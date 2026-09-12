@@ -1,0 +1,107 @@
+# Log rotasyonu: container başına en fazla 3 x 10MB tutulur, eskisi silinir.
+# Rotasyon yoksa log dosyası sınırsız büyür (bkz. docs/10-standards/LOGGING.md).
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    logging: *default-logging
+    environment:
+      POSTGRES_USER: kratos
+      POSTGRES_PASSWORD: kratospassword
+      POSTGRES_DB: kratos
+    volumes:
+      - kratos_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kratos"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  kratos-migrate:
+    image: oryd/kratos:v1.2.0
+    logging: *default-logging
+    command: migrate sql -e --yes
+    environment:
+      DSN: ${KRATOS_DSN}
+    volumes:
+      - ./kratos:/etc/config/kratos
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+
+  kratos:
+    image: oryd/kratos:v1.2.0
+    logging: *default-logging
+    command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
+    ports:
+      - "4433:4433"
+      - "4434:4434"
+    environment:
+      DSN: ${KRATOS_DSN}
+      LOG_LEVEL: info
+    volumes:
+      - ./kratos:/etc/config/kratos
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kratos-migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    logging: *default-logging
+    ports:
+      - "6379:6379"
+
+  market-service:
+    build: ./market-service
+    logging: *default-logging
+    ports:
+      - "5002:5002"
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:5002
+      - ASPNETCORE_ENVIRONMENT=Production
+      # Gerçek prod (AWS) ortamında Warning olarak set edilir; burada lokal teşhis için Information.
+      - Serilog__MinimumLevel__Default=${LOG_LEVEL:-Information}
+      - TwelveData__ApiKey=${TWELVEDATA_API_KEY}
+      - REDIS_CONNECTION=redis:6379
+      - Kratos__BaseUrl=http://kratos:4433
+    depends_on:
+      - redis
+      - kratos
+
+  portfolio-service:
+    build: ./portfolio-service
+    logging: *default-logging
+    ports:
+      - "5001:5001"
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:5001
+      - ASPNETCORE_ENVIRONMENT=Production
+      # Gerçek prod (AWS) ortamında Warning olarak set edilir; burada lokal teşhis için Information.
+      - Serilog__MinimumLevel__Default=${LOG_LEVEL:-Information}
+      - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
+      - ServiceUrls__MarketService=http://market-service:5002
+      - Kratos__BaseUrl=http://kratos:4433
+    depends_on:
+      - market-service
+      - kratos
+
+  web:
+    build: ./web
+    logging: *default-logging
+    ports:
+      - "80:80"
+    depends_on:
+      - portfolio-service
+      - kratos
+
+volumes:
+  kratos_postgres_data:

@@ -1,0 +1,80 @@
+# CodeQL: GitHub'ın statik güvenlik analizi. Kodu tarayıp bilinen açık
+# kalıplarını (SQL injection, XSS, script injection vb.) Security sekmesine raporlar.
+name: "CodeQL Advanced"
+
+# --- Ne zaman çalışır ---
+on:
+  push:
+    branches: [ "test" ]        # test branch'ine her push'ta
+  pull_request:
+    branches: [ "test" ]        # test'e açılan PR'larda
+  schedule:
+    # Her Çarşamba 22:27 UTC. Kod değişmese bile CodeQL kuralları güncellenince
+    # yeni açık yakalanabilsin diye haftalık tam tarama. Dakika değeri kurulumda
+    # rastgele üretilir (herkes aynı anda tetiklemesin diye).
+    - cron: '27 22 * * 3'
+
+jobs:
+  analyze:
+    # Ekranda "Analyze (csharp)" gibi görünür; matrix.language o an taranan dili yazar.
+    name: Analyze (${{ matrix.language }})
+
+    # Swift derlemesi Mac gerektirir; diğer her dil Ubuntu'da koşar. Bizde swift yok.
+    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+
+    # Bu job'un GITHUB_TOKEN'ına verilen izinler (minimum yetki prensibi).
+    permissions:
+      security-events: write   # tarama sonucunu (SARIF) Security sekmesine yazmak için — zorunlu
+      packages: read           # private paket bağımlılıklarını çekebilmek için
+      actions: read            # 'actions' dili taraması workflow dosyalarını okur
+      contents: read           # repo kodunu checkout edebilmek için
+
+    strategy:
+      fail-fast: false   # bir dil çökse bile diğer diller taranmaya devam eder
+      matrix:
+        # Liste; her eleman için job'un ayrı bir kopyası paralel koşar.
+        # matrix.language = o kopyanın 'language' değeri, matrix.build-mode = 'build-mode' değeri.
+        include:
+        - language: actions               # GitHub Actions workflow'larındaki açıklar
+          build-mode: none
+        - language: csharp                # .NET backend
+          build-mode: none
+        - language: javascript-typescript # React frontend
+          build-mode: none
+          # build-mode: none = CodeQL kodu derlemeden ("buildless") analiz eder.
+          # Daha hızlı, runner'a .NET/Node SDK kurmaya gerek yok.
+          # Derlenmesi zorunlu bir dil (C/C++, Java) eklenirse 'autobuild'/'manual' gerekir.
+
+    steps:
+    - name: Checkout repository
+      # Repo kodunu runner'a indirir. @<SHA> = action'ın tam commit hash'i;
+      # tag yerine SHA pinlemek supply-chain güvenliği (v7 tag'i başka commit'e kaydırılamaz).
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+    - name: Initialize CodeQL
+      # CodeQL motorunu kurar; hangi dili hangi build-mode ile tarayacağını matrix'ten alır.
+      # Bu adım (ve altındakiler) her matrix kopyası için baştan sona ayrı çalışır.
+      uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+      with:
+        languages: ${{ matrix.language }}      # kopya 1: actions, 2: csharp, 3: javascript-typescript
+        build-mode: ${{ matrix.build-mode }}   # hepsinde: none
+
+    - name: Run manual build steps
+      # Sadece build-mode == 'manual' ise çalışır. Bizde hiçbir dil manual değil,
+      # bu adım her zaman atlanır. Derlenen bir dil eklenirse build komutları buraya yazılır.
+      if: matrix.build-mode == 'manual'
+      shell: bash
+      run: |
+        echo 'If you are using a "manual" build mode for one or more of the' \
+          'languages you are analyzing, replace this with the commands to build' \
+          'your code, for example:'
+        echo '  make bootstrap'
+        echo '  make release'
+        exit 1
+
+    - name: Perform CodeQL Analysis
+      # Asıl tarama. Kodu CodeQL sorgularıyla analiz eder, bulguları SARIF olarak yükler.
+      uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+      with:
+        # Her dilin sonucu Security sekmesinde ayrı grupta görünsün diye etiket.
+        category: "/language:${{matrix.language}}"

@@ -1,25 +1,221 @@
 @import "tailwindcss";
 
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  /* LEDGER'a özel */
+  --color-up: hsl(var(--up));           /* kâr */
+  --color-down: hsl(var(--down));       /* zarar */
+  --color-brass: hsl(var(--brass));     /* ikincil aksan (işlem) */
+  --color-margin: hsl(var(--margin));   /* kırmızı marj çizgisi */
+
+  /* Şasi (koyu kabuk) — yalnızca Layout/sidebar kullanır, sayfa içeriği bone kalır */
+  --color-shell: hsl(var(--shell));
+  --color-shell-panel: hsl(var(--shell-panel));
+  --color-shell-border: hsl(var(--shell-border));
+  --color-shell-fg: hsl(var(--shell-fg));
+  --color-shell-muted: hsl(var(--shell-muted));
+  --color-foil: hsl(var(--foil));       /* şampanya aksan (şasi içinde) */
+
+  /* Kategori renkleri — yalnızca AYIRT ETMEK için. Asla kâr/zarar anlamı taşımaz. */
+  --color-cat-stock: hsl(var(--cat-stock));
+  --color-cat-gold: hsl(var(--cat-gold));
+  --color-cat-fx: hsl(var(--cat-fx));
+  --color-cat-cash: hsl(var(--cat-cash));
+  --color-cat-index: hsl(var(--cat-index));
+  --color-cat-other: hsl(var(--cat-other));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 1px);
+  --radius-sm: calc(var(--radius) - 1px);
+
+  --font-sans: "Instrument Sans Variable", system-ui, sans-serif;      /* gövde / UI */
+  --font-display: "Bricolage Grotesque Variable", system-ui, sans-serif; /* başlıklar */
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;         /* rakam / etiket */
+
+  /*
+    Tip ölçeği — 6 basamak, tam piksel. Ad-hoc `text-[11.5px]` yazmak yerine
+    hep bu adlar kullanılır. Tailwind'in text-xs/sm/lg'si ezilmedi; yeni işler
+    bu ölçeğe yazılır.
+  */
+  --text-micro: 0.6875rem;                /* 11 — etiket / ikincil mikro metin */
+  --text-micro--line-height: 1.3;
+  --text-ui: 0.8125rem;                   /* 13 — varsayılan UI / tablo hücresi */
+  --text-ui--line-height: 1.45;
+  --text-body: 0.9375rem;                 /* 15 — vurgulu gövde */
+  --text-body--line-height: 1.55;
+  --text-figure: 1.125rem;                /* 18 — KPI / kart değeri */
+  --text-figure--line-height: 1.2;
+  --text-head: 1.5rem;                    /* 24 — bölüm başlığı, mobil sayfa başlığı */
+  --text-head--line-height: 1.2;
+  --text-title: 1.875rem;                 /* 30 — sayfa başlığı (md+) */
+  --text-title--line-height: 1.1;
+}
+
+/*
+  LEDGER — açık/bone muhasebe defteri teması (tek tema, bilinçli tercih).
+  Renkler HSL "H S% L%" (shadcn yapısı). Ink üzerine bone; kâr/zarar semantik;
+  marj-kırmızısı ve pirinç aksanlar vurgudan ayrı.
+*/
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --primary: 221.2 83.2% 53.3%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
-  --radius: 0.5rem;
+  --background: 46 22% 92%;    /* #EFEDE6 bone */
+  --foreground: 45 8% 10%;     /* #1C1B18 ink */
+  --card: 50 25% 96%;          /* #F7F6F1 surface */
+  --card-foreground: 45 8% 10%;
+  --popover: 50 25% 96%;
+  --popover-foreground: 45 8% 10%;
+  --primary: 45 8% 10%;        /* ink — birincil buton */
+  --primary-foreground: 50 25% 96%;
+  --secondary: 46 18% 88%;     /* hover/ikincil yüzey */
+  --secondary-foreground: 45 8% 10%;
+  --muted: 46 16% 88%;
+  --muted-foreground: 45 6% 39%; /* #6A675E */
+  --accent: 46 18% 88%;
+  --accent-foreground: 45 8% 10%;
+  --destructive: 5 53% 32%;    /* zarar/loss #7B2D26 */
+  --destructive-foreground: 50 25% 96%;
+  --border: 47 16% 82%;        /* #D9D6CB rule */
+  --input: 45 8% 10%;          /* ledger'da inputlar ink kenarlı */
+  --ring: 45 8% 10%;
+
+  --up: 152 72% 28%;           /* kâr #147C4A */
+  --down: 5 61% 46%;           /* zarar #BE3A2E */
+
+  /* Kategori paleti — bone zemine göre ayarlandı, hepsi 4.5:1 üstü kontrast */
+  --cat-stock: 217 56% 42%;    /* #2F5DA8 hisse */
+  --cat-gold: 36 51% 56%;      /* #C69B58 altın */
+  --cat-fx: 176 65% 26%;       /* #17706B döviz */
+  --cat-cash: 265 33% 46%;     /* #6B4E9B nakit */
+  --cat-index: 18 54% 50%;     /* #C25E3A endeks */
+  --cat-other: 45 6% 52%;      /* #8C897E diğer */
+  --brass: 36 43% 38%;         /* #8C6A38 */
+  --margin: 6 59% 44%;         /* #B23A2E marj kırmızısı */
+
+  --radius: 0.5rem;            /* yumuşak köşe — keskinlik artık cetvelli tabloda kalıyor */
+
+  /* Şasi: bone tuvali taşıyan koyu kabuk. LEDGER kağıdı bunun üstünde durur. */
+  --shell: 240 6% 5%;          /* #0B0B0D */
+  --shell-panel: 240 6% 9%;    /* #15151A hover/kart yüzeyi */
+  --shell-border: 240 6% 14%;  /* #212127 */
+  --shell-fg: 240 5% 95%;      /* #F2F2F3 */
+  --shell-muted: 240 5% 56%;   /* #878791 */
+  --foil: 36 55% 71%;          /* #D4B483 şampanya */
 }
 
 * { border-color: hsl(var(--border)); }
-body { background-color: hsl(var(--background)); color: hsl(var(--foreground)); }
+
+/* Tailwind v4 preflight butonlara cursor:default veriyor (v3'te pointer'dı) — geri alıyoruz */
+button:not(:disabled), [role="button"]:not(:disabled), a[href] { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/*
+  Mikro etiket: mono + uppercase + tracking. Eyebrow, tablo başlığı, kart etiketi,
+  bölüm ayracı — hepsi bu. Boyut `--text-micro` (11px).
+*/
+.label {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  line-height: 1.3;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Rakamlar / ticker: mono + tabular hizalama */
+.tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* Ledger imzaları */
+.shadow-ledger { box-shadow: 4px 4px 0 0 hsl(var(--foreground) / 0.06); }
+.shadow-ledger-strong { box-shadow: 8px 8px 0 0 hsl(var(--foreground)); }
+.border-double-bottom { border-bottom: 3px double hsl(var(--foreground)); }
+
+/* --- Şasi imzaları (yalnızca Layout) --- */
+
+/* Şampanya foil kare: marka rozeti */
+.foil-tile {
+  background: linear-gradient(145deg, #E8CFA0, #C69B58 55%, #8C6A38);
+  color: #1A1408;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 2px 8px hsl(var(--foil) / .28);
+}
+
+/* Aktif nav satırı: yumuşak dolgu + solda ışıyan foil şerit */
+.nav-active {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .05);
+}
+.nav-active::before {
+  content: ""; position: absolute; left: -0.5rem; top: 0.5rem; bottom: 0.5rem; width: 2.5px;
+  background: hsl(var(--foil)); border-radius: 0 3px 3px 0;
+  box-shadow: 0 0 10px hsl(var(--foil) / .65);
+}
+
+/* Bone içerik tuvali — koyu şasinin üstünde yükselir */
+.canvas-inset { box-shadow: 0 12px 34px rgb(0 0 0 / .45); }
+
+/* Auth zemini: ızgara + üstten foil ışıma. Kart .auth-card ile yüzer. */
+.auth-bg { position: relative; overflow: hidden; background: hsl(var(--shell)); }
+.auth-bg::before {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    linear-gradient(hsl(var(--shell-border)) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--shell-border)) 1px, transparent 1px);
+  background-size: 34px 34px;
+  -webkit-mask-image: radial-gradient(420px 300px at 50% 42%, #000 10%, transparent 78%);
+          mask-image: radial-gradient(420px 300px at 50% 42%, #000 10%, transparent 78%);
+}
+.auth-bg::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(340px 190px at 50% 10%, hsl(var(--foil) / .17), transparent 70%);
+}
+.auth-card { box-shadow: 0 24px 60px rgb(0 0 0 / .65); }
+
+/* Sol kırmızı marj çizgisi (muhasebe kağıdı) — .margin-rule + sol iç boşluk gerektirir */
+.margin-rule { position: relative; }
+.margin-rule::before {
+  content: ""; position: absolute; top: 0; bottom: 0; left: 1rem; width: 1px;
+  background: hsl(var(--margin));
+}
+@media (min-width: 768px) { .margin-rule::before { left: 2rem; } }
+
+/* Modal giriş animasyonu (sade/versatil) */
+@keyframes ledger-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+.ledger-modal { animation: ledger-in .16s ease-out; }
+@media (prefers-reduced-motion: reduce) { .ledger-modal { animation: none; } }
+
+/* Yumuşak geçişler — reduced-motion'a saygılı */
+@media (prefers-reduced-motion: no-preference) {
+  a, button, [role="button"], .transition-smooth {
+    transition: color .16s ease, background-color .16s ease, border-color .16s ease, opacity .16s ease, transform .16s ease;
+  }
+}

@@ -1,95 +1,59 @@
-import { useEffect, useState } from 'react'
-import { portfolioApi } from '@/services/api'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useMemo } from 'react'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { useHoldings } from '@/hooks/queries'
+import { Page } from '@/components/Page'
+import { Section } from '@/components/Section'
+import { catOf } from '@/lib/assetColors'
 import {
   PieChart,
   Pie,
   Cell,
   Tooltip,
   Legend,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
   ResponsiveContainer,
 } from 'recharts'
 
 const formatTRY = (value) =>
   new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(value ?? 0)
 
-const TYPE_COLORS = {
-  Currency: '#3b82f6',
-  Stock: '#22c55e',
-  Crypto: '#f97316',
+const CHART_TOOLTIP_STYLE = {
+  backgroundColor: '#F7F6F1',
+  border: '1px solid #D9D6CB',
+  borderRadius: '8px',
+  color: '#1C1B18',
 }
 
-const PIE_COLORS = ['#3b82f6', '#22c55e', '#f97316', '#a855f7', '#ec4899']
-
 export default function Analytics() {
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [pieData, setPieData] = useState([])
-  const [barData, setBarData] = useState([])
+  const { t } = useLanguage()
+  const { data: holdings = [], isLoading, error } = useHoldings()
 
-  useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        const portfoliosRes = await portfolioApi.getAll()
-        const portfolios = portfoliosRes.data ?? []
-
-        const summaries = await Promise.all(
-          portfolios.map((p) => portfolioApi.getSummary(p.id).then((r) => r.data))
-        )
-
-        // Pie chart: allocation by asset type
-        const typeValueMap = {}
-        for (const summary of summaries) {
-          for (const asset of summary?.assets ?? []) {
-            const t = asset.assetType
-            typeValueMap[t] = (typeValueMap[t] ?? 0) + (asset.valueInTry ?? 0)
-          }
-        }
-        const totalAllAssets = Object.values(typeValueMap).reduce((a, b) => a + b, 0)
-        const pieChartData = Object.entries(typeValueMap).map(([name, value]) => ({
-          name,
-          value: parseFloat(((value / (totalAllAssets || 1)) * 100).toFixed(2)),
-          absValue: value,
-        }))
-        setPieData(pieChartData)
-
-        // Bar chart: portfolio distribution
-        const barChartData = summaries.map((s, i) => ({
-          name: s?.name ?? portfolios[i]?.name ?? `Portfolio ${i + 1}`,
-          value: s?.totalValueInTry ?? 0,
-        }))
-        setBarData(barChartData)
-      } catch (err) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
-      }
+  // Pie: varlık tipine göre dağılım
+  const pieData = useMemo(() => {
+    const typeValueMap = {}
+    for (const h of holdings) {
+      typeValueMap[h.assetType] = (typeValueMap[h.assetType] ?? 0) + (h.valueInTry ?? 0)
     }
-
-    fetchAll()
-  }, [])
-
-  if (loading) return <div className="text-gray-500">Loading...</div>
-  if (error) return <div className="text-red-500">Error: {error}</div>
+    const totalAll = Object.values(typeValueMap).reduce((a, b) => a + b, 0)
+    return Object.entries(typeValueMap).map(([name, value]) => ({
+      name: t(`assets.${name.toLowerCase()}`),
+      typeKey: name,
+      value: parseFloat(((value / (totalAll || 1)) * 100).toFixed(2)),
+      absValue: value,
+    }))
+  }, [holdings, t])
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Analytics</h1>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pie chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Asset Allocation by Type</CardTitle>
-          </CardHeader>
-          <CardContent>
+    <Page eyebrow={t('nav.sectionGeneral')} title={t('nav.analytics')}>
+      {isLoading ? (
+        <div className="text-ui text-muted-foreground">{t('common.loading')}</div>
+      ) : error ? (
+        <div className="text-ui text-down" role="alert">{t('common.error')}: {error.message}</div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {/* Varlık dağılımı */}
+          <Section title={t('analytics.allocation')} meta={`${pieData.length} ${t('overview.assetCount')}`}>
             {pieData.length === 0 ? (
-              <p className="text-gray-500 text-sm py-8 text-center">No data available.</p>
+              <p className="py-10 text-center text-ui text-muted-foreground">{t('assets.noAssets')}</p>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
@@ -101,14 +65,12 @@ export default function Analytics() {
                     dataKey="value"
                     label={({ name, value }) => `${name}: ${value}%`}
                   >
-                    {pieData.map((entry, index) => (
-                      <Cell
-                        key={entry.name}
-                        fill={TYPE_COLORS[entry.name] ?? PIE_COLORS[index % PIE_COLORS.length]}
-                      />
+                    {pieData.map((entry) => (
+                      <Cell key={entry.typeKey} fill={catOf(entry.typeKey).hex} />
                     ))}
                   </Pie>
                   <Tooltip
+                    contentStyle={CHART_TOOLTIP_STYLE}
                     formatter={(value, name, props) => [
                       `${value}% (${formatTRY(props.payload.absValue)})`,
                       name,
@@ -118,36 +80,9 @@ export default function Analytics() {
                 </PieChart>
               </ResponsiveContainer>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Bar chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Portfolio Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {barData.length === 0 ? (
-              <p className="text-gray-500 text-sm py-8 text-center">No data available.</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={barData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                  <YAxis
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(v) =>
-                      new Intl.NumberFormat('tr-TR', { notation: 'compact' }).format(v)
-                    }
-                  />
-                  <Tooltip formatter={(value) => [formatTRY(value), 'Value']} />
-                  <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+          </Section>
+        </div>
+      )}
+    </Page>
   )
 }

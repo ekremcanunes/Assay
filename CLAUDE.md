@@ -1,5 +1,21 @@
 # CLAUDE.md
 ---
+## 0. Doküman Haritası
+
+> Tüm dokümanlar `docs/` altında, numaralı kategori klasörlerinde durur. Tam indeks ve şema: `docs/README.md`.
+
+- `docs/10-standards/` — bağlayıcı standartlar; ilgili alanda kod yazmadan önce oku:
+  - `DESIGN.md` — tasarım sistemi (renk token'ları, tipografi, veri dürüstlüğü). UI değişikliğinden önce oku; ad-hoc renk/tip boyutu yasak.
+  - `DATA-FETCHING.md` — React Query veri çekme kuralları.
+  - `PIPELINE-SECURITY.md` — pipeline güvenlik standardı (planlama aşamasında; CI/CD veya güvenlik işine dokunmadan önce oku).
+  - `LOGGING.md` — loglama standardı (Serilog, stdout+JSON, seviye politikası, hassas veri yasağı, docker rotasyonu, AWS maliyet kontrolü). Log yazmadan veya log altyapısına dokunmadan önce oku.
+- `docs/20-modules/` — modül tasarımları (`GOLD-MODULE.md` — altın modülü).
+- `docs/30-operations/` — operasyon (`COMMANDS.md` — Docker, Redis, Kratos, psql, EF Core, hata ayıklama sırası).
+- `docs/40-learning/` — öğrenme notları (bağlayıcı değil).
+- `docs/superpowers/` — geçmiş plan/spec/verification arşivi (tarihsel kayıt; içindeki eski dosya yolları güncel olmayabilir).
+- Yeni doküman → `docs/` altında kategorisine uygun klasöre; `docs/README.md` indeksi de güncellenir. Kök dizine veya servis klasörlerine doküman konmaz.
+
+---
 ## 1. Think Before You Code
 
 > Don't assume. Don't hide ambiguity. State alternatives explicitly.

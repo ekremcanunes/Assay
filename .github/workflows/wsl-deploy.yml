@@ -1,0 +1,30 @@
+name: WSL Dev Deploy
+
+on:
+  push:
+    branches:
+      - test
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Copy secrets
+        run: |
+          cp ~/secrets/.env $GITHUB_WORKSPACE/.env
+          cp ~/secrets/portfolio-appsettings.Development.json $GITHUB_WORKSPACE/portfolio-service/appsettings.Development.json
+          cp ~/secrets/market-appsettings.Development.json $GITHUB_WORKSPACE/market-service/appsettings.Development.json
+
+      - name: Deploy
+        run: |
+          cd $GITHUB_WORKSPACE
+          docker compose down --remove-orphans
+          docker compose up --build -d
+          docker compose ps

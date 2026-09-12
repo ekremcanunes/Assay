@@ -1,18 +1,30 @@
 import axios from 'axios'
 
-const api = axios.create({ baseURL: 'http://localhost:5001' })
+const api = axios.create({ baseURL: '', withCredentials: true })
 
-export const portfolioApi = {
-  getAll: () => api.get('/api/portfolios'),
-  getById: (id) => api.get(`/api/portfolios/${id}`),
-  create: (data) => api.post('/api/portfolios', data),
-  delete: (id) => api.delete(`/api/portfolios/${id}`),
-  getAssets: (id) => api.get(`/api/portfolios/${id}/assets`),
-  addAsset: (id, data) => api.post(`/api/portfolios/${id}/assets`, data),
-  deleteAsset: (portfolioId, assetId) => api.delete(`/api/portfolios/${portfolioId}/assets/${assetId}`),
-  getSummary: (id) => api.get(`/api/portfolios/${id}/summary`),
+export const assetApi = {
+  getAll: () => api.get('/api/assets'),
+  buy: (data) => api.post('/api/assets/buy', data),
+  sell: (id, data) => api.post(`/api/assets/${id}/sell`, data),
+  update: (id, data) => api.put(`/api/assets/${id}`, data),
+  delete: (id) => api.delete(`/api/assets/${id}`),
 }
 
 export const dashboardApi = {
   get: () => api.get('/api/dashboard'),
+}
+
+export const transactionApi = {
+  getAll: (params) => api.get('/api/transactions', { params }),
+  getById: (id) => api.get(`/api/transactions/${id}`),
+  delete: (id) => api.delete(`/api/transactions/${id}`),
+}
+
+export const marketApi = {
+  search: (q) => api.get('/api/market/search', { params: { q } }),
+  overview: () => api.get('/api/market/overview'),
+  history: (symbol, assetType, range) =>
+    api.get(`/api/market/history/${encodeURIComponent(symbol)}`, { params: { assetType, range } }),
+  priceOn: (symbol, assetType, date) =>
+    api.get(`/api/market/price-on/${encodeURIComponent(symbol)}`, { params: { assetType, date } }),
 }
