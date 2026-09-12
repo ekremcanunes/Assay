@@ -21,6 +21,8 @@ Proje dokümanları bu klasörde, numaralı kategori klasörleri altında tutulu
 - [20-modules/GOLD-MODULE.md](20-modules/GOLD-MODULE.md) — Altın modülü tasarımı.
 - [30-operations/COMMANDS.md](30-operations/COMMANDS.md) — Komut rehberi: Docker, Redis, Kratos, psql, EF Core, hata ayıklama sırası.
 - [40-learning/DOCKER-LEARNING.md](40-learning/DOCKER-LEARNING.md) — Docker öğrenme notları.
+- [40-learning/LINUX-BASICS.md](40-learning/LINUX-BASICS.md) — Linux temel kavramlar: stdout/stderr, journalctl, konteyner log zinciri.
+- [40-learning/AWS-BASICS.md](40-learning/AWS-BASICS.md) — Bu projede kullanılacak AWS servisleri: OIDC, ECR, EC2, maliyet kalemleri, bölge seçimi.
 
 ## Kurallar
 
