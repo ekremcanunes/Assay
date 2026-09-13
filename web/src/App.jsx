@@ -10,6 +10,7 @@ import GoldFx from './pages/GoldFx'
 import Assets from './pages/Assets'
 import AddAsset from './pages/AddAsset'
 import Analytics from './pages/Analytics'
+import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Register from './pages/Register'
 
@@ -30,6 +31,7 @@ export default function App() {
         <AuthProvider>
           <BrowserRouter>
           <Routes>
+            <Route path="/landing" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route
