@@ -5,7 +5,7 @@
 > Tüm dokümanlar `docs/` altında, numaralı kategori klasörlerinde durur. Tam indeks ve şema: `docs/README.md`.
 
 - `docs/10-standards/` — bağlayıcı standartlar; ilgili alanda kod yazmadan önce oku:
-  - `DESIGN.md` — tasarım sistemi (renk token'ları, tipografi, veri dürüstlüğü). UI değişikliğinden önce oku; ad-hoc renk/tip boyutu yasak.
+  - `DESIGN.md` — **VOLTAJ** tasarım sistemi (üç renk, tip ölçeği, voltaj doz kuralı, bileşen anatomisi, veri dürüstlüğü). Landing, auth ve panel için tek standart. UI değişikliğinden önce oku; ad-hoc renk/tip boyutu ve gölge yasak. Tasarımı değiştirmeden önce canlı referans `/landing`'de dene.
   - `DATA-FETCHING.md` — React Query veri çekme kuralları.
   - `PIPELINE-SECURITY.md` — pipeline güvenlik standardı (planlama aşamasında; CI/CD veya güvenlik işine dokunmadan önce oku).
   - `LOGGING.md` — loglama standardı (Serilog, stdout+JSON, seviye politikası, hassas veri yasağı, docker rotasyonu, AWS maliyet kontrolü). Log yazmadan veya log altyapısına dokunmadan önce oku.
