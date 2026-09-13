@@ -20,7 +20,7 @@ export function Modal({ open, onClose, title, subtitle, children, actions, maxWi
       onClick={onClose}
     >
       <div
-        className={`ledger-modal w-full ${maxWidth} border-2 border-foreground bg-card p-6 shadow-ledger-strong`}
+        className={`modal-in w-full ${maxWidth} rounded-lg border border-border bg-card p-6`}
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
