@@ -27,11 +27,12 @@ docker ps -a                       # duranlar dahil hepsi
 docker images                      # indirilen imajlar
 docker inspect <container-adı>     # container detayları (network, IP, env)
 docker network ls                  # network listesi
-docker network inspect investment-tracker_default   # hangi container'lar bağlı
+docker network inspect assay_default   # hangi container'lar bağlı
 
-# Not: network/volume öneki klasör adından değil, docker-compose.yml içindeki
-# "name: investment-tracker" satırından gelir. Klasör Assay olarak yeniden
-# adlandırıldı ama önek bilerek sabit bırakıldı — mevcut volume'lar orphan kalmasın.
+# Not: network/volume/container öneki klasör adından değil, docker-compose.yml
+# içindeki "name:" satırından gelir. 2026-09-15'te investment-tracker -> assay
+# olarak değiştirildi; eski volume (investment-tracker_kratos_postgres_data)
+# bilerek taşınmadı, kayıtlı kullanıcılar sıfırlandı.
 docker volume ls                   # volume'lar (kratos_postgres_data burada)
 docker system df                   # docker'ın kapladığı disk alanı
 docker logs <container-adı>        # compose dışı container logları
@@ -175,4 +176,4 @@ curl http://localhost:4433/sessions/whoami
 docker compose restart kratos
 ```
 
-> **DİKKAT — geri dönüşü yok:** `docker volume rm investment-tracker_kratos_postgres_data` tüm kullanıcı kayıtlarını siler. Son çare.
+> **DİKKAT — geri dönüşü yok:** `docker volume rm assay_kratos_postgres_data` tüm kullanıcı kayıtlarını siler. Son çare.

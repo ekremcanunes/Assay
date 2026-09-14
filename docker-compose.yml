@@ -1,7 +1,9 @@
-# Proje adi klasor adindan turemesin: klasor yeniden adlandirilsa da
-# network ve volume adlari (investment-tracker_default, ..._kratos_postgres_data)
-# degismez, mevcut veri orphan kalmaz.
-name: investment-tracker
+# Proje adi klasor adindan turemesin - klasor yeniden adlandirilsa da
+# network/volume/container onekleri degismesin.
+# NOT: Bu deger investment-tracker -> assay'a degistirildiginde (2026-09-15)
+# mevcut Kratos volume'u (investment-tracker_kratos_postgres_data) bilerek
+# tasinmadi - kayitli kullanicilar sifirlanir, kabul edildi.
+name: assay
 
 x-logging: &default-logging
   driver: "json-file"
