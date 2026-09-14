@@ -23,6 +23,7 @@ Proje dokümanları bu klasörde, numaralı kategori klasörleri altında tutulu
 - [40-learning/DOCKER-LEARNING.md](40-learning/DOCKER-LEARNING.md) — Docker öğrenme notları.
 - [40-learning/LINUX-BASICS.md](40-learning/LINUX-BASICS.md) — Linux temel kavramlar: stdout/stderr, journalctl, konteyner log zinciri.
 - [40-learning/AWS-BASICS.md](40-learning/AWS-BASICS.md) — Bu projede kullanılacak AWS servisleri: OIDC, ECR, EC2, maliyet kalemleri, bölge seçimi.
+- [40-learning/NGINX-LEARNING.md](40-learning/NGINX-LEARNING.md) — Nginx & reverse proxy notları: nginx.conf satır satır, `proxy_pass` sondaki `/` kuralı, Compose DNS, session cookie akışı, rebuild gerekliliği, proxy atlamayı engelleme.
 
 ## Kurallar
 
