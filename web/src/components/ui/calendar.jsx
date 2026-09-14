@@ -52,7 +52,7 @@ export function Calendar({ className, classNames, startMonth, endMonth, ...props
         day_button:
           "tabular h-9 w-9 rounded-md text-ui text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
 
-        today: "[&>button]:font-semibold [&>button]:text-brass",
+        today: "[&>button]:font-semibold [&>button]:text-voltage",
         selected:
           "[&>button]:bg-foreground [&>button]:font-medium [&>button]:text-background [&>button]:hover:opacity-90",
         outside: "[&>button]:text-muted-foreground/50",

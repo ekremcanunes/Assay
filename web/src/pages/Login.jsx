@@ -61,7 +61,7 @@ export default function Login() {
       const body = await res.json()
       if (res.ok) {
         setSession(body)
-        navigate('/')
+        navigate('/overview')
       } else {
         setError(kratosErrorText(body, t))
       }
@@ -72,21 +72,23 @@ export default function Login() {
 
   if (!flow) {
     return (
-      <div className="auth-bg flex min-h-screen items-center justify-center font-mono text-micro text-shell-muted">
+      <div className="paper flex min-h-screen items-center justify-center bg-background font-mono text-micro text-muted-foreground">
         {t('auth.redirecting')}
       </div>
     )
   }
 
   return (
-    <div className="auth-bg flex min-h-screen items-center justify-center p-4">
-      <div className="auth-card relative z-10 w-full max-w-[340px] rounded-2xl border border-shell-border bg-shell-panel p-6">
-        <img src={assayMark} alt="" className="h-[30px] w-[30px]" />
-        <h1 className="mt-3.5 font-display text-head font-semibold tracking-tight text-shell-fg">{t('auth.signIn')}</h1>
-        <p className="mt-0.5 text-micro text-shell-muted">{APP_NAME} — {t('auth.signInSubtitle')}</p>
+    <div className="paper flex min-h-screen items-center bg-background p-6 md:p-12">
+      <div className="edge-accent relative z-10 w-full max-w-[360px] rounded-r-lg border border-l-0 border-border bg-card p-7">
+        <Link to="/landing" aria-label={`${APP_NAME} tanıtım sayfası`} className="inline-block rounded-sm hover:opacity-70">
+          <img src={assayMark} alt="" className="h-[30px] w-[30px]" />
+        </Link>
+        <h1 className="mt-4 text-head font-bold text-foreground">{t('auth.signIn')}</h1>
+        <p className="mt-1 text-ui text-muted-foreground">{APP_NAME} — {t('auth.signInSubtitle')}</p>
 
         {error && (
-          <div className="mt-4 rounded-lg border border-down/40 bg-down/10 px-3 py-2 text-micro text-down" role="alert">
+          <div className="mt-4 rounded-md border border-destructive/40 bg-destructive/8 px-3 py-2 text-micro text-destructive" role="alert">
             {error}
           </div>
         )}
@@ -116,7 +118,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => setShowPass((v) => !v)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-shell-muted hover:text-shell-fg"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
               aria-label={showPass ? t('auth.hidePassword') : t('auth.showPassword')}
             >
               {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -129,9 +131,15 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="mt-4 text-center text-micro text-shell-muted">
+        <p className="mt-5 text-ui text-muted-foreground">
           {t('auth.noAccount')}{' '}
-          <Link to="/register" className="border-b border-foil text-foil hover:opacity-80">{t('auth.createOne')}</Link>
+          <Link to="/register" className="font-semibold text-foreground underline underline-offset-4 hover:opacity-70">{t('auth.createOne')}</Link>
+        </p>
+
+        <p className="mt-4 border-t border-border pt-4">
+          <Link to="/landing" className="inline-flex items-center gap-1.5 text-ui text-muted-foreground hover:text-foreground">
+            <span aria-hidden="true">&larr;</span> {APP_NAME} nedir?
+          </Link>
         </p>
       </div>
     </div>

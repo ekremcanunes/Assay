@@ -210,7 +210,7 @@ export default function AddAsset() {
                     />
                   </div>
                   {(searching || results.length > 0) && (
-                    <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-md border border-border bg-popover shadow-lg">
+                    <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-input bg-popover">
                       {searching && (
                         <div className="px-3 py-2 text-ui text-muted-foreground">{t('common.loading')}</div>
                       )}
@@ -324,7 +324,7 @@ export default function AddAsset() {
             ) : priceSource === 'manual' && refPrice != null && tier !== 'none' ? (
               <p className={
                 tier === 'confirm' ? 'flex items-center gap-1.5 text-micro text-margin'
-                : tier === 'warn' ? 'flex items-center gap-1.5 text-micro text-brass'
+                : tier === 'warn' ? 'flex items-center gap-1.5 text-micro text-warn'
                 : 'text-micro text-muted-foreground'
               }>
                 {tier !== 'info' && <AlertTriangle className="h-3 w-3 shrink-0" />}
