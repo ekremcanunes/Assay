@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { APP_NAME } from '../lib/app'
+import { TECH, STACK_COLUMNS, DEFAULT_TECH } from '../lib/stack'
 import assayMark from '../assets/assay-mark.svg'
 
 /*
@@ -24,15 +25,15 @@ function useCacheLog() {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     const make = () => {
-      const s = stats.current
-      const sym = SYMBOLS[s.i % SYMBOLS.length]
-      s.i += 1
+      const st = stats.current
+      const sym = SYMBOLS[st.i % SYMBOLS.length]
+      st.i += 1
       const hit = Math.random() < 0.72
-      s.total += 1
-      if (hit) s.hits += 1
+      st.total += 1
+      if (hit) st.hits += 1
       const now = new Date()
       return {
-        id: `${now.getTime()}-${s.i}`,
+        id: `${now.getTime()}-${st.i}`,
         time: now.toLocaleTimeString('tr-TR', { hour12: false }),
         hit,
         sym,
@@ -43,8 +44,8 @@ function useCacheLog() {
 
     const push = () => {
       setLines((prev) => [...prev.slice(-4), make()])
-      const s = stats.current
-      setRatio(Math.round((s.hits / s.total) * 100))
+      const st = stats.current
+      setRatio(Math.round((st.hits / st.total) * 100))
     }
 
     for (let i = 0; i < 5; i += 1) push()
@@ -64,60 +65,6 @@ function Eyebrow({ children }) {
   return <span className="tick-accent label block text-muted-foreground">{children}</span>
 }
 
-/* Teknoloji işaretleri — stilize, resmi marka varlıkları değil */
-const strokeProps = {
-  fill: 'none',
-  stroke: 'currentColor',
-  strokeWidth: 1.6,
-  viewBox: '0 0 32 32',
-  'aria-hidden': true,
-}
-
-const TECH = [
-  { name: 'React 19', role: 'ARAYÜZ', icon: (
-    <svg {...strokeProps}><circle cx="16" cy="16" r="2.6" fill="currentColor" stroke="none" />
-      <ellipse cx="16" cy="16" rx="13" ry="5.2" />
-      <ellipse cx="16" cy="16" rx="13" ry="5.2" transform="rotate(60 16 16)" />
-      <ellipse cx="16" cy="16" rx="13" ry="5.2" transform="rotate(120 16 16)" /></svg>) },
-  { name: 'Vite', role: 'BUILD', icon: (
-    <svg {...strokeProps}><path d="M16 3 L28 7.5 L24.5 25 L16 29 L7.5 25 L4 7.5 Z" strokeLinejoin="round" />
-      <path d="M17.5 8 L13 17.5 h4 L14.5 24 L20 14 h-4 z" fill="currentColor" stroke="none" /></svg>) },
-  { name: 'Tailwind v4', role: 'STİL', icon: (
-    <svg {...strokeProps}><path d="M4 13 c2.5-5 5-6.5 7.5-4.5 1.7 1.3 2 3 4.5 3 2.5 0 3.5-2 3.5-2 -2.5 5-5 6.5-7.5 4.5 -1.7-1.3-2-3-4.5-3 -2.5 0-3.5 2-3.5 2 z" fill="currentColor" stroke="none" />
-      <path d="M12.5 22 c2.5-5 5-6.5 7.5-4.5 1.7 1.3 2 3 4.5 3 2.5 0 3.5-2 3.5-2 -2.5 5-5 6.5-7.5 4.5 -1.7-1.3-2-3-4.5-3 -2.5 0-3.5 2-3.5 2 z" fill="currentColor" stroke="none" /></svg>) },
-  { name: '.NET 9', role: 'SERVİSLER', icon: (
-    <svg {...strokeProps}><path d="M6 8 h20 v16 a2 2 0 0 1-2 2 H8 a2 2 0 0 1-2-2 Z" strokeLinejoin="round" />
-      <path d="M6 13 h20 M6 18 h20" /><path d="M11 5 v3 M21 5 v3" /></svg>) },
-  { name: 'PostgreSQL', role: 'KALICI VERİ', icon: (
-    <svg {...strokeProps}><ellipse cx="16" cy="8" rx="11" ry="4" />
-      <path d="M5 8 v16 c0 2.2 4.9 4 11 4 s11-1.8 11-4 V8" />
-      <path d="M5 16 c0 2.2 4.9 4 11 4 s11-1.8 11-4" /></svg>) },
-  { name: 'Redis', role: 'CACHE', icon: (
-    <svg {...strokeProps}><path d="M4 10 L16 5 L28 10 L16 15 Z" strokeLinejoin="round" />
-      <path d="M4 16 L16 21 L28 16" /><path d="M4 22 L16 27 L28 22" /></svg>) },
-  { name: 'Ory Kratos', role: 'KİMLİK', icon: (
-    <svg {...strokeProps}><path d="M16 3 L27 8 v8 c0 7-5 11.5-11 13 -6-1.5-11-6-11-13 V8 Z" strokeLinejoin="round" />
-      <path d="M11.5 16 l3.2 3.2 L21 12.5" /></svg>) },
-  { name: 'Docker', role: 'ÇALIŞTIRMA', icon: (
-    <svg {...strokeProps}><rect x="4" y="17" width="5" height="5" /><rect x="10.5" y="17" width="5" height="5" />
-      <rect x="17" y="17" width="5" height="5" /><rect x="10.5" y="10.5" width="5" height="5" />
-      <rect x="17" y="10.5" width="5" height="5" />
-      <path d="M22 19.5 c4 0 6-1.5 6-1.5 0 4.5-3.5 8.5-9 8.5 -7 0-11-4.5-11-4.5" /></svg>) },
-  { name: 'nginx', role: 'KENAR', icon: (
-    <svg {...strokeProps}><path d="M5 26 V9 L16 26 V9" strokeLinejoin="round" />
-      <path d="M21 12 h6 M24 9 v6" opacity=".55" /></svg>) },
-  { name: 'AWS', role: 'BULUT — SIRADA', icon: (
-    <svg {...strokeProps}><path d="M6 14 a5 5 0 0 1 4.6-5 6.4 6.4 0 0 1 12 1.6 A4.4 4.4 0 0 1 26 19 H9 a4 4 0 0 1-3-5 z" strokeLinejoin="round" />
-      <path d="M6 24 c4 1.8 8 2.6 10 2.6 s6-.8 10-2.6" strokeLinecap="round" />
-      <path d="M24 22.6 l2.4 1.4 -1 2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>) },
-  { name: 'GitHub Actions', role: 'CI/CD', icon: (
-    <svg {...strokeProps}><circle cx="16" cy="16" r="11" /><path d="M16 9 v7 l5 3" />
-      <path d="M25 7 l2.5-2.5 M27.5 4.5 v4 M27.5 4.5 h-4" opacity=".55" /></svg>) },
-  { name: 'TanStack Query', role: 'SUNUCU VERİSİ', icon: (
-    <svg {...strokeProps}><rect x="4" y="6" width="24" height="20" rx="2" strokeLinejoin="round" />
-      <path d="M4 11 h24" /><path d="M9 17 h6 M9 21 h10" /><circle cx="21.5" cy="17.5" r="2.5" /></svg>) },
-]
-
 const CAPS = [
   { t: 'Varlık takibi', edge: true, tags: ['TRY / USD', 'ağırlıklı ortalama'],
     d: 'Adet, alış fiyatı, para birimi ve tarih girilir. Aynı varlıktan tekrar alınca ortalama maliyet ağırlıklı güncellenir. Satışta gerçekleşen kâr/zarar hesaplanıp kaydedilir.' },
@@ -129,30 +76,6 @@ const CAPS = [
     d: 'BIST ve ABD borsalarındaki semboller isim ya da kodla aranır. BIST 30 içi arama client-side filtredir — 30 satır için sunucuya gidilmez.' },
 ]
 
-const STACK = [
-  { h: 'Arka uç', rows: [['portfolio-service', '.NET 9'], ['market-service', '.NET 9'], ['ORM', 'EF Core'],
-    ['Veritabanı', 'PostgreSQL · Neon'], ['Cache', 'Redis'], ['Kimlik', 'Ory Kratos 1.2'], ['Log', 'Serilog · JSON']] },
-  { h: 'Ön uç', rows: [['Çatı', 'React 19 · Vite'], ['Stil', 'Tailwind v4'], ['Bileşen', 'shadcn/ui'],
-    ['Sunucu verisi', 'TanStack Query'], ['Dağılım grafiği', 'Recharts'], ['Fiyat grafiği', 'Lightweight Charts'], ['Dil', 'TR / EN']] },
-  { h: 'Altyapı', rows: [['Çalıştırma', 'Docker Compose'], ['Kenar', 'nginx'], ['Ortam', 'WSL2 · Ubuntu'],
-    ['Dağıtım', 'GitHub Actions'], ['Bulut', 'AWS — sırada'], ['Kod taraması', 'CodeQL'], ['Sır yönetimi', 'Actions secrets']] },
-]
-
-const LEARN = [
-  { s: 'oturdu', t: 'Docker & container', ev: '6 servis tek compose up ile ayakta',
-    d: 'Image/container ayrımı, katman cache\'i, çok aşamalı build, compose ile servis bağlama. Docker Desktop yok — WSL2\'de native engine.' },
-  { s: 'oturdu', t: 'Kimlik doğrulama', ev: 'parola hash\'i hiç bizim kodumuza girmedi',
-    d: 'Kendi auth\'unu yazmak yerine Kratos\'u koymak. Cookie tabanlı session, self-service flow\'lar, her istekte doğrulama.' },
-  { s: 'oturdu', t: 'Cache stratejisi', ev: 'TTL sabit değil, veri tipine göre',
-    d: 'Ücretsiz API limitleri gerçek bir kısıt. Neyin ne kadar bayatlayabileceğine karar vermek: gün içi 5 dk, günlük seri 1 saat.' },
-  { s: 'devam', t: 'CI/CD', ev: 'pipeline güvenlik standardı yazım aşamasında',
-    d: 'GitHub Actions ile WSL\'e dağıtım, CodeQL taraması. Sırların nerede durduğu, hangi tag\'in çekildiği gibi tuzaklar burada öğrenildi.' },
-  { s: 'devam', t: 'Loglama', ev: 'FrankfurterClient\'ta sanitizer eklendi',
-    d: 'Serilog, stdout + JSON, seviye politikası, hassas veri yasağı. Log injection (CWE-117) gerçek bir bulgu olarak çıktı ve kapatıldı.' },
-  { s: 'sırada', t: 'Linux & AWS', ev: 'docs/40-learning altında not tutuluyor',
-    d: 'WSL2 üzerinde çalışmak Linux\'u zorunlu kıldı. Sonraki adım bulut: log maliyeti şimdiden hesaba katıldı.' },
-]
-
 const TRADEOFFS = [
   ['Piyasa verisi Postgres\'te tutulmuyor', 'Veritabanı yalnızca portföy ve işlemler için. Fiyatlar Redis\'te yaşar ve bayatlar — kalıcı fiyat tarihçesi yok.'],
   ['BIST 30 araması sunucuya gitmiyor', '30 satır için ağ turu ya da DB indeksi kurmak abartı olurdu. Filtre client-side; boş dönerse tüm BIST evreni sorgulanıyor.'],
@@ -160,14 +83,149 @@ const TRADEOFFS = [
   ['TradingView widget\'ı kaldırıldı', 'Ücretsiz widget BIST sembollerinde varsayılana düşüyordu — lisans kısıtı, kod hatası değil. Yerine veriyi kendimiz beslediğimiz Lightweight Charts kondu.'],
 ]
 
-const STATUS_CLS = {
-  oturdu: 'border-up text-up',
-  devam: 'border-voltage text-voltage',
-  sırada: 'border-border text-muted-foreground',
+/* ---------- Entegrasyon bölümü: solda dikey liste, sağda içerik ---------- */
+
+function CodeBlock({ code, title, note }) {
+  return (
+    <div>
+      {title && (
+        <div className="mb-2 flex items-center gap-2 font-mono text-micro text-muted-foreground">
+          <i className="h-[6px] w-[6px] rounded-full bg-voltage" aria-hidden="true" />
+          {title}
+        </div>
+      )}
+      <pre className="overflow-x-auto rounded-lg bg-foreground p-5 font-mono text-micro leading-[1.7] text-background/85">
+        {code}
+      </pre>
+      {note && <p className="mt-2 font-mono text-micro text-muted-foreground">{note}</p>}
+    </div>
+  )
+}
+
+function MiniTable({ head, rows }) {
+  return (
+    <div className="mt-4 overflow-x-auto">
+      <table className="w-full min-w-[460px] border-collapse">
+        <thead>
+          <tr>
+            {head.map((h) => (
+              <th key={h} className="label border-b border-foreground px-0 pb-2 pr-4 text-left text-muted-foreground">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.join('|')}>
+              {r.map((c, i) => (
+                <td key={r.join('|') + i}
+                    className={`border-b border-border py-2 pr-4 text-ui ${i === 0 ? 'text-foreground' : 'font-mono text-micro text-muted-foreground'}`}>
+                  {c}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function DetailBlock({ b }) {
+  if (b.kind === 'code') return <CodeBlock code={b.code} title={b.title} note={b.note} />
+
+  if (b.kind === 'warn') {
+    return (
+      <div className="edge-accent rounded-r-lg bg-background p-5">
+        <h4 className="mb-1.5 text-ui font-semibold text-foreground">{b.title}</h4>
+        <p className="text-ui text-muted-foreground">{b.body}</p>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <h4 className="mb-1.5 text-figure font-semibold text-foreground">{b.title}</h4>
+      <p className="text-ui text-muted-foreground">{b.body}</p>
+      {b.table && <MiniTable head={b.table.head} rows={b.table.rows} />}
+      {b.code && <div className="mt-4"><CodeBlock code={b.code} /></div>}
+      {b.after && <p className="mt-3 text-ui text-muted-foreground">{b.after}</p>}
+    </div>
+  )
+}
+
+function TechDetail({ tech }) {
+  if (!tech.detail) {
+    return (
+      <div className="flex min-h-[320px] flex-col items-center justify-center rounded-lg border border-dashed border-input bg-background p-10 text-center">
+        <span className="text-muted-foreground [&>svg]:h-10 [&>svg]:w-10">{tech.icon}</span>
+        <h3 className="mt-4 text-figure font-semibold text-foreground">{tech.name}</h3>
+        <p className="mt-1.5 max-w-[42ch] text-ui text-muted-foreground">
+          Bu teknolojinin entegrasyon yazısı henüz hazır değil. Sırayla ekleniyor.
+        </p>
+        <span className="mt-4 rounded-sm border border-input px-2 py-0.5 font-mono text-micro text-muted-foreground">
+          sırada
+        </span>
+      </div>
+    )
+  }
+
+  const { tagline, why, blocks, files, doc } = tech.detail
+
+  return (
+    <article className="rounded-lg bg-card p-7 md:p-9">
+      <header className="border-b border-border pb-6">
+        <div className="flex items-center gap-3">
+          <span className="text-voltage [&>svg]:h-8 [&>svg]:w-8">{tech.icon}</span>
+          <div>
+            <h3 className="text-head font-bold text-foreground">{tech.name}</h3>
+            <span className="font-mono text-micro tracking-wide text-muted-foreground">{tech.role}</span>
+          </div>
+        </div>
+        <p className="mt-4 max-w-[64ch] text-body text-muted-foreground">{tagline}</p>
+      </header>
+
+      <section className="border-b border-border py-6">
+        <span className="label mb-4 block text-muted-foreground">Neden bu</span>
+        <div className="grid gap-5 md:grid-cols-3">
+          {why.map((w) => (
+            <div key={w.t} className="rule-accent pt-3">
+              <h4 className="mb-1.5 text-ui font-semibold text-foreground">{w.t}</h4>
+              <p className="text-ui text-muted-foreground">{w.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="py-6">
+        <span className="label mb-5 block text-muted-foreground">Nasıl entegre edildi</span>
+        <div className="grid gap-7">
+          {blocks.map((b) => <DetailBlock key={b.title} b={b} />)}
+        </div>
+      </section>
+
+      <footer className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-border pt-5">
+        <span className="label text-muted-foreground">İlgili dosyalar</span>
+        <div className="flex flex-wrap gap-2">
+          {files.map((f) => (
+            <code key={f} className="rounded-sm bg-secondary px-2 py-0.5 font-mono text-micro text-foreground">{f}</code>
+          ))}
+        </div>
+        <span className="font-mono text-micro text-muted-foreground">Ayrıntılı not: {doc}</span>
+      </footer>
+    </article>
+  )
 }
 
 export default function Landing() {
   const { lines, ratio } = useCacheLog()
+  const [active, setActive] = useState(DEFAULT_TECH)
+  const activeTech = TECH.find((t) => t.slug === active) ?? TECH[0]
+
+  // Üstteki şeritten bir logoya tıklanınca entegrasyon bölümüne in ve onu seç
+  const openTech = (slug) => {
+    setActive(slug)
+    document.getElementById('entegrasyon')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   return (
     <div className="min-h-dvh bg-card text-muted-foreground">
@@ -181,8 +239,7 @@ export default function Landing() {
           <div className="hidden gap-6 text-ui font-medium md:flex">
             <a href="#ne" className="text-muted-foreground hover:text-foreground">Ne yapıyor</a>
             <a href="#akis" className="text-muted-foreground hover:text-foreground">İstek akışı</a>
-            <a href="#stack" className="text-muted-foreground hover:text-foreground">Teknolojiler</a>
-            <a href="#ogrenim" className="text-muted-foreground hover:text-foreground">Öğrenim</a>
+            <a href="#entegrasyon" className="text-muted-foreground hover:text-foreground">Entegrasyonlar</a>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/login" className="text-ui font-semibold text-foreground hover:underline hover:underline-offset-4">
@@ -256,34 +313,54 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* ---------- TEKNOLOJİ ŞERİDİ ---------- */}
-      <div className="mx-auto max-w-[1280px] px-6">
-        <div className="border-b border-border py-8">
-          <span className="tick-accent label mb-6 block text-muted-foreground">Üzerinde çalıştığı yığın</span>
+      {/* ---------- ÜZERİNDE ÇALIŞTIĞI YIĞIN (logolar + detay tablosu birlikte) ---------- */}
+      <section className="border-b border-border py-16 md:py-20">
+        <div className="mx-auto max-w-[1280px] px-6">
+          <span className="tick-accent label mb-2 block text-muted-foreground">Üzerinde çalıştığı yığın</span>
+          <p className="mb-8 max-w-[62ch] text-body text-muted-foreground">
+            Her seçimin bir gerekçesi var; &quot;popülerdi&quot; gerekçe sayılmadı. Bir işarete tıklayınca
+            o teknolojinin entegrasyonuna inersin.
+          </p>
+
           <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-3 lg:grid-cols-6">
             {TECH.map((x) => (
-              <div key={x.name} className="group flex flex-col items-center gap-2.5 bg-card px-4 py-6 text-center hover:bg-background">
+              <button
+                key={x.slug}
+                type="button"
+                onClick={() => openTech(x.slug)}
+                className="group flex flex-col items-center gap-2.5 bg-card px-4 py-6 text-center hover:bg-background"
+              >
                 <span className="text-foreground group-hover:text-voltage [&>svg]:h-[30px] [&>svg]:w-[30px]">{x.icon}</span>
                 <span className="text-ui font-semibold text-foreground">{x.name}</span>
                 <span className="font-mono text-micro tracking-wide text-muted-foreground">{x.role}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-4 grid gap-4 lg:grid-cols-3">
+            {STACK_COLUMNS.map((col) => (
+              <div key={col.h} className="rounded-lg bg-background p-6">
+                <h3 className="label mb-4 border-b border-input pb-3 text-muted-foreground">{col.h}</h3>
+                <dl>
+                  {col.rows.map(([k, v]) => (
+                    <div key={k} className="flex items-baseline justify-between gap-3 border-b border-border py-2 last:border-b-0">
+                      <dt className="text-ui text-foreground">{k}</dt>
+                      <dd className="whitespace-nowrap font-mono text-micro text-muted-foreground">{v}</dd>
+                    </div>
+                  ))}
+                </dl>
               </div>
             ))}
           </div>
-          <p className="mt-4 font-mono text-micro text-muted-foreground">
-            İşaretler stilize edilmiştir — resmi marka varlıkları değildir.
-          </p>
         </div>
-      </div>
+      </section>
 
       {/* ---------- 01 NE YAPIYOR ---------- */}
       <section id="ne" className="bg-background py-20 md:py-24">
         <div className="mx-auto max-w-[1280px] px-6">
           <div className="mb-8 max-w-[62ch]">
             <Eyebrow>01 — Kapsam</Eyebrow>
-            <h2 className="mt-2 text-display font-bold text-foreground">Dört iş yapıyor</h2>
-            <p className="mt-4 text-body text-muted-foreground">
-              Hepsi kendim kullandığım için var. Özellik listesi şişirmek için değil.
-            </p>
+            <h2 className="mt-2 text-display font-bold text-foreground">Defterin tuttukları</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {CAPS.map((c) => (
@@ -307,10 +384,6 @@ export default function Landing() {
           <div className="mb-8 max-w-[62ch]">
             <Eyebrow>02 — Mimari</Eyebrow>
             <h2 className="mt-2 text-display font-bold text-foreground">Bir fiyat isteği nereden geçiyor</h2>
-            <p className="mt-4 text-body text-muted-foreground">
-              Akan çizgiler gerçek yolu gösteriyor. Kritik nokta Redis: cache doluysa dış API hiç çağrılmaz —
-              ücretsiz limitler böyle korunuyor.
-            </p>
           </div>
 
           <div className="overflow-x-auto rounded-lg bg-background p-6">
@@ -386,61 +459,62 @@ services:
         </div>
       </section>
 
-      {/* ---------- 03 STACK ---------- */}
-      <section id="stack" className="bg-background py-20 md:py-24">
+      {/* ---------- 03 ENTEGRASYONLAR — solda liste, sağda içerik ---------- */}
+      <section id="entegrasyon" className="scroll-mt-4 bg-background py-20 md:py-24">
         <div className="mx-auto max-w-[1280px] px-6">
           <div className="mb-8 max-w-[62ch]">
-            <Eyebrow>03 — Yığın</Eyebrow>
-            <h2 className="mt-2 text-display font-bold text-foreground">Teknolojiler</h2>
+            <Eyebrow>03 — Gerekçe</Eyebrow>
+            <h2 className="mt-2 text-display font-bold text-foreground">Her teknoloji neden burada</h2>
             <p className="mt-4 text-body text-muted-foreground">
-              Her seçimin bir gerekçesi var; &quot;popülerdi&quot; gerekçe sayılmadı.
+              Soldan bir teknoloji seç; nasıl entegre edildiğini, hangi kararların alındığını ve
+              hangi tuzağa düşüldüğünü anlatıyorum. Sırayla dolduruluyor.
             </p>
           </div>
-          <div className="grid gap-4 lg:grid-cols-3">
-            {STACK.map((col) => (
-              <div key={col.h} className="rounded-lg bg-card p-6">
-                <h3 className="label mb-4 border-b border-input pb-3 text-muted-foreground">{col.h}</h3>
-                <dl>
-                  {col.rows.map(([k, v]) => (
-                    <div key={k} className="flex items-baseline justify-between gap-3 border-b border-border py-2 last:border-b-0">
-                      <dt className="text-ui text-foreground">{k}</dt>
-                      <dd className="whitespace-nowrap font-mono text-micro text-muted-foreground">{v}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
-            ))}
+
+          <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
+            {/* sol: dikey teknoloji listesi */}
+            <nav className="h-max overflow-hidden rounded-lg border border-border bg-card lg:sticky lg:top-4">
+              {TECH.map((x) => {
+                const on = x.slug === active
+                return (
+                  <button
+                    key={x.slug}
+                    type="button"
+                    onClick={() => setActive(x.slug)}
+                    aria-current={on ? 'true' : undefined}
+                    className={`flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left last:border-b-0 ${
+                      on ? 'nav-active' : 'hover:bg-background'
+                    }`}
+                  >
+                    <span className={`${on ? 'text-voltage' : 'text-muted-foreground'} [&>svg]:h-5 [&>svg]:w-5`}>
+                      {x.icon}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className={`block truncate text-ui ${on ? 'font-semibold text-foreground' : 'text-foreground'}`}>
+                        {x.name}
+                      </span>
+                      <span className="block truncate font-mono text-micro text-muted-foreground">{x.role}</span>
+                    </span>
+                    {!x.detail && (
+                      <span className="shrink-0 font-mono text-micro text-muted-foreground">·</span>
+                    )}
+                  </button>
+                )
+              })}
+            </nav>
+
+            {/* sağ: seçilen teknolojinin içeriği */}
+            <div className="min-w-0">
+              <TechDetail tech={activeTech} />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ---------- 04 ÖĞRENİM ---------- */}
-      <section id="ogrenim" className="border-t border-border py-20 md:py-24">
+      {/* ---------- PANELE GEÇ ---------- */}
+      <section id="panel" className="border-t border-border py-20 md:py-24">
         <div className="mx-auto max-w-[1280px] px-6">
-          <div className="mb-8 max-w-[62ch]">
-            <Eyebrow>04 — Sebep</Eyebrow>
-            <h2 className="mt-2 text-display font-bold text-foreground">Öğrenim hedefleri</h2>
-            <p className="mt-4 text-body text-muted-foreground">
-              Projenin asıl sebebi. Her hedefin altında onu öğrendiğimin kanıtı — okuduğum doküman değil, koda giren karar.
-            </p>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {LEARN.map((l) => (
-              <div key={l.t} className="rounded-lg border border-border bg-card p-6">
-                <span className={`inline-block rounded-sm border px-2 py-0.5 font-mono text-micro ${STATUS_CLS[l.s]}`}>{l.s}</span>
-                <h3 className="mb-1 mt-4 text-figure font-semibold text-foreground">{l.t}</h3>
-                <p className="text-ui text-muted-foreground">{l.d}</p>
-                <p className="mt-4 border-t border-border pt-3 font-mono text-micro text-muted-foreground">→ {l.ev}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- 05 PANELE GEÇ ---------- */}
-      <section id="panel" className="bg-background py-20 md:py-24">
-        <div className="mx-auto max-w-[1280px] px-6">
-          <div className="edge-accent grid items-center gap-8 rounded-r-lg bg-card p-8 lg:grid-cols-[1fr_auto]">
+          <div className="edge-accent grid items-center gap-8 rounded-r-lg bg-background p-8 lg:grid-cols-[1fr_auto]">
             <div>
               <Eyebrow>Panel</Eyebrow>
               <h3 className="mb-2 mt-3 text-head font-bold text-foreground">Defterini aç</h3>
@@ -462,18 +536,18 @@ services:
         </div>
       </section>
 
-      {/* ---------- 06 ÖDÜNLER ---------- */}
-      <section className="border-t border-border py-20 md:py-24">
+      {/* ---------- 04 ÖDÜNLER ---------- */}
+      <section className="bg-background py-20 md:py-24">
         <div className="mx-auto max-w-[1280px] px-6">
           <div className="mb-8 max-w-[62ch]">
-            <Eyebrow>05 — Dürüstlük</Eyebrow>
+            <Eyebrow>04 — Dürüstlük</Eyebrow>
             <h2 className="mt-2 text-display font-bold text-foreground">Bilinçli ödünler</h2>
             <p className="mt-4 text-body text-muted-foreground">
               Bir öğrenme projesinde her yer üretim standardında olmaz. Nerede bilerek aşağı indiğimi yazmak,
               yanlışlıkla indiğim yerlerden ayırıyor.
             </p>
           </div>
-          <div className="rounded-lg bg-background p-8">
+          <div className="rounded-lg bg-card p-8">
             {TRADEOFFS.map(([h, d]) => (
               <div key={h} className="border-b border-input py-4 first:pt-0 last:border-b-0 last:pb-0">
                 <h3 className="mb-1 text-ui font-semibold text-foreground">{h}</h3>
