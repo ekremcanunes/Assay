@@ -98,3 +98,17 @@ For tasks with multiple steps, create a short plan:
 - **Infinite loop:** Don't keep trying to fix the same error with the same approach. After two attempts, suggest a different strategy or ask.
 
 ---
+
+## 8. Explain the Terms You Use
+
+> Every industry term gets a one-line definition the first time it appears in a conversation.
+
+When explaining anything, if you use a concept or term that has an established meaning in the professional/enterprise world (e.g. *immutable deploy*, *OIDC federation*, *quality gate*, *SAST*), briefly state what it means right there — one sentence, in context. The user is learning the domain alongside the work; a term dropped without a definition is a gap, not a shortcut.
+
+- Definitions must be **real** — the term's accepted meaning in the industry, not an invented or improvised one. If unsure of the exact meaning, say so rather than guess.
+- Once a term has been defined in a conversation, don't repeat the definition.
+- Format is free: parenthetical, em-dash aside, or a short sentence. Don't turn every message into a glossary — define, then move on.
+
+Example: "the deploy is **immutable** — the image built and scanned in CI is deployed exactly as-is, byte for byte; nothing is rebuilt or patched on the server."
+
+---
