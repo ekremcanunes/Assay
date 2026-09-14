@@ -76,7 +76,7 @@ export default function Layout() {
   const initials = (email.slice(0, 2) || '··').toUpperCase()
 
   const generalNav = [
-    { to: '/', label: t('nav.overview'), short: t('nav.overviewShort'), icon: LayoutDashboard, end: true },
+    { to: '/overview', label: t('nav.overview'), short: t('nav.overviewShort'), icon: LayoutDashboard },
     { to: '/assets', label: t('nav.assets'), short: t('nav.assetsShort'), icon: Wallet },
     { to: '/analytics', label: t('nav.analytics'), short: t('nav.analyticsShort'), icon: BarChart2 },
   ]

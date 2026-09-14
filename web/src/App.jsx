@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './contexts/AuthContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './contexts/AuthContext'
 import { LanguageProvider } from './contexts/LanguageContext'
@@ -13,6 +14,19 @@ import Analytics from './pages/Analytics'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Register from './pages/Register'
+
+
+function RootGate() {
+  const { session, loading } = useAuth()
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background font-mono text-micro text-muted-foreground">
+        Loading...
+      </div>
+    )
+  }
+  return session ? <Navigate to="/overview" replace /> : <Landing />
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,6 +45,7 @@ export default function App() {
         <AuthProvider>
           <BrowserRouter>
           <Routes>
+            <Route path="/" element={<RootGate />} />
             <Route path="/landing" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -41,7 +56,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             >
-              <Route path="/" element={<Overview />} />
+              <Route path="/overview" element={<Overview />} />
               <Route path="/market" element={<Market />} />
               <Route path="/gold-fx" element={<GoldFx />} />
               <Route path="/assets" element={<Assets />} />
