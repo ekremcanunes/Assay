@@ -1,5 +1,3 @@
-# Log rotasyonu: container başına en fazla 3 x 10MB tutulur, eskisi silinir.
-# Rotasyon yoksa log dosyası sınırsız büyür (bkz. docs/10-standards/LOGGING.md).
 x-logging: &default-logging
   driver: "json-file"
   options:
@@ -70,6 +68,8 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       # Gerçek prod (AWS) ortamında Warning olarak set edilir; burada lokal teşhis için Information.
       - Serilog__MinimumLevel__Default=${LOG_LEVEL:-Information}
+      - Serilog__MinimumLevel__Override__Microsoft=${LOG_LEVEL_FRAMEWORK:-Warning}
+      - Serilog__MinimumLevel__Override__System=${LOG_LEVEL_FRAMEWORK:-Warning}
       - TwelveData__ApiKey=${TWELVEDATA_API_KEY}
       - REDIS_CONNECTION=redis:6379
       - Kratos__BaseUrl=http://kratos:4433
@@ -85,8 +85,10 @@ services:
     environment:
       - ASPNETCORE_URLS=http://0.0.0.0:5001
       - ASPNETCORE_ENVIRONMENT=Production
-      # Gerçek prod (AWS) ortamında Warning olarak set edilir; burada lokal teşhis için Information.
       - Serilog__MinimumLevel__Default=${LOG_LEVEL:-Information}
+      - Serilog__MinimumLevel__Override__Microsoft=${LOG_LEVEL_FRAMEWORK:-Warning}
+      - Serilog__MinimumLevel__Override__System=${LOG_LEVEL_FRAMEWORK:-Warning}
+      - Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore=${LOG_LEVEL_EFCORE:-Warning}
       - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
       - ServiceUrls__MarketService=http://market-service:5002
       - Kratos__BaseUrl=http://kratos:4433
