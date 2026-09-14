@@ -274,7 +274,7 @@ wsl -d Ubuntu -- bash -lc 'cat > /tmp/trust-policy.json <<EOF
         "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
       },
       "StringLike": {
-        "token.actions.githubusercontent.com:sub": "repo:ekremcanunes/investment-tracker:ref:refs/heads/main-prod"
+        "token.actions.githubusercontent.com:sub": "repo:ekremcanunes/Assay:ref:refs/heads/main-prod"
       }
     }
   }]
@@ -475,7 +475,7 @@ done'
 
 Beklenen: her repository'de bir etiket, değeri merge commit'inin SHA'sı.
 
-**Hata durumunda:** `Not authorized to perform sts:AssumeRoleWithWebIdentity` → güven politikasındaki `sub` koşulu dal adıyla uyuşmuyor. `repo:ekremcanunes/investment-tracker:ref:refs/heads/main-prod` satırını kontrol et.
+**Hata durumunda:** `Not authorized to perform sts:AssumeRoleWithWebIdentity` → güven politikasındaki `sub` koşulu dal adıyla uyuşmuyor. `repo:ekremcanunes/Assay:ref:refs/heads/main-prod` satırını kontrol et.
 
 ---
 
