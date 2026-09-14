@@ -28,6 +28,10 @@ docker images                      # indirilen imajlar
 docker inspect <container-adı>     # container detayları (network, IP, env)
 docker network ls                  # network listesi
 docker network inspect investment-tracker_default   # hangi container'lar bağlı
+
+# Not: network/volume öneki klasör adından değil, docker-compose.yml içindeki
+# "name: investment-tracker" satırından gelir. Klasör Assay olarak yeniden
+# adlandırıldı ama önek bilerek sabit bırakıldı — mevcut volume'lar orphan kalmasın.
 docker volume ls                   # volume'lar (kratos_postgres_data burada)
 docker system df                   # docker'ın kapladığı disk alanı
 docker logs <container-adı>        # compose dışı container logları

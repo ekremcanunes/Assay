@@ -1,3 +1,8 @@
+# Proje adi klasor adindan turemesin: klasor yeniden adlandirilsa da
+# network ve volume adlari (investment-tracker_default, ..._kratos_postgres_data)
+# degismez, mevcut veri orphan kalmaz.
+name: investment-tracker
+
 x-logging: &default-logging
   driver: "json-file"
   options:
