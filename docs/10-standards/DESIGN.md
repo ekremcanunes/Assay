@@ -156,6 +156,7 @@ CSS [`index.css`](../../web/src/index.css)'te:
 - **`.label`**, **`.tabular`** — §3
 - **`.modal-in`** — modal giriş animasyonu, `prefers-reduced-motion`'a saygılı
 - **`@keyframes flow`** — mimari diyagramındaki akan hat
+- **[`AuthVisual`](../../web/src/components/AuthVisual.jsx)** — auth sağ alanı: mouse'a bükülen ızgara + soyut eğri (rakamsız). Yalnızca `lg`+ ekranda lazy yüklenir.
 
 ### 5.5 Sayfa iskeleti
 

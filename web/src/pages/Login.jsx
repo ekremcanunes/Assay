@@ -7,6 +7,7 @@ import { authLabelCls, authInputCls, authSubmitCls } from '../lib/authStyles'
 import { APP_NAME } from '../lib/app'
 import assayMark from '../assets/assay-mark.svg'
 import { Eye, EyeOff } from 'lucide-react'
+import AuthVisual from '../components/AuthVisual'
 
 export default function Login() {
   const [flow, setFlow] = useState(null)
@@ -142,6 +143,7 @@ export default function Login() {
           </Link>
         </p>
       </div>
+      <AuthVisual />
     </div>
   )
 }
