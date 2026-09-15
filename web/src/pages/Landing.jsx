@@ -343,19 +343,23 @@ export default function Landing() {
             o teknolojinin entegrasyonuna inersin.
           </p>
 
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-3 lg:grid-cols-6">
-            {TECH.map((x) => (
-              <button
-                key={x.slug}
-                type="button"
-                onClick={() => openTech(x.slug)}
-                className="group flex flex-col items-center gap-2.5 bg-card px-4 py-6 text-center hover:bg-background"
-              >
-                <span className="text-foreground group-hover:text-voltage [&>svg]:h-[30px] [&>svg]:w-[30px]">{x.icon}</span>
-                <span className="text-ui font-semibold text-foreground">{x.name}</span>
-                <span className="font-mono text-micro tracking-wide text-muted-foreground">{x.role}</span>
-              </button>
-            ))}
+          {/* Çizgiler hücre kenarlığından: yarım kalan son satırın boş hücreleri gri değil beyaz görünür.
+              -mr-px/-mb-px en sağ ve en alt kenarlığı dış çerçevenin altına iter, çift çizgi oluşmaz. */}
+          <div className="overflow-hidden rounded-lg border border-border bg-card">
+            <div className="-mb-px -mr-px grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+              {TECH.map((x) => (
+                <button
+                  key={x.slug}
+                  type="button"
+                  onClick={() => openTech(x.slug)}
+                  className="group flex flex-col items-center gap-2.5 border-b border-r border-border bg-card px-4 py-6 text-center hover:bg-background"
+                >
+                  <span className="text-foreground group-hover:text-voltage [&>svg]:h-[30px] [&>svg]:w-[30px]">{x.icon}</span>
+                  <span className="text-ui font-semibold text-foreground">{x.name}</span>
+                  <span className="font-mono text-micro tracking-wide text-muted-foreground">{x.role}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="mt-4 grid gap-4 lg:grid-cols-3">
