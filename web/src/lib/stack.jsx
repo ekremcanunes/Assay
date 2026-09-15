@@ -69,6 +69,8 @@ export const TECH = [
         <rect x="17" y="17" width="5" height="5" /><rect x="10.5" y="10.5" width="5" height="5" />
         <rect x="17" y="10.5" width="5" height="5" />
         <path d="M22 19.5 c4 0 6-1.5 6-1.5 0 4.5-3.5 8.5-9 8.5 -7 0-11-4.5-11-4.5" /></svg>),
+    // Diyagramlar ağır: içerik yalnızca Docker seçilince ayrı chunk olarak iner.
+    loadDetail: () => import('./dockerDetail'),
   },
   {
     slug: 'nginx', name: 'nginx', role: 'KENAR',

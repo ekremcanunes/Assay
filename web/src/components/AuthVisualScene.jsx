@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-import { useLanguage } from '../contexts/LanguageContext'
 import { APP_NAME } from '../lib/app'
 
 const CELL = 34 // .paper ızgarasıyla aynı
@@ -49,7 +48,6 @@ const MA_PATH = CANDLES.slice(MA - 1)
   .join(' ')
 
 export default function AuthVisualScene() {
-  const { t } = useLanguage()
   const wrapRef = useRef(null)
   const canvasRef = useRef(null)
   const cursorRef = useRef(null)
@@ -211,10 +209,7 @@ export default function AuthVisualScene() {
         className="absolute inset-y-0 left-0 w-px bg-foreground/20 opacity-0 transition-opacity duration-150"
       />
       <div className="absolute inset-0 flex flex-col justify-center px-10">
-        <div className="mb-4 flex items-baseline gap-2">
-          <span className="label text-foreground">{APP_NAME}</span>
-          <span className="text-micro text-muted-foreground">{t('auth.illustrative')}</span>
-        </div>
+        <span className="label mb-4 text-foreground">{APP_NAME}</span>
         <svg ref={svgRef} viewBox={`0 0 ${VB_W} ${VB_H}`} className="block h-auto w-full">
           {CANDLES.map((k, i) => (
             <g
