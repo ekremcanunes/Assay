@@ -197,6 +197,7 @@ Kratos   ──200 { identity: { id: "u-123" } }──▶ portfolio-service`,
     icon: (
       <svg {...s}><circle cx="16" cy="16" r="11" /><path d="M16 9 v7 l5 3" />
         <path d="M25 7 l2.5-2.5 M27.5 4.5 v4 M27.5 4.5 h-4" opacity=".55" /></svg>),
+    loadDetail: () => import('./ciDetail'),
   },
   {
     slug: 'tanstack-query', name: 'TanStack Query', role: 'SUNUCU VERİSİ',
