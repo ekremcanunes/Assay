@@ -140,6 +140,21 @@ sudo service docker status
 sudo service redis-server stop    # native redis, container'daki ile çakışırsa
 ```
 
+## AWS EC2 (Prod) — WSL2 değil, prod sunucusunda çalıştırılır
+
+Prod EC2'ye (`assay-prod`, eu-central-1) bağlanmak: EC2 Console → Instances → `assay-prod` → **Connect** → **EC2 Instance Connect** (tarayıcıdan, `.pem` gerekmez) ya da `ssh -i assay-prod-aws-key.pem ubuntu@<Public-IP>`.
+
+```bash
+# Docker kurulu mu, versiyonu ne?
+docker --version && docker compose version
+
+# ECR'a login (image push/pull öncesi gerekli)
+aws ecr get-login-password --region eu-central-1 \
+  | docker login --username AWS --password-stdin 495890796058.dkr.ecr.eu-central-1.amazonaws.com
+```
+
+> Docker kurulum adımları (GPG key, resmi repo ekleme, `docker-ce` paketleri): `Desktop/aws/07-cicd/EC2-DOCKER-KURULUMU.md` — genel/tekrar kullanılabilir olduğu için oraya, prod pipeline planına (`docs/superpowers/plans/2026-09-08-prod-pipeline.md` Task 8) da işlendi.
+
 ## GitHub Actions Runner (WSL2)
 
 ```bash
