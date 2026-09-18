@@ -20,6 +20,7 @@
 - **İmajlar git SHA ile etiketlenir**, `latest` kullanılmaz.
 - **Prod compose'da yalnızca `web` yayınlanır**; diğer servisler `expose` ile compose ağında kalır.
 - **Commit'ler kullanıcı onayıyla atılır** — plan komutu verir, çalıştırma kararı kullanıcınındır.
+- **Prod sırları AWS Secrets Manager'da tutulur** (2026-09-19 kararı) — `KRATOS_DSN`, portfolio-service DB connection string, Twelve Data API key. GitHub Secrets DEĞİL. Deploy script'i (Task 9, `deploy/scripts/deploy.sh`) EC2 üzerinde bu sırları çekip `.env`/`appsettings.Development.json` dosyalarını runtime'da üretecek — repo'da hiç görünmeyecekler. EC2'nin bu sırlara erişimi IAM instance profile (`EC2ECRPullRole`'a benzer, ayrı bir role veya aynı role'e `secretsmanager:GetSecretValue` eklenerek) üzerinden olacak, access key değil. Maliyet ihmal edilebilir (~$0.40/sır/ay + neredeyse sıfır API çağrı ücreti, deploy/restart nadiren olduğu için). Öğrenme amaçlı seçildi; ileride GitHub Secrets'a geçiş istenirse kolay (sadece deploy script'i ve secret kaynağı değişir).
 
 **Ortam notları:**
 - `docker` Git Bash'te yok, WSL2'de: `wsl -d Ubuntu -- bash -lc '...'`

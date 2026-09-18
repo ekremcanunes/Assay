@@ -5,9 +5,9 @@ name: "CodeQL Advanced"
 # --- Ne zaman çalışır ---
 on:
   push:
-    branches: [ "test" ]        # test branch'ine her push'ta
+    branches: [ "test", "main-prod" ]        # test ve main-prod branch'ine her push'ta
   pull_request:
-    branches: [ "test" ]        # test'e açılan PR'larda
+    branches: [ "test", "main-prod" ]        # test veya main-prod'a açılan PR'larda
   schedule:
     # Her Çarşamba 22:27 UTC. Kod değişmese bile CodeQL kuralları güncellenince
     # yeni açık yakalanabilsin diye haftalık tam tarama. Dakika değeri kurulumda
