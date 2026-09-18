@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, use, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { APP_NAME } from '../lib/app'
 import { TECH, STACK_COLUMNS, DEFAULT_TECH } from '../lib/stack'
@@ -130,8 +130,28 @@ function MiniTable({ head, rows }) {
   )
 }
 
+// Lazy içerik promise'i teknoloji başına bir kez oluşur; use() aynı promise'i görmeli.
+const detailPromises = new Map()
+function loadDetail(tech) {
+  if (!detailPromises.has(tech.slug)) {
+    detailPromises.set(tech.slug, tech.loadDetail().then((m) => m.default))
+  }
+  return detailPromises.get(tech.slug)
+}
+
 function DetailBlock({ b }) {
   if (b.kind === 'code') return <CodeBlock code={b.code} title={b.title} note={b.note} />
+
+  if (b.kind === 'diagram') {
+    return (
+      <figure>
+        <h4 className="mb-1.5 text-figure font-semibold text-foreground">{b.title}</h4>
+        {b.body && <p className="mb-4 text-ui text-muted-foreground">{b.body}</p>}
+        <div className="overflow-x-auto rounded-lg border border-border bg-background p-5">{b.figure}</div>
+        {b.caption && <figcaption className="mt-2 font-mono text-micro text-muted-foreground">{b.caption}</figcaption>}
+      </figure>
+    )
+  }
 
   if (b.kind === 'warn') {
     return (
@@ -154,7 +174,8 @@ function DetailBlock({ b }) {
 }
 
 function TechDetail({ tech }) {
-  if (!tech.detail) {
+  const detail = tech.detail ?? (tech.loadDetail ? use(loadDetail(tech)) : null)
+  if (!detail) {
     return (
       <div className="flex min-h-[320px] flex-col items-center justify-center rounded-lg border border-dashed border-input bg-background p-10 text-center">
         <span className="text-muted-foreground [&>svg]:h-10 [&>svg]:w-10">{tech.icon}</span>
@@ -169,7 +190,7 @@ function TechDetail({ tech }) {
     )
   }
 
-  const { tagline, why, blocks, files, doc } = tech.detail
+  const { tagline, why, blocks, files, doc } = detail
 
   return (
     <article className="rounded-lg bg-card p-7 md:p-9">
@@ -322,19 +343,23 @@ export default function Landing() {
             o teknolojinin entegrasyonuna inersin.
           </p>
 
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-3 lg:grid-cols-6">
-            {TECH.map((x) => (
-              <button
-                key={x.slug}
-                type="button"
-                onClick={() => openTech(x.slug)}
-                className="group flex flex-col items-center gap-2.5 bg-card px-4 py-6 text-center hover:bg-background"
-              >
-                <span className="text-foreground group-hover:text-voltage [&>svg]:h-[30px] [&>svg]:w-[30px]">{x.icon}</span>
-                <span className="text-ui font-semibold text-foreground">{x.name}</span>
-                <span className="font-mono text-micro tracking-wide text-muted-foreground">{x.role}</span>
-              </button>
-            ))}
+          {/* Çizgiler hücre kenarlığından: yarım kalan son satırın boş hücreleri gri değil beyaz görünür.
+              -mr-px/-mb-px en sağ ve en alt kenarlığı dış çerçevenin altına iter, çift çizgi oluşmaz. */}
+          <div className="overflow-hidden rounded-lg border border-border bg-card">
+            <div className="-mb-px -mr-px grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+              {TECH.map((x) => (
+                <button
+                  key={x.slug}
+                  type="button"
+                  onClick={() => openTech(x.slug)}
+                  className="group flex flex-col items-center gap-2.5 border-b border-r border-border bg-card px-4 py-6 text-center hover:bg-background"
+                >
+                  <span className="text-foreground group-hover:text-voltage [&>svg]:h-[30px] [&>svg]:w-[30px]">{x.icon}</span>
+                  <span className="text-ui font-semibold text-foreground">{x.name}</span>
+                  <span className="font-mono text-micro tracking-wide text-muted-foreground">{x.role}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="mt-4 grid gap-4 lg:grid-cols-3">
@@ -495,7 +520,7 @@ services:
                       </span>
                       <span className="block truncate font-mono text-micro text-muted-foreground">{x.role}</span>
                     </span>
-                    {!x.detail && (
+                    {!x.detail && !x.loadDetail && (
                       <span className="shrink-0 font-mono text-micro text-muted-foreground">·</span>
                     )}
                   </button>
@@ -505,7 +530,15 @@ services:
 
             {/* sağ: seçilen teknolojinin içeriği */}
             <div className="min-w-0">
-              <TechDetail tech={activeTech} />
+              <Suspense
+                fallback={
+                  <div className="flex min-h-[320px] items-center justify-center rounded-lg bg-card font-mono text-micro text-muted-foreground">
+                    yükleniyor…
+                  </div>
+                }
+              >
+                <TechDetail tech={activeTech} />
+              </Suspense>
             </div>
           </div>
         </div>

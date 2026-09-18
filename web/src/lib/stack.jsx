@@ -38,6 +38,15 @@ export const TECH = [
         <path d="M12.5 22 c2.5-5 5-6.5 7.5-4.5 1.7 1.3 2 3 4.5 3 2.5 0 3.5-2 3.5-2 -2.5 5-5 6.5-7.5 4.5 -1.7-1.3-2-3-4.5-3 -2.5 0-3.5 2-3.5 2 z" fill="currentColor" stroke="none" /></svg>),
   },
   {
+    slug: 'auth-visual', name: 'Giriş görseli', role: 'CANVAS + SVG',
+    icon: (
+      <svg {...s}><path d="M9 5 v6 M9 22 v5 M16 3 v4 M16 18 v6 M23 8 v4 M23 21 v5" />
+        <rect x="6.5" y="11" width="5" height="11" />
+        <rect x="13.5" y="7" width="5" height="11" fill="currentColor" stroke="none" />
+        <rect x="20.5" y="12" width="5" height="9" /></svg>),
+    loadDetail: () => import('./authVisualDetail'),
+  },
+  {
     slug: 'dotnet', name: '.NET 9', role: 'SERVİSLER',
     icon: (
       <svg {...s}><path d="M6 8 h20 v16 a2 2 0 0 1-2 2 H8 a2 2 0 0 1-2-2 Z" strokeLinejoin="round" />
@@ -69,6 +78,8 @@ export const TECH = [
         <rect x="17" y="17" width="5" height="5" /><rect x="10.5" y="10.5" width="5" height="5" />
         <rect x="17" y="10.5" width="5" height="5" />
         <path d="M22 19.5 c4 0 6-1.5 6-1.5 0 4.5-3.5 8.5-9 8.5 -7 0-11-4.5-11-4.5" /></svg>),
+    // Diyagramlar ağır: içerik yalnızca Docker seçilince ayrı chunk olarak iner.
+    loadDetail: () => import('./dockerDetail'),
   },
   {
     slug: 'nginx', name: 'nginx', role: 'KENAR',
@@ -186,6 +197,7 @@ Kratos   ──200 { identity: { id: "u-123" } }──▶ portfolio-service`,
     icon: (
       <svg {...s}><circle cx="16" cy="16" r="11" /><path d="M16 9 v7 l5 3" />
         <path d="M25 7 l2.5-2.5 M27.5 4.5 v4 M27.5 4.5 h-4" opacity=".55" /></svg>),
+    loadDetail: () => import('./ciDetail'),
   },
   {
     slug: 'tanstack-query', name: 'TanStack Query', role: 'SUNUCU VERİSİ',
