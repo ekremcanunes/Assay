@@ -1,0 +1,16 @@
+# Dev ortami icin port yayinlama. Compose bu dosyayi OTOMATIK okur.
+# Prod sunucusuna kopyalanmaz -> orada portlar kapali kalir.
+services:
+  market-service:
+    ports:
+      - "5002:5002"
+  portfolio-service:
+    ports:
+      - "5001:5001"
+  redis:
+    ports:
+      - "6379:6379"
+  kratos:
+    ports:
+      - "4433:4433"
+      - "4434:4434"
