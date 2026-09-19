@@ -193,7 +193,7 @@ function TechDetail({ tech }) {
   const { tagline, why, blocks, files, doc } = detail
 
   return (
-    <article className="rounded-lg bg-card p-7 md:p-9">
+    <article className="rounded-lg bg-card p-5 md:p-9">
       <header className="border-b border-border pb-6">
         <div className="flex items-center gap-3">
           <span className="text-voltage [&>svg]:h-8 [&>svg]:w-8">{tech.icon}</span>
@@ -237,9 +237,16 @@ function TechDetail({ tech }) {
   )
 }
 
+const NAV_LINKS = [
+  ['#ne', 'Ne yapıyor'],
+  ['#akis', 'İstek akışı'],
+  ['#entegrasyon', 'Entegrasyonlar'],
+]
+
 export default function Landing() {
   const { lines, ratio } = useCacheLog()
   const [active, setActive] = useState(DEFAULT_TECH)
+  const [menuOpen, setMenuOpen] = useState(false)
   const activeTech = TECH.find((t) => t.slug === active) ?? TECH[0]
 
   // Üstteki şeritten bir logoya tıklanınca entegrasyon bölümüne in ve onu seç
@@ -251,35 +258,71 @@ export default function Landing() {
   return (
     <div className="min-h-dvh bg-card text-muted-foreground">
       {/* ---------- NAV ---------- */}
-      <div className="mx-auto max-w-[1280px] px-6">
+      <div className="mx-auto max-w-[1280px] px-5 md:px-6">
         <nav className="flex h-16 items-center justify-between gap-4 border-b border-border">
           <div className="flex items-center gap-2.5">
             <Mark className="h-[26px] w-[26px]" />
             <b className="text-body font-bold tracking-tight text-foreground">{APP_NAME}</b>
           </div>
           <div className="hidden gap-6 text-ui font-medium md:flex">
-            <a href="#ne" className="text-muted-foreground hover:text-foreground">Ne yapıyor</a>
-            <a href="#akis" className="text-muted-foreground hover:text-foreground">İstek akışı</a>
-            <a href="#entegrasyon" className="text-muted-foreground hover:text-foreground">Entegrasyonlar</a>
+            {NAV_LINKS.map(([href, label]) => (
+              <a key={href} href={href} className="text-muted-foreground hover:text-foreground">{label}</a>
+            ))}
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/login" className="text-ui font-semibold text-foreground hover:underline hover:underline-offset-4">
+            <Link to="/login" className="hidden text-ui font-semibold text-foreground hover:underline hover:underline-offset-4 sm:block">
               Giriş yap
             </Link>
             <Link to="/register" className="rounded-md bg-foreground px-4 py-2.5 text-ui font-semibold text-background hover:opacity-90">
               Kayıt ol
             </Link>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label={menuOpen ? 'Menüyü kapat' : 'Menüyü aç'}
+              aria-expanded={menuOpen}
+              className="-mr-1.5 flex h-10 w-10 items-center justify-center text-foreground md:hidden"
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                {menuOpen
+                  ? <path d="M5 5l14 14M19 5L5 19" />
+                  : <><path d="M3 7h18" /><path d="M3 12h18" /><path d="M3 17h18" /></>}
+              </svg>
+            </button>
           </div>
         </nav>
+
+        {/* mobil menü — nav linkleri md altında buraya iner */}
+        {menuOpen && (
+          <div className="border-b border-border py-2 md:hidden">
+            {NAV_LINKS.map(([href, label]) => (
+              <a
+                key={href}
+                href={href}
+                onClick={() => setMenuOpen(false)}
+                className="block border-b border-border py-3.5 text-body font-medium text-foreground last:border-b-0"
+              >
+                {label}
+              </a>
+            ))}
+            <Link
+              to="/login"
+              onClick={() => setMenuOpen(false)}
+              className="block border-t border-border py-3.5 text-body font-medium text-foreground sm:hidden"
+            >
+              Giriş yap
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* ---------- HERO ---------- */}
       <header className="paper border-b border-border">
-        <div className="mx-auto max-w-[1280px] px-6 py-20 md:py-24">
-          <div className="grid gap-12 lg:grid-cols-[7fr_5fr] lg:items-start">
+        <div className="mx-auto max-w-[1280px] px-5 py-16 md:px-6 md:py-24">
+          <div className="grid gap-10 lg:grid-cols-[7fr_5fr] lg:items-start lg:gap-12">
             <div>
               <span className="mb-6 block h-[3px] w-[52px] bg-voltage" />
-              <h1 className="max-w-[15ch] text-title font-bold text-foreground md:text-display lg:text-hero">
+              <h1 className="max-w-[15ch] text-display font-bold leading-[1.08] text-foreground lg:text-hero">
                 Kendi portföyümü tuttuğum, mimariyi öğrendiğim uygulama.
               </h1>
               <p className="mt-6 max-w-[52ch] text-body text-muted-foreground">
@@ -287,18 +330,18 @@ export default function Landing() {
                 <b className="font-semibold text-foreground">Ama asıl amaç bu değil:</b> mikroservis, Docker,
                 kimlik doğrulama ve CI/CD&apos;yi oyuncak örnek üzerinde değil, her gün kullandığım bir uygulamada denemek.
               </p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Link to="/register" className="rounded-md bg-foreground px-5 py-3 text-ui font-semibold text-background hover:opacity-90">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <Link to="/register" className="rounded-md bg-foreground px-5 py-3.5 text-center text-ui font-semibold text-background hover:opacity-90 sm:py-3">
                   Panele geç
                 </Link>
-                <a href="#akis" className="rounded-md border border-input px-5 py-3 text-ui font-semibold text-foreground hover:border-foreground">
+                <a href="#akis" className="rounded-md border border-input px-5 py-3.5 text-center text-ui font-semibold text-foreground hover:border-foreground sm:py-3">
                   İstek akışını gör
                 </a>
               </div>
             </div>
 
             {/* canlı cache logu — gerçek artefakt, dekor değil */}
-            <div className="rounded-lg bg-foreground p-6">
+            <div className="rounded-lg bg-foreground p-5 md:p-6">
               <div className="mb-3 flex items-center justify-between gap-3 border-b border-background/15 pb-3">
                 <span className="flex items-center gap-2 font-mono text-micro text-background/60">
                   <i className="h-[7px] w-[7px] rounded-full bg-up" aria-hidden="true" />
@@ -306,9 +349,9 @@ export default function Landing() {
                 </span>
                 <span className="font-mono text-micro text-background/60">json</span>
               </div>
-              <div className="min-h-[132px]">
+              <div className="min-h-[132px] overflow-x-auto">
                 {lines.map((l) => (
-                  <div key={l.id} className="font-mono text-micro leading-[1.75] text-background/80">
+                  <div key={l.id} className="whitespace-nowrap font-mono text-micro leading-[1.75] text-background/80">
                     <span className="text-background/45">{l.time}</span>{' '}
                     <span className={l.hit ? 'text-up' : 'text-down'}>{l.hit ? 'HIT ' : 'MISS'}</span>{' '}
                     {l.sym} <span className="text-background/45">{l.src} {l.ms}ms</span>
@@ -323,7 +366,7 @@ export default function Landing() {
           </div>
 
           {/* stat — sayı ink, üstünde voltaj cetveli */}
-          <div className="mt-20 flex flex-wrap gap-12">
+          <div className="mt-14 grid grid-cols-2 gap-x-8 gap-y-8 sm:flex sm:flex-wrap sm:gap-12 md:mt-20">
             {[['6', 'container'], ['2', '.NET servisi'], ['3', 'veri kaynağı'], ['5dk', 'cache ömrü']].map(([n, k]) => (
               <div key={k} className="rule-accent pt-4">
                 <span className="block text-display font-bold text-foreground">{n}</span>
@@ -335,8 +378,8 @@ export default function Landing() {
       </header>
 
       {/* ---------- ÜZERİNDE ÇALIŞTIĞI YIĞIN (logolar + detay tablosu birlikte) ---------- */}
-      <section className="border-b border-border py-16 md:py-20">
-        <div className="mx-auto max-w-[1280px] px-6">
+      <section className="border-b border-border py-12 md:py-20">
+        <div className="mx-auto max-w-[1280px] px-5 md:px-6">
           <span className="tick-accent label mb-2 block text-muted-foreground">Üzerinde çalıştığı yığın</span>
           <p className="mb-8 max-w-[62ch] text-body text-muted-foreground">
             Her seçimin bir gerekçesi var; &quot;popülerdi&quot; gerekçe sayılmadı. Bir işarete tıklayınca
@@ -381,15 +424,15 @@ export default function Landing() {
       </section>
 
       {/* ---------- 01 NE YAPIYOR ---------- */}
-      <section id="ne" className="bg-background py-20 md:py-24">
-        <div className="mx-auto max-w-[1280px] px-6">
+      <section id="ne" className="bg-background py-16 md:py-24">
+        <div className="mx-auto max-w-[1280px] px-5 md:px-6">
           <div className="mb-8 max-w-[62ch]">
             <Eyebrow>01 — Kapsam</Eyebrow>
             <h2 className="mt-2 text-display font-bold text-foreground">Defterin tuttukları</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {CAPS.map((c) => (
-              <div key={c.t} className={`rounded-lg bg-card p-8 ${c.edge ? 'edge-accent' : 'border border-border'}`}>
+              <div key={c.t} className={`rounded-lg bg-card p-6 md:p-8 ${c.edge ? 'edge-accent' : 'border border-border'}`}>
                 <h3 className="mb-3 text-figure font-semibold text-foreground">{c.t}</h3>
                 <p className="text-ui text-muted-foreground">{c.d}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -404,8 +447,8 @@ export default function Landing() {
       </section>
 
       {/* ---------- 02 İSTEK AKIŞI ---------- */}
-      <section id="akis" className="border-y border-border py-20 md:py-24">
-        <div className="mx-auto max-w-[1280px] px-6">
+      <section id="akis" className="border-y border-border py-16 md:py-24">
+        <div className="mx-auto max-w-[1280px] px-5 md:px-6">
           <div className="mb-8 max-w-[62ch]">
             <Eyebrow>02 — Mimari</Eyebrow>
             <h2 className="mt-2 text-display font-bold text-foreground">Bir fiyat isteği nereden geçiyor</h2>
@@ -485,8 +528,8 @@ services:
       </section>
 
       {/* ---------- 03 ENTEGRASYONLAR — solda liste, sağda içerik ---------- */}
-      <section id="entegrasyon" className="scroll-mt-4 bg-background py-20 md:py-24">
-        <div className="mx-auto max-w-[1280px] px-6">
+      <section id="entegrasyon" className="scroll-mt-4 bg-background py-16 md:py-24">
+        <div className="mx-auto max-w-[1280px] px-5 md:px-6">
           <div className="mb-8 max-w-[62ch]">
             <Eyebrow>03 — Gerekçe</Eyebrow>
             <h2 className="mt-2 text-display font-bold text-foreground">Her teknoloji neden burada</h2>
@@ -545,9 +588,9 @@ services:
       </section>
 
       {/* ---------- PANELE GEÇ ---------- */}
-      <section id="panel" className="border-t border-border py-20 md:py-24">
-        <div className="mx-auto max-w-[1280px] px-6">
-          <div className="edge-accent grid items-center gap-8 rounded-r-lg bg-background p-8 lg:grid-cols-[1fr_auto]">
+      <section id="panel" className="border-t border-border py-16 md:py-24">
+        <div className="mx-auto max-w-[1280px] px-5 md:px-6">
+          <div className="edge-accent grid items-center gap-7 rounded-r-lg bg-background p-6 md:p-8 lg:grid-cols-[1fr_auto] lg:gap-8">
             <div>
               <Eyebrow>Panel</Eyebrow>
               <h3 className="mb-2 mt-3 text-head font-bold text-foreground">Defterini aç</h3>
@@ -557,11 +600,11 @@ services:
                 işlem defteri ve piyasa sayfalarına geçersin.
               </p>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <Link to="/register" className="rounded-md bg-foreground px-5 py-3 text-ui font-semibold text-background hover:opacity-90">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Link to="/register" className="rounded-md bg-foreground px-5 py-3.5 text-center text-ui font-semibold text-background hover:opacity-90 sm:py-3">
                 Kayıt ol
               </Link>
-              <Link to="/login" className="rounded-md border border-input px-5 py-3 text-ui font-semibold text-foreground hover:border-foreground">
+              <Link to="/login" className="rounded-md border border-input px-5 py-3.5 text-center text-ui font-semibold text-foreground hover:border-foreground sm:py-3">
                 Giriş yap
               </Link>
             </div>
@@ -570,8 +613,8 @@ services:
       </section>
 
       {/* ---------- 04 ÖDÜNLER ---------- */}
-      <section className="bg-background py-20 md:py-24">
-        <div className="mx-auto max-w-[1280px] px-6">
+      <section className="bg-background py-16 md:py-24">
+        <div className="mx-auto max-w-[1280px] px-5 md:px-6">
           <div className="mb-8 max-w-[62ch]">
             <Eyebrow>04 — Dürüstlük</Eyebrow>
             <h2 className="mt-2 text-display font-bold text-foreground">Bilinçli ödünler</h2>
@@ -580,7 +623,7 @@ services:
               yanlışlıkla indiğim yerlerden ayırıyor.
             </p>
           </div>
-          <div className="rounded-lg bg-card p-8">
+          <div className="rounded-lg bg-card p-6 md:p-8">
             {TRADEOFFS.map(([h, d]) => (
               <div key={h} className="border-b border-input py-4 first:pt-0 last:border-b-0 last:pb-0">
                 <h3 className="mb-1 text-ui font-semibold text-foreground">{h}</h3>
@@ -592,18 +635,18 @@ services:
       </section>
 
       {/* ---------- KAPANIŞ — sayfadaki TEK dolu voltaj bandı ---------- */}
-      <section className="py-20 md:py-24">
-        <div className="mx-auto max-w-[1280px] px-6">
-          <div className="rounded-lg bg-voltage p-10 md:p-16">
-            <h2 className="max-w-[20ch] text-display font-bold text-white">
+      <section className="py-16 md:py-24">
+        <div className="mx-auto max-w-[1280px] px-5 md:px-6">
+          <div className="rounded-lg bg-voltage p-8 md:p-16">
+            <h2 className="max-w-[20ch] text-display font-bold leading-[1.1] text-white">
               Bitmiş bir ürün değil, süren bir defter.
             </h2>
             <p className="mt-4 max-w-[56ch] text-body text-white/85">
               Kod açık, kararlar dokümanda. Neyi neden yaptığım <code className="font-mono">docs/</code> altında
               standartlar ve öğrenme notları olarak duruyor.
             </p>
-            <div className="mt-6 flex flex-wrap items-center gap-4">
-              <Link to="/register" className="rounded-md bg-foreground px-5 py-3 text-ui font-semibold text-background hover:opacity-90">
+            <div className="mt-7 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+              <Link to="/register" className="w-full rounded-md bg-foreground px-5 py-3.5 text-center text-ui font-semibold text-background hover:opacity-90 sm:w-auto sm:py-3">
                 Kayıt ol
               </Link>
               <Link to="/login" className="text-ui font-semibold text-white underline underline-offset-4">
