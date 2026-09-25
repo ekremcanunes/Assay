@@ -17,7 +17,7 @@ docker compose exec kratos sh      # çalışan container içinde shell aç (exi
 docker compose exec market-service env     # container'ın environment variable'larını gör
 ```
 
-> `docker compose exec <servis>` → compose'daki servis adını kullanır (`postgres`, `kratos`, `redis`, `web`, `portfolio-service`, `market-service`). Container'ın tam adını bilmek gerekmez.
+> `docker compose exec <servis>` → compose'daki servis adını kullanır (`kratos`, `redis`, `web`, `portfolio-service`, `market-service`). Container'ın tam adını bilmek gerekmez.
 
 ## Docker (genel)
 
@@ -27,18 +27,24 @@ docker ps -a                       # duranlar dahil hepsi
 docker images                      # indirilen imajlar
 docker inspect <container-adı>     # container detayları (network, IP, env)
 docker network ls                  # network listesi
-docker network inspect investment-tracker_default   # hangi container'lar bağlı
-docker volume ls                   # volume'lar (kratos_postgres_data burada)
+docker network inspect assay_default   # hangi container'lar bağlı
+
+# Not: network/volume/container öneki klasör adından değil, docker-compose.yml
+# içindeki "name:" satırından gelir. 2026-09-15'te investment-tracker -> assay
+# olarak değiştirildi.
+docker volume ls                   # volume'lar
 docker system df                   # docker'ın kapladığı disk alanı
 docker logs <container-adı>        # compose dışı container logları
 docker container prune             # sadece durdurulmuş container'ları sil
 docker system prune -a             # kullanılmayan her şeyi temizle (container, image, network, cache)
 ```
 
-## Kratos Postgres (kullanıcı/kimlik verisi)
+## Kratos veritabanı (kullanıcı/kimlik verisi)
+
+Kratos ve portfolio-service **Neon'daki bulut Postgres'e** bağlanır — compose içinde yerel bir `postgres` servisi yoktur (2026-09-25'te ölü kod olarak kaldırıldı). Bağlanmak için Neon konsolundaki SQL Editor kullanılır ya da yerel `psql` ile `.env`'deki `KRATOS_DSN` adresine gidilir:
 
 ```bash
-docker compose exec postgres psql -U kratos -d kratos   # veritabanına bağlan
+psql "$KRATOS_DSN"     # .env'deki Neon adresine bağlan (psql yerelde kurulu olmalı)
 ```
 
 Bağlandıktan sonra psql içinde:
@@ -135,6 +141,21 @@ sudo service docker status
 sudo service redis-server stop    # native redis, container'daki ile çakışırsa
 ```
 
+## AWS EC2 (Prod) — WSL2 değil, prod sunucusunda çalıştırılır
+
+Prod EC2'ye (`assay-prod`, eu-central-1) bağlanmak: EC2 Console → Instances → `assay-prod` → **Connect** → **EC2 Instance Connect** (tarayıcıdan, `.pem` gerekmez) ya da `ssh -i assay-prod-aws-key.pem ubuntu@<Public-IP>`.
+
+```bash
+# Docker kurulu mu, versiyonu ne?
+docker --version && docker compose version
+
+# ECR'a login (image push/pull öncesi gerekli)
+aws ecr get-login-password --region eu-central-1 \
+  | docker login --username AWS --password-stdin 495890796058.dkr.ecr.eu-central-1.amazonaws.com
+```
+
+> Docker kurulum adımları (GPG key, resmi repo ekleme, `docker-ce` paketleri): `Desktop/aws/07-cicd/EC2-DOCKER-KURULUMU.md` — genel/tekrar kullanılabilir olduğu için oraya, prod pipeline planına (`docs/superpowers/plans/2026-09-08-prod-pipeline.md` Task 8) da işlendi.
+
 ## GitHub Actions Runner (WSL2)
 
 ```bash
@@ -171,4 +192,4 @@ curl http://localhost:4433/sessions/whoami
 docker compose restart kratos
 ```
 
-> **DİKKAT — geri dönüşü yok:** `docker volume rm investment-tracker_kratos_postgres_data` tüm kullanıcı kayıtlarını siler. Son çare.
+> **Not:** Kullanıcı/kimlik verisi Neon'da (bulut) durur, yerel bir volume'da değil — `docker compose down -v` gibi komutlar kullanıcı kayıtlarını silmez.

@@ -21,3 +21,8 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# Understand-Anything analiz ciktisi (kod anlama araci, deneme asamasinda)
+.ua/
+.understand-anything/
+.ua-dashboard.log

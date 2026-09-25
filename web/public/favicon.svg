@@ -1,15 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Assay monogram: foil gradyanlı "A" + kırmızı assay (marj) çizgisi.
-       Wordmark ile aynı dil; 16px'te tek silüet olarak okunur. -->
-  <defs>
-    <linearGradient id="foil" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#E8CFA0"/>
-      <stop offset="0.55" stop-color="#C69B58"/>
-      <stop offset="1" stop-color="#8C6A38"/>
-    </linearGradient>
-  </defs>
+  <!-- Assay monogramı: src/assets/assay-mark.svg ile aynı. -->
   <path d="M32 8 L13 50 M32 8 L51 50 M21.5 36 H42.5"
-        fill="none" stroke="url(#foil)" stroke-width="8"
-        stroke-linecap="round" stroke-linejoin="round"/>
-  <line x1="10" y1="58" x2="54" y2="58" stroke="#B23A2E" stroke-width="3" stroke-linecap="round"/>
+        fill="none" stroke="#141414" stroke-width="8"
+        stroke-linecap="butt" stroke-linejoin="miter"/>
+  <rect x="10" y="56.5" width="44" height="3" fill="#C2185B"/>
 </svg>

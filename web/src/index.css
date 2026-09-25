@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/*
+  VOLTAJ — tek tasarım sistemi. Landing, auth ve panel aynı dili konuşur.
+  Esas: docs/10-standards/DESIGN.md
+
+  Üç renk: beyaz zemin · ink metin/aksiyon · tek voltaj rengi (magenta).
+  Voltaj rengi ASLA büyük metin ya da dolu buton olmaz — cetvel, kenar,
+  nokta ve sayfada tek bir dolu bant olarak yaşar.
+*/
+
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
@@ -21,19 +30,15 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
 
-  /* LEDGER'a özel */
-  --color-up: hsl(var(--up));           /* kâr */
-  --color-down: hsl(var(--down));       /* zarar */
-  --color-brass: hsl(var(--brass));     /* ikincil aksan (işlem) */
-  --color-margin: hsl(var(--margin));   /* kırmızı marj çizgisi */
+  /* Semantik — kâr/zarar. Voltaj renginden ve kategoriden bağımsız. */
+  --color-up: hsl(var(--up));
+  --color-down: hsl(var(--down));
 
-  /* Şasi (koyu kabuk) — yalnızca Layout/sidebar kullanır, sayfa içeriği bone kalır */
-  --color-shell: hsl(var(--shell));
-  --color-shell-panel: hsl(var(--shell-panel));
-  --color-shell-border: hsl(var(--shell-border));
-  --color-shell-fg: hsl(var(--shell-fg));
-  --color-shell-muted: hsl(var(--shell-muted));
-  --color-foil: hsl(var(--foil));       /* şampanya aksan (şasi içinde) */
+  /* Voltaj: markanın tek rengi. Kullanımı doz kuralına tabidir. */
+  --color-voltage: hsl(var(--voltage));
+
+  /* Uyarı — semantik, markadan bağımsız. Voltaj rengi uyarı anlamı taşımaz. */
+  --color-warn: hsl(var(--warn));
 
   /* Kategori renkleri — yalnızca AYIRT ETMEK için. Asla kâr/zarar anlamı taşımaz. */
   --color-cat-stock: hsl(var(--cat-stock));
@@ -43,81 +48,87 @@
   --color-cat-index: hsl(var(--cat-index));
   --color-cat-other: hsl(var(--cat-other));
 
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 1px);
-  --radius-sm: calc(var(--radius) - 1px);
-
-  --font-sans: "Instrument Sans Variable", system-ui, sans-serif;      /* gövde / UI */
-  --font-display: "Bricolage Grotesque Variable", system-ui, sans-serif; /* başlıklar */
-  --font-mono: "Geist Mono Variable", ui-monospace, monospace;         /* rakam / etiket */
+  --radius-sm: 0.375rem;   /* 6  — rozet */
+  --radius-md: var(--radius);
+  --radius-lg: 0.75rem;    /* 12 — kart, panel */
 
   /*
-    Tip ölçeği — 6 basamak, tam piksel. Ad-hoc `text-[11.5px]` yazmak yerine
-    hep bu adlar kullanılır. Tailwind'in text-xs/sm/lg'si ezilmedi; yeni işler
-    bu ölçeğe yazılır.
+    Tek aile: Inter. Hiyerarşi aileden değil ölçek + ağırlıktan gelir.
+    --font-display ayrı bir aile değil; ad korunuyor ki çağrı yerleri kırılmasın.
   */
-  --text-micro: 0.6875rem;                /* 11 — etiket / ikincil mikro metin */
-  --text-micro--line-height: 1.3;
+  --font-sans: "Inter Variable", system-ui, -apple-system, sans-serif;
+  --font-display: "Inter Variable", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+
+  /*
+    Tip ölçeği — 6 basamak. Ad-hoc boyut yazılmaz.
+    Büyük basamaklarda negatif tracking zorunlu: Inter 700 tracking'siz
+    fazla geniş okunur, sıkıştırma sisteme mühendislik hissini veren şey.
+  */
+  --text-micro: 0.6875rem;                /* 11 — etiket / mikro metin */
+  --text-micro--line-height: 1.35;
   --text-ui: 0.8125rem;                   /* 13 — varsayılan UI / tablo hücresi */
   --text-ui--line-height: 1.45;
   --text-body: 0.9375rem;                 /* 15 — vurgulu gövde */
   --text-body--line-height: 1.55;
   --text-figure: 1.125rem;                /* 18 — KPI / kart değeri */
   --text-figure--line-height: 1.2;
-  --text-head: 1.5rem;                    /* 24 — bölüm başlığı, mobil sayfa başlığı */
-  --text-head--line-height: 1.2;
-  --text-title: 1.875rem;                 /* 30 — sayfa başlığı (md+) */
-  --text-title--line-height: 1.1;
+  --text-figure--letter-spacing: -0.01em;
+  --text-head: 1.5rem;                    /* 24 — bölüm / mobil sayfa başlığı */
+  --text-head--line-height: 1.25;
+  --text-head--letter-spacing: -0.025em;
+  --text-title: 2rem;                     /* 32 — sayfa başlığı (md+) */
+  --text-title--line-height: 1.15;
+  --text-title--letter-spacing: -0.032em;
+  --text-display: 2.75rem;                /* 44 — landing bölüm başlığı */
+  --text-display--line-height: 1.1;
+  --text-display--letter-spacing: -0.038em;
+  --text-hero: 3.75rem;                   /* 60 — yalnızca landing h1 */
+  --text-hero--line-height: 1.05;
+  --text-hero--letter-spacing: -0.042em;
 }
 
 /*
-  LEDGER — açık/bone muhasebe defteri teması (tek tema, bilinçli tercih).
-  Renkler HSL "H S% L%" (shadcn yapısı). Ink üzerine bone; kâr/zarar semantik;
-  marj-kırmızısı ve pirinç aksanlar vurgudan ayrı.
+  Palet. Panel zemini #F7F7F5, yüzeyler beyaz — yoğun tabloda saf beyaz
+  zemin göz yorduğu için katman tersine kuruldu. Landing'de zemin beyaz,
+  bantlar #F7F7F5; ikisi aynı palet, yalnızca hangisinin zemin olduğu farklı.
 */
 :root {
-  --background: 46 22% 92%;    /* #EFEDE6 bone */
-  --foreground: 45 8% 10%;     /* #1C1B18 ink */
-  --card: 50 25% 96%;          /* #F7F6F1 surface */
-  --card-foreground: 45 8% 10%;
-  --popover: 50 25% 96%;
-  --popover-foreground: 45 8% 10%;
-  --primary: 45 8% 10%;        /* ink — birincil buton */
-  --primary-foreground: 50 25% 96%;
-  --secondary: 46 18% 88%;     /* hover/ikincil yüzey */
-  --secondary-foreground: 45 8% 10%;
-  --muted: 46 16% 88%;
-  --muted-foreground: 45 6% 39%; /* #6A675E */
-  --accent: 46 18% 88%;
-  --accent-foreground: 45 8% 10%;
-  --destructive: 5 53% 32%;    /* zarar/loss #7B2D26 */
-  --destructive-foreground: 50 25% 96%;
-  --border: 47 16% 82%;        /* #D9D6CB rule */
-  --input: 45 8% 10%;          /* ledger'da inputlar ink kenarlı */
-  --ring: 45 8% 10%;
+  --background: 60 10% 97%;    /* #F7F7F5 panel zemini */
+  --foreground: 0 0% 8%;       /* #141414 ink */
+  --card: 0 0% 100%;           /* #FFFFFF yüzey */
+  --card-foreground: 0 0% 8%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 8%;
+  --primary: 0 0% 8%;          /* ink — birincil buton dolu ink */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 40 11% 94%;     /* #F2F1EE hover / ikincil yüzey */
+  --secondary-foreground: 0 0% 8%;
+  --muted: 40 11% 94%;
+  --muted-foreground: 45 4% 35%; /* #5C5A55 */
+  --accent: 40 11% 94%;
+  --accent-foreground: 0 0% 8%;
+  --destructive: 3 71% 40%;    /* #B3261E silme/tehlike */
+  --destructive-foreground: 0 0% 100%;
+  --border: 40 13% 89%;        /* #E4E3DE hairline */
+  --input: 40 9% 79%;          /* #CFCDC6 alan alt kenarlığı */
+  --ring: 0 0% 8%;             /* odak halkası ink */
 
   --up: 152 72% 28%;           /* kâr #147C4A */
   --down: 5 61% 46%;           /* zarar #BE3A2E */
 
-  /* Kategori paleti — bone zemine göre ayarlandı, hepsi 4.5:1 üstü kontrast */
+  --voltage: 337 78% 43%;      /* #C2185B — markanın tek rengi */
+  --warn: 38 93% 33%;          /* #A16207 yumuşak uyarı (sert uyarı: destructive) */
+
+  /* Kategori paleti — beyaz zeminde hepsi 4.5:1 üstü */
   --cat-stock: 217 56% 42%;    /* #2F5DA8 hisse */
-  --cat-gold: 36 51% 56%;      /* #C69B58 altın */
+  --cat-gold: 36 51% 46%;      /* #B08843 altın */
   --cat-fx: 176 65% 26%;       /* #17706B döviz */
   --cat-cash: 265 33% 46%;     /* #6B4E9B nakit */
-  --cat-index: 18 54% 50%;     /* #C25E3A endeks */
-  --cat-other: 45 6% 52%;      /* #8C897E diğer */
-  --brass: 36 43% 38%;         /* #8C6A38 */
-  --margin: 6 59% 44%;         /* #B23A2E marj kırmızısı */
+  --cat-index: 18 54% 44%;     /* #AD5233 endeks */
+  --cat-other: 45 6% 44%;      /* #77746B diğer */
 
-  --radius: 0.5rem;            /* yumuşak köşe — keskinlik artık cetvelli tabloda kalıyor */
-
-  /* Şasi: bone tuvali taşıyan koyu kabuk. LEDGER kağıdı bunun üstünde durur. */
-  --shell: 240 6% 5%;          /* #0B0B0D */
-  --shell-panel: 240 6% 9%;    /* #15151A hover/kart yüzeyi */
-  --shell-border: 240 6% 14%;  /* #212127 */
-  --shell-fg: 240 5% 95%;      /* #F2F2F3 */
-  --shell-muted: 240 5% 56%;   /* #878791 */
-  --foil: 36 55% 71%;          /* #D4B483 şampanya */
+  --radius: 0.5rem;            /* 8 — buton, alan */
 }
 
 * { border-color: hsl(var(--border)); }
@@ -135,87 +146,86 @@ body {
 }
 
 /*
-  Mikro etiket: mono + uppercase + tracking. Eyebrow, tablo başlığı, kart etiketi,
-  bölüm ayracı — hepsi bu. Boyut `--text-micro` (11px).
+  Mikro etiket: eyebrow, tablo başlığı, kart etiketi, bölüm ayracı.
+  Tek aile kuralı gereği mono değil Inter 600; ayrımı tracking yapıyor.
 */
 .label {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--text-micro);
-  line-height: 1.3;
-  letter-spacing: 0.1em;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
-/* Rakamlar / ticker: mono + tabular hizalama */
+/* Rakamlar: mono + tabular hizalama. Sütunlar hizada kalır. */
 .tabular {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
 
-/* Ledger imzaları */
-.shadow-ledger { box-shadow: 4px 4px 0 0 hsl(var(--foreground) / 0.06); }
-.shadow-ledger-strong { box-shadow: 8px 8px 0 0 hsl(var(--foreground)); }
-.border-double-bottom { border-bottom: 3px double hsl(var(--foreground)); }
+/* ---------- Voltaj imzaları — aksan yalnızca burada görünür ---------- */
 
-/* --- Şasi imzaları (yalnızca Layout) --- */
+/* Üst cetvel: KPI/stat bloklarının üstünde 3px aksan */
+.rule-accent { border-top: 3px solid hsl(var(--voltage)); }
 
-/* Şampanya foil kare: marka rozeti */
-.foil-tile {
-  background: linear-gradient(145deg, #E8CFA0, #C69B58 55%, #8C6A38);
-  color: #1A1408;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 2px 8px hsl(var(--foil) / .28);
-}
+/* Sol kenar: kartın/panelin sol kenarında 3px aksan */
+.edge-accent { border-left: 3px solid hsl(var(--voltage)); }
 
-/* Aktif nav satırı: yumuşak dolgu + solda ışıyan foil şerit */
+/* Aktif nav satırı: yumuşak dolgu + solda 3px aksan şerit */
 .nav-active {
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / .05);
-}
-.nav-active::before {
-  content: ""; position: absolute; left: -0.5rem; top: 0.5rem; bottom: 0.5rem; width: 2.5px;
-  background: hsl(var(--foil)); border-radius: 0 3px 3px 0;
-  box-shadow: 0 0 10px hsl(var(--foil) / .65);
+  background: hsl(var(--secondary));
+  box-shadow: inset 3px 0 0 0 hsl(var(--voltage));
 }
 
-/* Bone içerik tuvali — koyu şasinin üstünde yükselir */
-.canvas-inset { box-shadow: 0 12px 34px rgb(0 0 0 / .45); }
+/* Bölüm etiketi önündeki kısa tire */
+.tick-accent::before {
+  content: ""; display: inline-block; width: 22px; height: 2px;
+  background: hsl(var(--voltage)); vertical-align: 0.22em; margin-right: 10px;
+}
 
-/* Auth zemini: ızgara + üstten foil ışıma. Kart .auth-card ile yüzer. */
-.auth-bg { position: relative; overflow: hidden; background: hsl(var(--shell)); }
-.auth-bg::before {
-  content: ""; position: absolute; inset: 0;
+/* Tablo toplam satırı: çift çizgi değil, tek ink kural */
+.border-total { border-top: 2px solid hsl(var(--foreground)); }
+
+/*
+  Defter kağıdı: 34px cetvel ızgarası + radyal maske.
+  Landing hero'su ve auth zemini bunu kullanır.
+*/
+.paper { position: relative; overflow: hidden; }
+.paper::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
   background-image:
-    linear-gradient(hsl(var(--shell-border)) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(var(--shell-border)) 1px, transparent 1px);
+    linear-gradient(hsl(var(--border)) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px);
   background-size: 34px 34px;
-  -webkit-mask-image: radial-gradient(420px 300px at 50% 42%, #000 10%, transparent 78%);
-          mask-image: radial-gradient(420px 300px at 50% 42%, #000 10%, transparent 78%);
+  -webkit-mask-image: radial-gradient(120% 85% at 22% 8%, #000 8%, transparent 72%);
+          mask-image: radial-gradient(120% 85% at 22% 8%, #000 8%, transparent 72%);
 }
-.auth-bg::after {
-  content: ""; position: absolute; inset: 0;
-  background: radial-gradient(340px 190px at 50% 10%, hsl(var(--foil) / .17), transparent 70%);
-}
-.auth-card { box-shadow: 0 24px 60px rgb(0 0 0 / .65); }
+.paper > * { position: relative; z-index: 1; }
 
-/* Sol kırmızı marj çizgisi (muhasebe kağıdı) — .margin-rule + sol iç boşluk gerektirir */
-.margin-rule { position: relative; }
-.margin-rule::before {
-  content: ""; position: absolute; top: 0; bottom: 0; left: 1rem; width: 1px;
-  background: hsl(var(--margin));
-}
-@media (min-width: 768px) { .margin-rule::before { left: 2rem; } }
+/* Mimari diyagramındaki akan hat — istek yolunu gösterir */
+@keyframes flow { to { stroke-dashoffset: -24; } }
+@media (prefers-reduced-motion: reduce) { [class*="animation:flow"] { animation: none !important; } }
 
-/* Modal giriş animasyonu (sade/versatil) */
-@keyframes ledger-in {
+/* Modal giriş animasyonu */
+@keyframes modal-in {
   from { opacity: 0; transform: translateY(6px) scale(0.985); }
   to   { opacity: 1; transform: none; }
 }
-.ledger-modal { animation: ledger-in .16s ease-out; }
-@media (prefers-reduced-motion: reduce) { .ledger-modal { animation: none; } }
+.modal-in { animation: modal-in .16s ease-out; }
+@media (prefers-reduced-motion: reduce) { .modal-in { animation: none; } }
 
-/* Yumuşak geçişler — reduced-motion'a saygılı */
+/*
+  Geçişler: 110ms + cubic-bezier(0,0,.38,.9) — sert duran "productive"
+  easing. Yumuşak ease-out butonu kart gibi gösteriyordu.
+*/
 @media (prefers-reduced-motion: no-preference) {
   a, button, [role="button"], .transition-smooth {
-    transition: color .16s ease, background-color .16s ease, border-color .16s ease, opacity .16s ease, transform .16s ease;
+    transition: color .11s cubic-bezier(0,0,.38,.9),
+                background-color .11s cubic-bezier(0,0,.38,.9),
+                border-color .11s cubic-bezier(0,0,.38,.9),
+                box-shadow .11s cubic-bezier(0,0,.38,.9),
+                opacity .11s cubic-bezier(0,0,.38,.9);
   }
 }

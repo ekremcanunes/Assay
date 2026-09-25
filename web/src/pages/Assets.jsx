@@ -338,7 +338,7 @@ export default function Assets() {
                   })}
                 </tbody>
                 <tfoot>
-                  <tr className="border-double-bottom bg-secondary/50 font-bold uppercase">
+                  <tr className="border-total bg-secondary/50 font-semibold uppercase">
                     <td className="px-2 py-3.5" colSpan={4}>{t('common.total')}</td>
                     <td className="px-2 py-3.5 text-right text-foreground">{formatMoney(tabTotal)}</td>
                     <td className="px-2 py-3.5"></td>

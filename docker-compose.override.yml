@@ -1,0 +1,21 @@
+# Dev ortami farklari: kaynaktan build + port yayinlama. Compose bu dosyayi OTOMATIK okur.
+# Repo prod EC2'de de klonlu durur -> prod'da MUTLAKA "docker compose -f docker-compose.yml"
+# ile calistirilir; aksi halde portlar acilir ve ECR imaji yerine yerel build yapilir.
+services:
+  market-service:
+    build: ./market-service
+    ports:
+      - "5002:5002"
+  portfolio-service:
+    build: ./portfolio-service
+    ports:
+      - "5001:5001"
+  web:
+    build: ./web
+  redis:
+    ports:
+      - "6379:6379"
+  kratos:
+    ports:
+      - "4433:4433"
+      - "4434:4434"

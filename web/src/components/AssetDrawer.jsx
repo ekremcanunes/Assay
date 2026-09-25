@@ -162,7 +162,7 @@ export default function AssetDrawer({ holding, onClose, onSell }) {
   const actionBtn = isMarket ? (
     <button
       onClick={() => navigate('/assets/buy')}
-      className="flex w-full items-center justify-center gap-2 border border-brass bg-brass py-3 font-bold uppercase tracking-wider text-white hover:opacity-90"
+      className="flex w-full items-center justify-center gap-2 rounded-md bg-foreground py-3 font-semibold text-background hover:opacity-90"
     >
       <Plus className="h-4 w-4" />
       {t('assets.buy')}
@@ -193,7 +193,7 @@ export default function AssetDrawer({ holding, onClose, onSell }) {
     return (
       <div className="fixed inset-0 z-50 bg-foreground/50 p-4 md:p-8" onClick={onClose}>
         <div
-          className="ledger-modal mx-auto flex h-full max-w-6xl flex-col border-2 border-foreground bg-card shadow-ledger-strong"
+          className="modal-in mx-auto flex h-full max-w-6xl flex-col rounded-lg border border-border bg-card"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="px-6 pt-6 font-mono text-micro">{header}</div>
@@ -218,7 +218,7 @@ export default function AssetDrawer({ holding, onClose, onSell }) {
   return (
     <div className="fixed inset-0 z-40 bg-foreground/40 backdrop-blur-[1px]" onClick={onClose}>
       <div
-        className="fixed bottom-0 right-0 top-0 flex w-full max-w-md flex-col justify-between overflow-y-auto border-l-2 border-foreground bg-card p-6 font-mono text-micro shadow-ledger-strong"
+        className="fixed bottom-0 right-0 top-0 flex w-full max-w-md flex-col justify-between overflow-y-auto border-l border-border bg-card p-6 font-mono text-micro"
         onClick={(e) => e.stopPropagation()}
       >
         <div>

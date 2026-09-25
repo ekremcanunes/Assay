@@ -14,13 +14,16 @@ Proje dokümanları bu klasörde, numaralı kategori klasörleri altında tutulu
 
 ## Dokümanlar
 
-- [10-standards/DESIGN.md](10-standards/DESIGN.md) — Tasarım sistemi: renk token'ları, tipografi, veri dürüstlüğü kuralları. **UI değişikliğinden önce zorunlu okuma.**
+- [10-standards/DESIGN.md](10-standards/DESIGN.md) — **VOLTAJ** tasarım sistemi: üç renk, 8 basamaklı tip ölçeği, voltaj doz kuralı, bileşen anatomisi, veri dürüstlüğü. Landing + auth + panel için tek standart. **UI değişikliğinden önce zorunlu okuma.** Canlı referans: `/landing`.
 - [10-standards/DATA-FETCHING.md](10-standards/DATA-FETCHING.md) — React Query veri çekme kuralları. **Web'de veri çeken kod yazmadan önce zorunlu okuma.**
 - [10-standards/PIPELINE-SECURITY.md](10-standards/PIPELINE-SECURITY.md) — Pipeline güvenlik standardı (planlama): kod hangi analiz istasyonlarından geçer, araç seçimi, GitHub Actions/CodePipeline sorumluluk ayrımı, öncelik sırası.
 - [10-standards/LOGGING.md](10-standards/LOGGING.md) — Loglama standardı: stdout+JSON kuralı, seviye politikası, ne loglanmaz, docker rotasyonu, AWS'ye geçiş adımları. **Log yazan veya log altyapısına dokunan değişikliklerde zorunlu okuma.**
 - [20-modules/GOLD-MODULE.md](20-modules/GOLD-MODULE.md) — Altın modülü tasarımı.
 - [30-operations/COMMANDS.md](30-operations/COMMANDS.md) — Komut rehberi: Docker, Redis, Kratos, psql, EF Core, hata ayıklama sırası.
 - [40-learning/DOCKER-LEARNING.md](40-learning/DOCKER-LEARNING.md) — Docker öğrenme notları.
+- [40-learning/LINUX-BASICS.md](40-learning/LINUX-BASICS.md) — Linux temel kavramlar: stdout/stderr, journalctl, konteyner log zinciri.
+- [40-learning/AWS-BASICS.md](40-learning/AWS-BASICS.md) — Bu projede kullanılacak AWS servisleri: OIDC, ECR, EC2, maliyet kalemleri, bölge seçimi.
+- [40-learning/NGINX-LEARNING.md](40-learning/NGINX-LEARNING.md) — Nginx & reverse proxy notları: nginx.conf satır satır, `proxy_pass` sondaki `/` kuralı, Compose DNS, session cookie akışı, rebuild gerekliliği, proxy atlamayı engelleme.
 
 ## Kurallar
 

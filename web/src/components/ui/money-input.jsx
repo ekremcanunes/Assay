@@ -34,7 +34,7 @@ export const MoneyInput = React.forwardRef(
           value={value ?? ""}
           onChange={handleChange}
           className={cn(
-            "flex h-9 w-full rounded-md border border-input bg-transparent py-1 pr-3 text-right text-ui tabular-nums shadow-sm transition-colors",
+            "flex h-10 w-full rounded-none border-0 border-b border-input bg-secondary py-1 pr-3 text-right text-ui tabular-nums transition-colors",
             "placeholder:text-muted-foreground hover:border-foreground",
             "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
             "disabled:cursor-not-allowed disabled:opacity-50",

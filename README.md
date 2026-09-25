@@ -39,12 +39,13 @@ docker compose up --build -d
 
 | Container | İmaj | Port |
 |---|---|---|
-| web | nginx (custom) | 80 |
-| portfolio-service | .NET 9 (custom) | 5001 |
-| market-service | .NET 9 (custom) | 5002 |
-| kratos | oryd/kratos:v1.2.0 | 4433, 4434 |
-| postgres | postgres:16-alpine | 5432 |
-| redis | redis:alpine | 6379 |
+| web | nginx (custom) | 80 (host'a açık — tek giriş noktası) |
+| portfolio-service | .NET 9 (custom) | 5001 (yalnızca compose ağında) |
+| market-service | .NET 9 (custom) | 5002 (yalnızca compose ağında) |
+| kratos | oryd/kratos:v1.2.0 | 4433, 4434 (yalnızca compose ağında) |
+| redis | redis:alpine | 6379 (yalnızca compose ağında) |
+
+Dev ortamında `docker-compose.override.yml` bu portları host'a geri açar; prod sunucusuna kopyalanmaz.
 
 Gerekli ortam değişkenleri (`.env`):
 

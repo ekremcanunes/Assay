@@ -32,7 +32,7 @@ export function PageTab({ active, children, ...props }) {
       className={cn(
         '-mb-px shrink-0 whitespace-nowrap border-b-2 pb-2.5 text-ui',
         active
-          ? 'border-brass font-semibold text-foreground'
+          ? 'border-voltage font-semibold text-foreground'
           : 'border-transparent text-muted-foreground hover:text-foreground'
       )}
       {...props}
@@ -48,7 +48,7 @@ export function PrimaryAction({ className, children, ...props }) {
     <button
       type="button"
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-lg bg-brass px-3 py-1.5 text-ui font-semibold text-white hover:opacity-90',
+        'inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-ui font-semibold text-background hover:opacity-90',
         className
       )}
       {...props}

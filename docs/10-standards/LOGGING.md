@@ -31,15 +31,39 @@ JSON logu terminalde okumak için: `docker compose logs market-service | jq`
 
 Prod'da `Information` **kalıcı olarak açık bırakılmaz**. Sorun analizi için geçici açılır, iş bitince geri alınır.
 
+**İstisna — istek logu.** Prod `Warning` iken `UseSerilogRequestLogging()`'in ürettiği satır (`Information`) de düşerdi; o zaman elde yalnızca 5xx veren istekler kalır, "çalışıyor ama yavaş" durumu görünmez. Bu yüzden `appsettings.json`'da yalnızca o kaynak geri açılmıştır:
+
+```json
+"Serilog.AspNetCore.RequestLoggingMiddleware": "Information"
+```
+
+Kapsamı istek başına tek satırdır (§4); uygulamanın geri kalan `Information` logları prod'da kapalı kalır. **Bu override silinmez** — silinirse prod'da trafik ve süre görünürlüğü tamamen kaybolur.
+
 ### Seviye nasıl değiştirilir
 
-Deploy gerektirmez — ortam değişkeni ile:
+Deploy gerektirmez — `.env` dosyasındaki üç ayrı kadran ile. Her biri farklı bir log kümesini yönetir; **tek bir kadran hepsini birden açmaz**:
+
+| Değişken | Kapsam | Varsayılan | Ne zaman açılır |
+|----------|--------|------------|-----------------|
+| `LOG_LEVEL` | Uygulamanın kendi logları (`Default`) | `Information` | Prod'da `Warning`; kendi kodunun akışını izlerken `Debug` |
+| `LOG_LEVEL_FRAMEWORK` | `Microsoft`, `System` | `Warning` | ASP.NET pipeline / HttpClient teşhisi |
+| `LOG_LEVEL_EFCORE` | `Microsoft.EntityFrameworkCore` (portfolio-service) | `Warning` | Üretilen SQL'i görmek gerektiğinde |
+
+Karşılığı ortam değişkenleri (`docker-compose.yml`'de bağlıdır, AWS'de aynı isimlerle set edilir):
 
 ```bash
 Serilog__MinimumLevel__Default=Warning
+Serilog__MinimumLevel__Override__Microsoft=Warning
+Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore=Warning
 ```
 
-Compose'da bu `LOG_LEVEL` değişkenine bağlıdır (`.env` dosyasından okunur, varsayılan `Information`).
+**Neden ayrı kadranlar:** `Default` yalnızca kendi loglarını etkiler, `Override` altındakileri **hareket ettirmez**. `LOG_LEVEL=Debug` yazıp EF Core'un SQL'ini beklemek boşunadır; o `LOG_LEVEL_EFCORE` ile açılır. EF'in ayrı tutulmasının sebebi hacimdir — HTTP teşhisi için framework'ü açarken her SQL sorgusunu da loglamak zorunda kalmazsın.
+
+**Üç uyarı:**
+
+1. **Geçersiz değer servisi çökertir.** Serilog seviye adını büyük/küçük harf duyarsız çözer (`warning` çalışır) ama tanımadığı bir kelimede (`info`, `verbose` değil de yazım hatası) `InvalidOperationException` fırlatır ve uygulama hiç ayağa kalkmaz. Geçerli değerler: `Verbose`, `Debug`, `Information`, `Warning`, `Error`, `Fatal`.
+2. **`LOG_LEVEL_FRAMEWORK=Information` query string'i loglamaya başlar.** ASP.NET'in kendi `Request starting ... {QueryString}` satırı geri gelir; §4'ün hassas veri yasağıyla çakışır. Teşhis bitince `Warning`'e geri alınır, prod'da açık bırakılmaz.
+3. **Başlangıç satırları kadranlardan etkilenmez.** `Microsoft.Hosting.Lifetime` `appsettings.json`'da `Information`'a sabitlenmiştir (daha spesifik `Override` kazanır); `LOG_LEVEL_FRAMEWORK=Error` yapsan bile "Now listening on / Application started" satırları düşmeye devam eder. Bu kasıtlıdır — servisin ayağa kalktığını görmek her ortamda gerekir.
 
 ### Gürültü bastırma (`Override`)
 
@@ -101,7 +125,7 @@ x-logging: &default-logging
 
 Yeni bir servis eklendiğinde `logging: *default-logging` satırı eklenmesi zorunludur.
 
-## 7. AWS'ye Geçiş (prod'a çıkmadan önce yapılacaklar)
+## 7. AWS'ye Geçiş
 
 İlk hedef: **EC2 + docker compose**. Bu yapıda uygulama tarafında değişiklik gerekmez, yalnızca aşağıdakiler kurulur:
 
@@ -119,4 +143,13 @@ ECS/Fargate'e geçilirse: task definition'da `awslogs` log driver'ı tanımlanı
 - [ ] `Program.cs`'te `AddSerilog(...)` + `UseSerilogRequestLogging()` var
 - [ ] `appsettings.json`'da `Serilog:MinimumLevel` bölümü var, eski `Logging:LogLevel` bölümü **yok**
 - [ ] `docker-compose.yml`'de servise `logging: *default-logging` eklendi
+- [ ] `docker-compose.yml`'de servise `Serilog__MinimumLevel__*` kadranları eklendi (bkz. §3)
 - [ ] Servis dosyaya log yazmıyor, yalnızca stdout'a
+
+## 9. Ek — `docker-compose.yml` sözdizimi
+
+| Sözdizimi | Katman | Anlamı |
+|-----------|--------|--------|
+| `x-logging:` | Compose | "Bu anahtarı yok say" — tanımı barındıracak yer |
+| `&ad` | YAML | Değeri etiketle (tanımla) |
+| `*ad` | YAML | Etiketlenen değeri buraya genişlet (kullan) |

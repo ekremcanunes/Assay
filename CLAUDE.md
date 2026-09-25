@@ -5,7 +5,7 @@
 > Tüm dokümanlar `docs/` altında, numaralı kategori klasörlerinde durur. Tam indeks ve şema: `docs/README.md`.
 
 - `docs/10-standards/` — bağlayıcı standartlar; ilgili alanda kod yazmadan önce oku:
-  - `DESIGN.md` — tasarım sistemi (renk token'ları, tipografi, veri dürüstlüğü). UI değişikliğinden önce oku; ad-hoc renk/tip boyutu yasak.
+  - `DESIGN.md` — **VOLTAJ** tasarım sistemi (üç renk, tip ölçeği, voltaj doz kuralı, bileşen anatomisi, veri dürüstlüğü). Landing, auth ve panel için tek standart. UI değişikliğinden önce oku; ad-hoc renk/tip boyutu ve gölge yasak. Tasarımı değiştirmeden önce canlı referans `/landing`'de dene.
   - `DATA-FETCHING.md` — React Query veri çekme kuralları.
   - `PIPELINE-SECURITY.md` — pipeline güvenlik standardı (planlama aşamasında; CI/CD veya güvenlik işine dokunmadan önce oku).
   - `LOGGING.md` — loglama standardı (Serilog, stdout+JSON, seviye politikası, hassas veri yasağı, docker rotasyonu, AWS maliyet kontrolü). Log yazmadan veya log altyapısına dokunmadan önce oku.
@@ -96,5 +96,19 @@ For tasks with multiple steps, create a short plan:
 - **Bulk changes:** Don't pack multiple independent changes into a single commit.
 - **Error suppression:** Don't swallow errors with try/catch and return empty results.
 - **Infinite loop:** Don't keep trying to fix the same error with the same approach. After two attempts, suggest a different strategy or ask.
+
+---
+
+## 8. Explain the Terms You Use
+
+> Every industry term gets a one-line definition the first time it appears in a conversation.
+
+When explaining anything, if you use a concept or term that has an established meaning in the professional/enterprise world (e.g. *immutable deploy*, *OIDC federation*, *quality gate*, *SAST*), briefly state what it means right there — one sentence, in context. The user is learning the domain alongside the work; a term dropped without a definition is a gap, not a shortcut.
+
+- Definitions must be **real** — the term's accepted meaning in the industry, not an invented or improvised one. If unsure of the exact meaning, say so rather than guess.
+- Once a term has been defined in a conversation, don't repeat the definition.
+- Format is free: parenthetical, em-dash aside, or a short sentence. Don't turn every message into a glossary — define, then move on.
+
+Example: "the deploy is **immutable** — the image built and scanned in CI is deployed exactly as-is, byte for byte; nothing is rebuilt or patched on the server."
 
 ---

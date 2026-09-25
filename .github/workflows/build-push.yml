@@ -1,0 +1,48 @@
+name: Build and Push to ECR
+
+on:
+  push:
+    branches: [ main-prod ]
+
+env:
+  AWS_REGION: eu-central-1 #Frankfurt
+  ECR_REGISTRY: 495890796058.dkr.ecr.eu-central-1.amazonaws.com
+
+permissions:
+  id-token: write      # OIDC jetonu istemek icin ZORUNLU
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: web
+            context: ./web
+          - name: portfolio-service
+            context: ./portfolio-service
+          - name: market-service
+            context: ./market-service
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5
+        with:
+          role-to-assume: arn:aws:iam::495890796058:role/GitHubActionsDeployRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region "$AWS_REGION" \
+            | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+
+      - name: Build and push
+        run: |
+          IMAGE="$ECR_REGISTRY/assay/${{ matrix.name }}:${GITHUB_SHA}"
+          docker build -t "$IMAGE" "${{ matrix.context }}"
+          docker push "$IMAGE"
+          echo "Pushed: $IMAGE"

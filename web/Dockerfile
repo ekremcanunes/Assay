@@ -1,8 +1,11 @@
 # Stage 1: Build
 FROM node:22-alpine AS build
 WORKDIR /app
+# Bağımlılık katmanı: yalnızca package*.json değişince yeniden çalışır
+COPY package.json package-lock.json ./
+RUN npm ci
 COPY . .
-RUN npm install && npm run build
+RUN npm run build
 
 # Stage 2: Runtime
 FROM nginx:alpine

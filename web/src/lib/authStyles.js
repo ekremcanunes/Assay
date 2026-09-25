@@ -1,10 +1,14 @@
-// Login/Register ortak alan stilleri — koyu şasi üzerinde yüzen auth kartı.
+// Login/Register ortak alan stilleri — VOLTAJ sistemi.
+// Alan: yüzey dolgusu + yalnızca alt kenarlık (çerçeveli input yok).
+// Buton: ink dolu, radius 8px. Voltaj rengi burada görünmez.
 export const authLabelCls =
-  'mt-3.5 mb-1.5 block label text-shell-muted'
+  'mt-4 mb-1.5 block label text-muted-foreground'
 
 export const authInputCls =
-  'w-full rounded-lg border border-shell-border bg-shell px-3 py-2 font-mono text-ui text-shell-fg ' +
-  'placeholder:text-shell-muted/70 focus:border-foil focus:outline-none focus:ring-[3px] focus:ring-foil/20'
+  'w-full rounded-none border-0 border-b border-input bg-secondary px-3 py-2.5 font-mono text-ui text-foreground ' +
+  'placeholder:text-muted-foreground/70 focus:border-foreground focus:outline-none ' +
+  'focus:shadow-[inset_0_0_0_2px_hsl(var(--foreground))]'
 
 export const authSubmitCls =
-  'foil-tile mt-5 w-full rounded-lg py-2.5 text-ui font-semibold disabled:opacity-50'
+  'mt-6 w-full rounded-md bg-foreground py-3 text-ui font-semibold text-background ' +
+  'hover:opacity-90 disabled:opacity-50'
