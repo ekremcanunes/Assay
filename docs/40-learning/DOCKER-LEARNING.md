@@ -148,6 +148,23 @@ healthcheck:
 ```
 Servisin gerçekten hazır olduğunu kontrol eder. `depends_on` ile birlikte kullanılır.
 
+`CMD` vs `CMD-SHELL`: `CMD` komutu doğrudan çalıştırır (dizi olarak yazılır), `CMD-SHELL` ise `/bin/sh -c` içinde çalıştırır — pipe, `&&`, `$VAR` gibi shell özellikleri gerekiyorsa bu gerekir. Compose sadece komutun **çıkış koduna** bakar: `0` → healthy, başka bir şey → unhealthy.
+
+### stop_grace_period — iki ayrı süreölçer sorunu
+
+`docker stop` çalıştığında Docker PID 1'e `SIGTERM` gönderir ve bir kronometre başlatır — varsayılan **10 saniye**. Süre dolunca `SIGKILL` gönderir; bu sinyal yakalanamaz, süreç anında ölür.
+
+Sorun: **.NET'in kendi shutdown timeout'u varsayılan 30 saniye.** Uygulama "30 saniyem var" diye işini bitirmeye çalışırken Docker 10. saniyede öldürür. Sonuç: yarım kalmış istekler, kapanmamış DB bağlantıları, yazılmamış loglar. Exec form (`CMD ["dotnet", ...]`) kullanıp sinyali doğru almak tek başına yetmez — süre de yetmeli.
+
+Hizalama:
+```yaml
+market-service:
+  stop_grace_period: 30s    # Docker da 30 saniye beklesin
+```
+ya da tek seferlik: `docker stop -t 30 <container>`
+
+> Bu projede eklenmedi: servisler kısa HTTP istekleri işliyor (fiyat sorgusu, portföy listesi — milisaniyeler), 10 saniye fazlasıyla yetiyor. Uzun süren bir iş eklenirse (toplu veri işleme, uzun transaction, rapor üretimi) bu ayar gerekir.
+
 ### appsettings Hiyerarşisi (.NET)
 1. `appsettings.json` → default değerler, commit'lenebilir
 2. `appsettings.Development.json` → yerel credentials, gitignore'da
