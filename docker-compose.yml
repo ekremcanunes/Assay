@@ -43,7 +43,7 @@ services:
       - "6379"
 
   market-service:
-    build: ./market-service
+    image: ${ECR_REGISTRY:-local}/assay/market-service:${IMAGE_TAG:-dev}
     logging: *default-logging
     expose:
       - "5002"
@@ -62,7 +62,7 @@ services:
       - kratos
 
   portfolio-service:
-    build: ./portfolio-service
+    image: ${ECR_REGISTRY:-local}/assay/portfolio-service:${IMAGE_TAG:-dev}
     logging: *default-logging
     expose:
       - "5001"
@@ -81,7 +81,7 @@ services:
       - kratos
 
   web:
-    build: ./web
+    image: ${ECR_REGISTRY:-local}/assay/web:${IMAGE_TAG:-dev}
     logging: *default-logging
     ports:
       - "80:80"
