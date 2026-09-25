@@ -27,6 +27,8 @@ services:
     environment:
       DSN: ${KRATOS_DSN}
       LOG_LEVEL: info
+      SECRETS_COOKIE_0: ${KRATOS_SECRETS_COOKIE}
+      SECRETS_CIPHER_0: ${KRATOS_SECRETS_CIPHER}
     volumes:
       - ./kratos:/etc/config/kratos
     depends_on:
