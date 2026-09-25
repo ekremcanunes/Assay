@@ -179,7 +179,9 @@ Gerekçe: sır sızıntısı geri alınamaz, bu yüzden her ortamda kesin durdur
 5. **CodeQL** (C# + JavaScript) PR'larda koşar.
 6. **Trivy image scan + hadolint** — imaj ve Dockerfile denetimi. Servis Dockerfile'larının root ile çalışıp çalışmadığı burada görülecek.
 7. **GitHub↔AWS OIDC** kurulur; statik AWS anahtarı hiç oluşturulmaz.
-8. **Prod sırları AWS Secrets Manager / SSM'e taşınır.**
+8. **Prod sırları AWS Secrets Manager / SSM'e taşınır.** Secret: `assay/prod/env`. Deploy script onu okuyup EC2'de `.env`'e yazar, yani sır sunucu diskinde düz metin durur. Docker env değişkenlerini zaten container config'inde düz metin sakladığı için bu kabul edildi. Yine de:
+   - `.env` dosyası `chmod 600` ile yazılır (yalnızca sahibi okur).
+   - EC2 root volume'unun (EBS) şifreli olduğu doğrulanır (EC2 → Volumes → Encryption). Şifresizse şifreli snapshot'tan yeni volume oluşturulur.
 9. **Action'lar SHA ile sabitlenir**, workflow `permissions:` daraltılır.
 10. **ECR ayarları:** scan-on-push açık, immutable tag, lifecycle policy (eski imajları temizler — depolama maliyeti de kontrol altına alınır).
 
