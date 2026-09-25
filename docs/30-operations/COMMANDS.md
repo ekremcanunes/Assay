@@ -17,7 +17,7 @@ docker compose exec kratos sh      # çalışan container içinde shell aç (exi
 docker compose exec market-service env     # container'ın environment variable'larını gör
 ```
 
-> `docker compose exec <servis>` → compose'daki servis adını kullanır (`postgres`, `kratos`, `redis`, `web`, `portfolio-service`, `market-service`). Container'ın tam adını bilmek gerekmez.
+> `docker compose exec <servis>` → compose'daki servis adını kullanır (`kratos`, `redis`, `web`, `portfolio-service`, `market-service`). Container'ın tam adını bilmek gerekmez.
 
 ## Docker (genel)
 
@@ -31,19 +31,20 @@ docker network inspect assay_default   # hangi container'lar bağlı
 
 # Not: network/volume/container öneki klasör adından değil, docker-compose.yml
 # içindeki "name:" satırından gelir. 2026-09-15'te investment-tracker -> assay
-# olarak değiştirildi; eski volume (investment-tracker_kratos_postgres_data)
-# bilerek taşınmadı, kayıtlı kullanıcılar sıfırlandı.
-docker volume ls                   # volume'lar (kratos_postgres_data burada)
+# olarak değiştirildi.
+docker volume ls                   # volume'lar
 docker system df                   # docker'ın kapladığı disk alanı
 docker logs <container-adı>        # compose dışı container logları
 docker container prune             # sadece durdurulmuş container'ları sil
 docker system prune -a             # kullanılmayan her şeyi temizle (container, image, network, cache)
 ```
 
-## Kratos Postgres (kullanıcı/kimlik verisi)
+## Kratos veritabanı (kullanıcı/kimlik verisi)
+
+Kratos ve portfolio-service **Neon'daki bulut Postgres'e** bağlanır — compose içinde yerel bir `postgres` servisi yoktur (2026-09-25'te ölü kod olarak kaldırıldı). Bağlanmak için Neon konsolundaki SQL Editor kullanılır ya da yerel `psql` ile `.env`'deki `KRATOS_DSN` adresine gidilir:
 
 ```bash
-docker compose exec postgres psql -U kratos -d kratos   # veritabanına bağlan
+psql "$KRATOS_DSN"     # .env'deki Neon adresine bağlan (psql yerelde kurulu olmalı)
 ```
 
 Bağlandıktan sonra psql içinde:
@@ -191,4 +192,4 @@ curl http://localhost:4433/sessions/whoami
 docker compose restart kratos
 ```
 
-> **DİKKAT — geri dönüşü yok:** `docker volume rm assay_kratos_postgres_data` tüm kullanıcı kayıtlarını siler. Son çare.
+> **Not:** Kullanıcı/kimlik verisi Neon'da (bulut) durur, yerel bir volume'da değil — `docker compose down -v` gibi komutlar kullanıcı kayıtlarını silmez.
