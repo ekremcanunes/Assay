@@ -20,7 +20,7 @@ services:
   kratos:
     image: oryd/kratos:v1.2.0
     logging: *default-logging
-    command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
+    command: serve -c /etc/config/kratos/kratos.yml --watch-courier
     expose:
       - "4433"
       - "4434"
@@ -95,6 +95,10 @@ services:
     logging: *default-logging
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./web/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/nginx/certs:ro   # deploy.sh Secrets Manager'dan yazar (Cloudflare Origin sertifikasi)
     depends_on:
       - portfolio-service
       - kratos

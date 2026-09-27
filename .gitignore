@@ -11,6 +11,8 @@ obj/
 
 # Secrets (local overrides with real credentials)
 appsettings.Development.json
+# Prod TLS: deploy.sh Secrets Manager'dan EC2'de yazar
+certs/
 
 # Node
 node_modules/
