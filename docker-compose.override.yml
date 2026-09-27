@@ -12,10 +12,16 @@ services:
       - "5001:5001"
   web:
     build: ./web
+    # Dev duz HTTP: prod'un 443 portu ve sertifika/nginx.prod.conf mount'lari burada tamamen kaldirilir.
+    ports: !override
+      - "80:80"
+    volumes: !override []
   redis:
     ports:
       - "6379:6379"
   kratos:
+    # --dev: HTTP'de guvenli (Secure) cookie zorunlulugunu gevsetir; yalnizca yerelde.
+    command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
     ports:
       - "4433:4433"
       - "4434:4434"

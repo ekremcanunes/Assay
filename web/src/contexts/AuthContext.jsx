@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { KRATOS_URL } from '../lib/app'
 
 const AuthContext = createContext(null)
 
@@ -15,7 +16,7 @@ export function AuthProvider({ children }) {
   const setSession = (data) => setSessionRaw(unwrapSession(data))
 
   useEffect(() => {
-    fetch('http://localhost:4433/sessions/whoami', { credentials: 'include' })
+    fetch(`${KRATOS_URL}/sessions/whoami`, { credentials: 'include' })
       .then(res => res.ok ? res.json() : null)
       .then(data => setSessionRaw(unwrapSession(data)))
       .catch(() => setSessionRaw(null))
@@ -23,7 +24,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   const logout = async () => {
-    const res = await fetch('http://localhost:4433/self-service/logout/browser', { credentials: 'include' })
+    const res = await fetch(`${KRATOS_URL}/self-service/logout/browser`, { credentials: 'include' })
     const { logout_url } = await res.json()
     window.location.href = logout_url
   }
