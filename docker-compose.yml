@@ -29,6 +29,16 @@ services:
       LOG_LEVEL: info
       SECRETS_COOKIE_0: ${KRATOS_SECRETS_COOKIE}
       SECRETS_CIPHER_0: ${KRATOS_SECRETS_CIPHER}
+      # kratos.yml'deki localhost URL'lerini ortama gore ezer (prod: deploy.sh APP_URL verir).
+      SERVE_PUBLIC_BASE_URL: ${APP_URL:-http://localhost}/.ory/
+      SERVE_PUBLIC_CORS_ALLOWED_ORIGINS_0: ${APP_URL:-http://localhost}
+      SELFSERVICE_DEFAULT_BROWSER_RETURN_URL: ${APP_URL:-http://localhost}/
+      SELFSERVICE_ALLOWED_RETURN_URLS_0: ${APP_URL:-http://localhost}
+      SELFSERVICE_FLOWS_ERROR_UI_URL: ${APP_URL:-http://localhost}/error
+      SELFSERVICE_FLOWS_SETTINGS_UI_URL: ${APP_URL:-http://localhost}/settings
+      SELFSERVICE_FLOWS_LOGOUT_AFTER_DEFAULT_BROWSER_RETURN_URL: ${APP_URL:-http://localhost}/login
+      SELFSERVICE_FLOWS_LOGIN_UI_URL: ${APP_URL:-http://localhost}/login
+      SELFSERVICE_FLOWS_REGISTRATION_UI_URL: ${APP_URL:-http://localhost}/register
     volumes:
       - ./kratos:/etc/config/kratos
     depends_on:

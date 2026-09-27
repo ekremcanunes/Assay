@@ -2,7 +2,7 @@ version: v1.2.0
 
 serve:
   public:
-    base_url: http://localhost:4433/
+    base_url: http://localhost/.ory/   # tarayıcı Kratos'a nginx/vite /.ory proxy'si üzerinden ulaşır
     cors:
       enabled: true
       allowed_origins:

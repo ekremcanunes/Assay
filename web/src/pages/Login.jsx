@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { isValidEmail, kratosErrorText } from '../lib/authErrors'
 import { authLabelCls, authInputCls, authSubmitCls } from '../lib/authStyles'
-import { APP_NAME } from '../lib/app'
+import { APP_NAME, KRATOS_URL } from '../lib/app'
 import assayMark from '../assets/assay-mark.svg'
 import { Eye, EyeOff } from 'lucide-react'
 import AuthVisual from '../components/AuthVisual'
@@ -25,14 +25,14 @@ export default function Login() {
   useEffect(() => {
     const flowId = searchParams.get('flow')
     if (flowId) {
-      fetch(`http://localhost:4433/self-service/login/flows?id=${flowId}`, {
+      fetch(`${KRATOS_URL}/self-service/login/flows?id=${flowId}`, {
         credentials: 'include',
         headers: { Accept: 'application/json' },
       })
         .then((res) => res.json())
         .then(setFlow)
     } else {
-      window.location.href = 'http://localhost:4433/self-service/login/browser'
+      window.location.href = `${KRATOS_URL}/self-service/login/browser`
     }
   }, [searchParams])
 
@@ -53,7 +53,7 @@ export default function Login() {
     setLoading(true)
     const csrfToken = flow?.ui?.nodes?.find((n) => n.attributes?.name === 'csrf_token')?.attributes?.value
     try {
-      const res = await fetch(`http://localhost:4433/self-service/login?flow=${flow.id}`, {
+      const res = await fetch(`${KRATOS_URL}/self-service/login?flow=${flow.id}`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
