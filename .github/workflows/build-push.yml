@@ -7,6 +7,7 @@ on:
 env:
   AWS_REGION: eu-central-1 #Frankfurt
   ECR_REGISTRY: 495890796058.dkr.ecr.eu-central-1.amazonaws.com
+  RELEASE_BUCKET: assay-pipeline-source
 
 permissions:
   id-token: write      # OIDC jetonu istemek icin ZORUNLU
@@ -46,3 +47,26 @@ jobs:
           docker build -t "$IMAGE" "${{ matrix.context }}"
           docker push "$IMAGE"
           echo "Pushed: $IMAGE"
+
+  # Uc imaj da ECR'a cikinca surumu (SHA + run.sh) S3'e birakir; CodePipeline buradan baslar.
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5
+        with:
+          role-to-assume: arn:aws:iam::495890796058:role/GitHubActionsDeployRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Upload release bundle
+        run: |
+          mkdir bundle
+          cp deploy/scripts/run.sh bundle/
+          echo "IMAGE_TAG=${GITHUB_SHA}" > bundle/release.env
+          (cd bundle && zip -q ../release.zip run.sh release.env)
+          aws s3 cp release.zip "s3://${RELEASE_BUCKET}/release.zip"
+          echo "Release: ${GITHUB_SHA}"
