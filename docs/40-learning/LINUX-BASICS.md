@@ -24,6 +24,29 @@ dotnet run 2> err.txt      # sadece stderr dosyaya
 
 **Neden önemli:** `LOGGING.md`'nin temel kuralı ("servis stdout'a yazar, nereye gideceğine platform karar verir") bu prensibe dayanır. Uygulama kodu stdout'un ucunda ne olduğunu bilmez/bilmemeli — bu, EC2→ECS→EKS geçişlerinde kod değişmeden platformun log hedefini değiştirebilmesini sağlar.
 
+## Shell builtin'leri ve `sudo cd` neden çalışmaz
+
+```
+$ sudo cd /opt
+sudo: 'cd': command not found
+```
+
+**Shell** (bash, sh) terminalde çalışan programdır ve "şu an hangi klasördeyim" bilgisini **kendi içinde** tutar. `cd` bu bilgiyi değiştirir, bu yüzden ayrı bir program olamaz: ayrı bir program kendi klasörünü değiştirir, bitince bu değişiklik kaybolur ve shell etkilenmez. Bu nedenle `cd` shell'in içine gömülü bir komuttur (**builtin**).
+
+`sudo` ise **ayrı bir program** başlatıp onu başka bir kullanıcıyla (root) çalıştırır. `sudo cd` dediğinde `cd` adında bir program dosyası aranır; böyle bir dosya olmadığı için hata alınır.
+
+> Benzetme: `cd`, **senin** başka bir odaya yürümen. `sudo` ise "bu işi yetkili birine yaptır" demek. Yetkili kişi başka odaya yürüse bile sen hâlâ aynı odadasın.
+
+| İstek | Doğrusu |
+|---|---|
+| Bir klasöre girmek | `cd /opt` (klasör okunabiliyorsa `sudo` gerekmez) |
+| Root yetkisi gereken bir klasörde çalışmak | `sudo -i` → root shell açılır, orada `cd` kullanılır |
+| Root yetkisiyle tek bir komut çalıştırmak | `sudo ls /root`, `sudo git -C /opt/assay pull` (`-C`: "bu klasördeymiş gibi çalış") |
+
+Diğer builtin'lere örnek: `export`, `source`, `alias`, `exit`. Bir komutun builtin mi program mı olduğunu `type <komut>` gösterir (`type cd` → "cd is a shell builtin", `type ls` → "ls is /usr/bin/ls").
+
+**Session Manager notu:** AWS Session Manager varsayılan olarak `sh` açar (`$` işareti). Ok tuşlarıyla komut geçmişi ve Tab ile tamamlama için `bash` yazıp bash'e geçilir.
+
 ## journalctl
 
 systemd'nin merkezi log okuyucusu. Sistemin **tüm** loglarını (kernel, systemd servisleri, boot süreci) tek yerden gösterir.
