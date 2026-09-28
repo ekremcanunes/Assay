@@ -16,9 +16,14 @@ main() {
 
   cd "$APP_DIR"
 
-  # Compose ve kratos/ config'i, imajla ayni commit'ten gelsin.
-  git fetch --quiet origin main-prod
-  git checkout --quiet --detach "$IMAGE_TAG"
+  # Compose ve kratos/ config'i, imajla ayni commit'ten gelsin. Checkout bu dosyanin kendisini
+  # de degistirir; bellekteki ESKI surum devam etmesin diye diskteki YENI surumle bastan basla.
+  # DEPLOY_REEXEC: yeni surum checkout'u tekrar yapip sonsuz donguye girmesin (adi sabit kalmali).
+  if [[ "${DEPLOY_REEXEC:-}" != "$IMAGE_TAG" ]]; then
+    git fetch --quiet origin main-prod
+    git checkout --quiet --detach "$IMAGE_TAG"
+    DEPLOY_REEXEC="$IMAGE_TAG" exec "$APP_DIR/deploy/scripts/deploy.sh"
+  fi
 
   # umask 077: .env ilk andan itibaren yalnizca sahibi tarafindan okunabilir (600).
   # Degerler tek tirnakla yazilir -> compose icerideki $ karakterini degisken sanmaz.
