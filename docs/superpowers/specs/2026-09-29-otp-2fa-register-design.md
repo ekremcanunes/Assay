@@ -38,15 +38,18 @@ Hedef:
 5. `require_verified_address` hook'u **en az bir** doğrulanmış adres arar, hepsini değil.
 6. SMS HTTP kanalına giden Jsonnet `ctx`: `recipient`, `body`, `template_type`, `template_data`.
 7. `courier.templates.{login_code,verification_code}.valid.sms` ile SMS metni özelleştirilebilir.
+8. Şemada `credentials.code.via: "sms"` **desteklenmez** (`identity/extension_credentials.go`'da yorum satırı; şema doğrulaması hata verir). Gerek de yok: 2FA kodu `verifiable_addresses` üzerinden gider, oturum `code` yöntemi `mfa_enabled` iken AAL2 sayılır. Bu yüzden `code` işareti hiçbir trait'e konmaz.
+9. `verification.via: sms` olan alanda `format` zorunlu (`tel`).
+10. `required_aal: aal2` iken JSON şifre girişi 422 `browser_location_change_required` döner. Oturum çerezi (AAL1) verilir ama yanıtta identity **yoktur** (oltalamaya karşı). AAL2 akışı `Accept: application/json` ile AJAX olarak başlatılabilir; sayfa yönlendirmesi gerekmez.
 
 ## 4. Kimlik şeması — `kratos/identity.schema.json`
 
-| Trait | Kural | Şifre tanımlayıcısı | `code` (2FA) | Doğrulama |
-|---|---|---|---|---|
-| `email` | `format: email`, zorunlu | ✅ | `via: email` | `via: email` |
-| `phone` | `^\+905[0-9]{9}$`, zorunlu | ✅ | `via: sms` | `via: sms` |
-| `name.first`, `name.last` | string, 1–50 karakter, zorunlu | | | |
-| `consent` | `boolean`, `const: true`, zorunlu | | | |
+| Trait | Kural | Şifre tanımlayıcısı | Doğrulama (= 2FA kanalı, §3.8) |
+|---|---|---|---|
+| `email` | `format: email`, zorunlu | ✅ | `via: email` |
+| `phone` | `format: tel`, `^\+905[0-9]{9}$`, zorunlu | ✅ | `via: sms` |
+| `name.first`, `name.last` | string, 1–50 karakter, zorunlu | | |
+| `consent` | `boolean`, `const: true`, zorunlu | | |
 
 Telefon TR cep ile sınırlı; VatanSMS paketi yurt içi.
 
@@ -77,10 +80,10 @@ Yeni dosyalar: `kratos/sms-body.jsonnet` (`{ to: ctx.recipient, message: ctx.bod
 3. Bitince "Hesabın hazır" mesajıyla `/login`'e yönlendirilir.
 
 **Giriş — `/login`** ([Login.jsx](../../../web/src/pages/Login.jsx), iki adım)
-1. **Adım 1:** "Telefon veya e-posta" + şifre. Telefon biçimindeyse normalize edilir. Yanıttaki oturumun `identity`'si bellekte tutulur.
-2. **Adım 2:** "Kodu nereye gönderelim?" → [SMS: maskeli numara] [E-posta: maskeli adres]. Telefon doğrulanmamışsa yalnızca SMS gösterilir (§3.3).
-3. Seçimle `/self-service/login/browser?aal=aal2&via=phone|email` açılır. `identifier` bellekteki tam adresle doldurulur. Sayfa yenilenip adres kaybolursa kullanıcıdan Kratos'un maskeli ipucuyla adresini yazması istenir.
-4. Kod girilir → AAL2 oturum → `/overview`.
+1. **Adım 1:** "Telefon veya e-posta" + şifre. Telefon biçimindeyse normalize edilir. Yanıt 422 `browser_location_change_required` ise adım 2'ye geçilir; 200 ise (2FA kapalı) doğrudan `/overview`.
+2. **Adım 2:** "Kodu nereye gönderelim?" → [SMS] [E-posta]. Yanıtta identity olmadığı için (§3.10) hangi adresin doğrulanmamış olduğu burada bilinmez; iki seçenek de gösterilir.
+3. Seçimle `/self-service/login/browser?aal=aal2&via=phone|email` AJAX ile açılır. Seçilen kanal adım 1'de yazılanla aynı türdeyse `identifier` otomatik doldurulur ve kod hemen istenir. Değilse kullanıcı, Kratos'un maskeli ipucuyla (`al•••@ornek.com`) o adresi yazar.
+4. Kod girilir → AAL2 oturum → `/overview`. Telefon doğrulanmamış kullanıcı e-postayı seçtiyse backend 403 `verification_required` döner ve kullanıcı `/verification`'a gider; orada "SMS ile doğrula" ile telefonu doğrular.
 
 **Oturum durumu** ([AuthContext.jsx](../../../web/src/contexts/AuthContext.jsx), [ProtectedRoute.jsx](../../../web/src/components/ProtectedRoute.jsx))
 Frontend açma/kapama anahtarlarını bilmez; yalnızca Kratos ve backend yanıtlarına göre davranır:
@@ -98,8 +101,8 @@ Yeni hata metinleri [authErrors.js](../../../web/src/lib/authErrors.js)'e, yeni 
   - Sonuç > `Sms:DailyLimit` → **429**, gönderim yok.
   - Sağlayıcı hatası → sayaç 1 geri alınır, **502**. Kratos courier yeniden dener.
 - **Gönderici (`ISmsSender`)**, `Sms:Mode` ile seçilir:
-  - `Mailpit` (dev): SMS, Mailpit'e e-posta olarak gider. Konu: `SMS → +90532•••4567`, gövde: SMS metni.
-  - `VatanSms` (prod): JSON → VatanSMS XML API. Ayrıntılar plan aşamasında VatanSMS dokümanından alınır.
+  - `Mailpit` (dev): SMS, Mailpit'e e-posta olarak gider. Konu: `SMS → +905321234567`, gövde: SMS metni. Mailpit bir log değil, yerel bir test arayüzü; numara tam gösterilir.
+  - `VatanSms` (prod): vatansms.com SOAP servisi (`https://panel.vatansms.com/webservis/service.php`, işlem `TekSmsiBirdenCokNumarayaGonder`). Numara `5XXXXXXXXX` biçiminde, `tip=Turkce`, `ticari=0` (OTP ticari ileti değil).
 - **Loglama** ([LOGGING.md](../../10-standards/LOGGING.md)): "SMS gönderildi {TemplateType}" (Information), "Günlük SMS tavanı doldu {Limit}" (Warning), sağlayıcı hatası (Error). Numara ve kod **loglanmaz**.
 
 ## 8. E-posta
@@ -166,6 +169,5 @@ Komutlar [COMMANDS.md](../../30-operations/COMMANDS.md)'ye eklenir.
 
 ## 14. Plan aşamasında netleşecekler
 
-- VatanSMS API: uç nokta, kimlik doğrulama, XML gövdesi, başarı/hata yanıtı.
-- Şifre ile giriş yanıtının `required_aal: aal2` altındaki tam şekli (oturum + identity dönüyor mu).
+- VatanSMS SOAP `return` değerinin başarı/hata biçimi (ilk gerçek gönderimde).
 - Kratos courier env override biçimi (§10) ve `SESSION_WHOAMI_REQUIRED_AAL` / `SELFSERVICE_FLOWS_VERIFICATION_ENABLED` env adlarının v1.2.0'da çalıştığı (§10.1).
