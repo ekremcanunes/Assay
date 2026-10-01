@@ -1,4 +1,5 @@
-#!/usr/bin/env bash ---> env'e bak bash nerede kuruluysa o dizinden çağırır.(Alternatif bash deploy.sh demek)
+#!/usr/bin/env bash
+# Shebang: env'e bak, bash nerede kuruluysa o dizinden çağırır. (Alternatif: bash deploy.sh demek)
 # Prod EC2'de calisir. Kullanim: IMAGE_TAG=<git-sha> ./deploy/scripts/deploy.sh
 set -euo pipefail #-e=errexit, -u=nounset, -o pipefail / Amaç: Hatalar aninda yakalansin, tanimsiz degiskenler kullanilmasin, pipe'larda hata olursa script durdurulsun.
 # Govde main() icinde: bash fonksiyonu calistirmadan once tamamini okur, boylece
