@@ -41,10 +41,10 @@ Otomatik test olmadığı için her satır, sahibi olan görevde **elle kontrol 
 
 **Files:**
 - Create: `portfolio-service/Models/SmsDailyUsage.cs`
-- Create: `portfolio-service/Sms/SmsOptions.cs`
-- Create: `portfolio-service/Sms/ISmsSender.cs`
-- Create: `portfolio-service/Sms/MailpitSmsSender.cs`
-- Create: `portfolio-service/Sms/SmsUsageCounter.cs`
+- Create: `portfolio-service/Services/SmsOptions.cs`
+- Create: `portfolio-service/Services/ISmsSender.cs`
+- Create: `portfolio-service/Services/MailpitSmsSender.cs`
+- Create: `portfolio-service/Services/SmsUsageCounter.cs`
 - Create: `portfolio-service/DTOs/SmsRelayRequest.cs`
 - Create: `portfolio-service/Controllers/SmsRelayController.cs`
 - Create: `portfolio-service/Migrations/<zaman>_AddSmsDailyUsage.cs` (EF üretir)
@@ -91,9 +91,9 @@ Beklenen: `Migrations/` altında `CreateTable("SmsDailyUsage", …)` içeren yen
 
 - [ ] **Adım 3: Ayarlar, gönderici arayüzü, Mailpit gönderici**
 
-`portfolio-service/Sms/SmsOptions.cs`:
+`portfolio-service/Services/SmsOptions.cs`:
 ```csharp
-namespace portfolio_service.Sms;
+namespace portfolio_service.Services;
 
 public class SmsOptions
 {
@@ -104,9 +104,9 @@ public class SmsOptions
 }
 ```
 
-`portfolio-service/Sms/ISmsSender.cs`:
+`portfolio-service/Services/ISmsSender.cs`:
 ```csharp
-namespace portfolio_service.Sms;
+namespace portfolio_service.Services;
 
 // Gönderim başarısızsa exception fırlatır; relay sayacı geri alıp 502 döner.
 public interface ISmsSender
@@ -115,12 +115,12 @@ public interface ISmsSender
 }
 ```
 
-`portfolio-service/Sms/MailpitSmsSender.cs`:
+`portfolio-service/Services/MailpitSmsSender.cs`:
 ```csharp
 using System.Net.Mail;
 using Microsoft.Extensions.Options;
 
-namespace portfolio_service.Sms;
+namespace portfolio_service.Services;
 
 // Dev: SMS'i gerçekten göndermez, Mailpit'e e-posta olarak düşürür (localhost:8025).
 public class MailpitSmsSender(IOptions<SmsOptions> options) : ISmsSender
@@ -137,12 +137,12 @@ public class MailpitSmsSender(IOptions<SmsOptions> options) : ISmsSender
 
 - [ ] **Adım 4: Sayaç**
 
-`portfolio-service/Sms/SmsUsageCounter.cs`:
+`portfolio-service/Services/SmsUsageCounter.cs`:
 ```csharp
 using Microsoft.EntityFrameworkCore;
 using portfolio_service.Data;
 
-namespace portfolio_service.Sms;
+namespace portfolio_service.Services;
 
 public class SmsUsageCounter(AppDbContext db)
 {
@@ -184,7 +184,7 @@ using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using portfolio_service.DTOs;
-using portfolio_service.Sms;
+using portfolio_service.Services;
 
 namespace portfolio_service.Controllers;
 
@@ -237,7 +237,7 @@ builder.Services.Configure<SmsOptions>(builder.Configuration.GetSection("Sms"));
 builder.Services.AddScoped<SmsUsageCounter>();
 builder.Services.AddSingleton<ISmsSender, MailpitSmsSender>();
 ```
-ve üstte `using portfolio_service.Sms;`.
+(`Program.cs` zaten `using portfolio_service.Services;` içeriyor, ek `using` gerekmez.)
 
 `portfolio-service/Middleware/KratosMiddleware.cs` → `InvokeAsync`'in ilk satırı olarak:
 ```csharp
@@ -1411,8 +1411,8 @@ git commit -m "feat(web): iki adimli giris (sifre + SMS/e-posta OTP)"
 ### Görev 6: VatanSMS gönderici ve prod yapılandırması
 
 **Files:**
-- Create: `portfolio-service/Sms/VatanSmsOptions.cs`
-- Create: `portfolio-service/Sms/VatanSmsSender.cs`
+- Create: `portfolio-service/Services/VatanSmsOptions.cs`
+- Create: `portfolio-service/Services/VatanSmsSender.cs`
 - Modify: `portfolio-service/Program.cs`
 - Modify: `docker-compose.yml`, `.env.example`
 
@@ -1439,9 +1439,9 @@ Bir kez de yanlış şifreyle gönder. Başarılı `return` değerinin **pozitif
 
 - [ ] **Adım 2: Gönderici**
 
-`portfolio-service/Sms/VatanSmsOptions.cs`:
+`portfolio-service/Services/VatanSmsOptions.cs`:
 ```csharp
-namespace portfolio_service.Sms;
+namespace portfolio_service.Services;
 
 public class VatanSmsOptions
 {
@@ -1452,13 +1452,13 @@ public class VatanSmsOptions
 }
 ```
 
-`portfolio-service/Sms/VatanSmsSender.cs`:
+`portfolio-service/Services/VatanSmsSender.cs`:
 ```csharp
 using System.Text;
 using System.Xml.Linq;
 using Microsoft.Extensions.Options;
 
-namespace portfolio_service.Sms;
+namespace portfolio_service.Services;
 
 // Prod: vatansms.com SOAP servisi, TekSmsiBirdenCokNumarayaGonder (WSDL: panel.vatansms.com/webservis/service.php?wsdl).
 public class VatanSmsSender(HttpClient http, IOptions<VatanSmsOptions> options) : ISmsSender
