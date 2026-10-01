@@ -32,7 +32,7 @@ export default function Register() {
         .then((res) => res.json())
         .then(setFlow)
     } else {
-      window.location.href = `${KRATOS_URL}/self-service/registration/browser`
+      window.location.replace(`${KRATOS_URL}/self-service/registration/browser`)
     }
   }, [searchParams])
 
@@ -135,7 +135,7 @@ export default function Register() {
 
         <p className="mt-5 text-ui text-muted-foreground">
           {t('auth.alreadyHaveAccount')}{' '}
-          <Link to="/login" className="font-semibold text-foreground underline underline-offset-4 hover:opacity-70">{t('auth.signIn')}</Link>
+          <Link to="/login" reloadDocument className="font-semibold text-foreground underline underline-offset-4 hover:opacity-70">{t('auth.signIn')}</Link>
         </p>
 
         <p className="mt-4 border-t border-border pt-4">

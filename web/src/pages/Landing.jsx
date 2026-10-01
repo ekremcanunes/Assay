@@ -270,10 +270,10 @@ export default function Landing() {
             ))}
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/login" className="hidden text-ui font-semibold text-foreground hover:underline hover:underline-offset-4 sm:block">
+            <Link to="/login" reloadDocument className="hidden text-ui font-semibold text-foreground hover:underline hover:underline-offset-4 sm:block">
               Giriş yap
             </Link>
-            <Link to="/register" className="rounded-md bg-foreground px-4 py-2.5 text-ui font-semibold text-background hover:opacity-90">
+            <Link to="/register" reloadDocument className="rounded-md bg-foreground px-4 py-2.5 text-ui font-semibold text-background hover:opacity-90">
               Kayıt ol
             </Link>
             <button
@@ -307,6 +307,7 @@ export default function Landing() {
             ))}
             <Link
               to="/login"
+              reloadDocument
               onClick={() => setMenuOpen(false)}
               className="block border-t border-border py-3.5 text-body font-medium text-foreground sm:hidden"
             >
@@ -331,7 +332,7 @@ export default function Landing() {
                 kimlik doğrulama ve CI/CD&apos;yi oyuncak örnek üzerinde değil, her gün kullandığım bir uygulamada denemek.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <Link to="/register" className="rounded-md bg-foreground px-5 py-3.5 text-center text-ui font-semibold text-background hover:opacity-90 sm:py-3">
+                <Link to="/register" reloadDocument className="rounded-md bg-foreground px-5 py-3.5 text-center text-ui font-semibold text-background hover:opacity-90 sm:py-3">
                   Panele geç
                 </Link>
                 <a href="#akis" className="rounded-md border border-input px-5 py-3.5 text-center text-ui font-semibold text-foreground hover:border-foreground sm:py-3">
@@ -601,10 +602,10 @@ services:
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Link to="/register" className="rounded-md bg-foreground px-5 py-3.5 text-center text-ui font-semibold text-background hover:opacity-90 sm:py-3">
+              <Link to="/register" reloadDocument className="rounded-md bg-foreground px-5 py-3.5 text-center text-ui font-semibold text-background hover:opacity-90 sm:py-3">
                 Kayıt ol
               </Link>
-              <Link to="/login" className="rounded-md border border-input px-5 py-3.5 text-center text-ui font-semibold text-foreground hover:border-foreground sm:py-3">
+              <Link to="/login" reloadDocument className="rounded-md border border-input px-5 py-3.5 text-center text-ui font-semibold text-foreground hover:border-foreground sm:py-3">
                 Giriş yap
               </Link>
             </div>
@@ -646,10 +647,10 @@ services:
               standartlar ve öğrenme notları olarak duruyor.
             </p>
             <div className="mt-7 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-              <Link to="/register" className="w-full rounded-md bg-foreground px-5 py-3.5 text-center text-ui font-semibold text-background hover:opacity-90 sm:w-auto sm:py-3">
+              <Link to="/register" reloadDocument className="w-full rounded-md bg-foreground px-5 py-3.5 text-center text-ui font-semibold text-background hover:opacity-90 sm:w-auto sm:py-3">
                 Kayıt ol
               </Link>
-              <Link to="/login" className="text-ui font-semibold text-white underline underline-offset-4">
+              <Link to="/login" reloadDocument className="text-ui font-semibold text-white underline underline-offset-4">
                 Zaten hesabın var mı? Giriş yap
               </Link>
             </div>

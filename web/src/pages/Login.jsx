@@ -32,7 +32,7 @@ export default function Login() {
         .then((res) => res.json())
         .then(setFlow)
     } else {
-      window.location.href = `${KRATOS_URL}/self-service/login/browser`
+      window.location.replace(`${KRATOS_URL}/self-service/login/browser`)
     }
   }, [searchParams])
 
@@ -134,7 +134,7 @@ export default function Login() {
 
         <p className="mt-5 text-ui text-muted-foreground">
           {t('auth.noAccount')}{' '}
-          <Link to="/register" className="font-semibold text-foreground underline underline-offset-4 hover:opacity-70">{t('auth.createOne')}</Link>
+          <Link to="/register" reloadDocument className="font-semibold text-foreground underline underline-offset-4 hover:opacity-70">{t('auth.createOne')}</Link>
         </p>
 
         <p className="mt-4 border-t border-border pt-4">
