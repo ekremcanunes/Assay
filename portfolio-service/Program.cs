@@ -40,6 +40,9 @@ builder.Services.AddHttpClient("Kratos");
 
 builder.Services.AddScoped<IAssetService, AssetService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.Configure<SmsOptions>(builder.Configuration.GetSection("Sms"));
+builder.Services.AddScoped<SmsUsageCounter>();
+builder.Services.AddSingleton<ISmsSender, MailpitSmsSender>();
 
 builder.Services.AddCors(options =>
 {

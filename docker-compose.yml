@@ -86,6 +86,9 @@ services:
       - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
       - ServiceUrls__MarketService=http://market-service:5002
       - Kratos__BaseUrl=http://kratos:4433
+      - Sms__Mode=${SMS_MODE:-Mailpit}
+      - Sms__DailyLimit=${SMS_DAILY_LIMIT:-16}
+      - Sms__RelayApiKey=${SMS_RELAY_API_KEY}
     depends_on:
       - market-service
       - kratos

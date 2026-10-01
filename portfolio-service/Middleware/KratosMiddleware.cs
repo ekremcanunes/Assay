@@ -6,6 +6,13 @@ public class KratosMiddleware(RequestDelegate next, IHttpClientFactory httpClien
 {
     public async Task InvokeAsync(HttpContext context)
     {
+        // /internal/*: Kratos'un sunucudan sunucuya çağrıları (SMS relay). Kullanıcı oturumu yok; API anahtarıyla korunur.
+        if (context.Request.Path.StartsWithSegments("/internal"))
+        {
+            await next(context);
+            return;
+        }
+
         var kratosUrl = configuration["Kratos:BaseUrl"] ?? "http://kratos:4433";
         var client = httpClientFactory.CreateClient("Kratos");
 
