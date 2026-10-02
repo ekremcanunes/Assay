@@ -1,5 +1,7 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using portfolio_service.Data;
 using portfolio_service.Middleware;
 using portfolio_service.Services;
@@ -41,8 +43,9 @@ builder.Services.AddHttpClient("Kratos");
 builder.Services.AddScoped<IAssetService, AssetService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.Configure<SmsOptions>(builder.Configuration.GetSection("Sms"));
+builder.Services.Configure<AuthOptions>(builder.Configuration.GetSection("Auth"));
 builder.Services.AddScoped<SmsUsageCounter>();
-builder.Services.AddSingleton<ISmsSender, MailpitSmsSender>();
+builder.Services.AddHttpClient<ISmsSender, HttpSmsSender>(client => client.Timeout = TimeSpan.FromSeconds(10));
 
 builder.Services.AddCors(options =>
 {
@@ -62,6 +65,26 @@ if (builder.Environment.IsDevelopment())
 builder.WebHost.UseUrls(builder.Configuration["ASPNETCORE_URLS"] ?? "http://0.0.0.0:5001");
 
 var app = builder.Build();
+
+// SMS / 2FA yapılandırma kontrolü. Yalnızca bozuk şablon servisi durdurur (yazım hatası);
+// eksik/kapalı ayarlar loglanır, e-postayla giriş çalışmaya devam eder.
+var smsOptions = app.Services.GetRequiredService<IOptions<SmsOptions>>().Value;
+var authOptions = app.Services.GetRequiredService<IOptions<AuthOptions>>().Value;
+if (smsOptions.Enabled && !smsOptions.IsAvailable)
+    app.Logger.LogError("SMS açık ama SMS_URL boş; SMS kanalı kapalı sayılıyor");
+if (smsOptions.IsAvailable)
+{
+    try
+    {
+        JsonDocument.Parse(HttpSmsSender.RenderBody(smsOptions.BodyTemplate, "+905000000000", "test", smsOptions.Sender)).Dispose();
+    }
+    catch (JsonException ex)
+    {
+        throw new InvalidOperationException("SMS_BODY_TEMPLATE geçerli bir JSON şablonu değil", ex);
+    }
+}
+if (authOptions.IsMisconfigured(smsOptions))
+    app.Logger.LogError("{Message}", AuthOptions.MisconfiguredMessage);
 
 using (var scope = app.Services.CreateScope())
 {

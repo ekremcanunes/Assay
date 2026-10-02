@@ -22,6 +22,11 @@ selfservice:
   methods:
     password:
       enabled: true
+    code:                               # OTP yalnızca 2. faktör; şifresiz giriş kapalı (ikisi aynı anda açılamaz)
+      mfa_enabled: true
+      passwordless_enabled: false
+      config:
+        lifespan: 10m                   # kod geçerlilik süresi
 
   flows:
     error:
@@ -38,15 +43,18 @@ selfservice:
     registration:
       lifespan: 10m                     # kayıt formu doldurmak için max süre
       ui_url: http://localhost/register
-      after:
-        password:
-          hooks:
-            - hook: session             # kayıt sonrası otomatik login
+    verification:
+      enabled: true                     # AUTH_VERIFICATION_ENABLED ezer
+      use: code
+      ui_url: http://localhost/verification
+      lifespan: 15m
 
 session:
   lifespan: 8h                          # session süresi — 8 saat
   cookie:
     persistent: false                   # tarayıcı kapanınca cookie silinsin
+  whoami:
+    required_aal: aal2                  # her girişte 2FA; AUTH_REQUIRED_AAL ezer
 
 log:
   level: info
@@ -75,4 +83,40 @@ identity:
 
 courier:
   smtp:
-    connection_uri: smtps://test:test@mailslurper:1025/?skip_ssl_verify=true
+    connection_uri: smtp://mailpit:1025/?disable_starttls=true   # COURIER_SMTP_CONNECTION_URI ezer
+    from_address: no-reply@assay.com.tr                          # COURIER_SMTP_FROM_ADDRESS ezer
+    from_name: Assay
+  channels:
+    - id: sms
+      type: http
+      request_config:
+        url: http://portfolio-service:5001/internal/sms
+        method: POST
+        body: file:///etc/config/kratos/sms-body.jsonnet
+        auth:
+          type: api_key
+          config:
+            name: X-Api-Key
+            value: PLEASE-CHANGE-ME                              # COURIER_CHANNELS_0_REQUEST_CONFIG_AUTH_CONFIG_VALUE ezer
+            in: header
+  templates:
+    login_code:
+      valid:
+        email:
+          subject: file:///etc/config/kratos/templates/login_code/valid/email.subject.gotmpl
+          body:
+            html: file:///etc/config/kratos/templates/login_code/valid/email.body.gotmpl
+            plaintext: file:///etc/config/kratos/templates/login_code/valid/email.body.plaintext.gotmpl
+        sms:
+          body:
+            plaintext: file:///etc/config/kratos/templates/login_code/valid/sms.body.gotmpl
+    verification_code:
+      valid:
+        email:
+          subject: file:///etc/config/kratos/templates/verification_code/valid/email.subject.gotmpl
+          body:
+            html: file:///etc/config/kratos/templates/verification_code/valid/email.body.gotmpl
+            plaintext: file:///etc/config/kratos/templates/verification_code/valid/email.body.plaintext.gotmpl
+        sms:
+          body:
+            plaintext: file:///etc/config/kratos/templates/verification_code/valid/sms.body.gotmpl

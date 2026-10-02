@@ -116,8 +116,8 @@ Servis açılırken. Hiçbir durum servisi düşürmez, bozuk şablon hariç:
 | Durum | Davranış |
 |---|---|
 | `Sms:Enabled=true`, `Sms:Url` boş | Error log: "SMS açık ama SMS_URL boş; SMS kanalı kapalı sayılıyor". Servis açılır. |
-| `Sms:Enabled=true`, şablon geçerli JSON değil | `InvalidOperationException`, servis açılmaz. Şablon örnek değerlerle doldurulup `JsonDocument.Parse` edilir. Yazım hatasıdır, bilinçli kapatma değildir. |
-| `Sms:Enabled=false` | Şablon ve URL kontrol edilmez. |
+| SMS kanalı kullanılabilir (`Enabled` ve `Url` dolu), şablon geçerli JSON değil | `InvalidOperationException`, servis açılmaz. Şablon örnek değerlerle doldurulup `JsonDocument.Parse` edilir. Yazım hatasıdır, bilinçli kapatma değildir. |
+| SMS kanalı kullanılamaz (`Enabled=false` ya da `Url` boş) | Şablon kontrol edilmez: SMS'i henüz yapılandırmamış ortam açılabilmeli. |
 | 2FA zorunlu, iki kanal da kapalı | Error log (§4.5'teki mesaj). Servis açılır. |
 
 ### 4.4 Relay değişikliği ve kaldırılanlar
