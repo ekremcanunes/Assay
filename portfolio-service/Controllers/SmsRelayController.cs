@@ -24,6 +24,13 @@ public class SmsRelayController(
         if (expected.Length == 0 || !CryptographicOperations.FixedTimeEquals(expected, given))
             return Unauthorized();
 
+        // SMS_ENABLED=false ya da SMS_URL boş: sayaç artırılmadan reddedilir.
+        if (!options.Value.IsAvailable)
+        {
+            logger.LogWarning("SMS kanalı kapalı, istek reddedildi {TemplateType}", req.Type);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable);
+        }
+
         var count = await counter.IncrementAsync(ct);
         if (count > options.Value.DailyLimit)
         {

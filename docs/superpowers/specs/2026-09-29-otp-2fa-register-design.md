@@ -124,9 +124,10 @@ Yeni hata metinleri [authErrors.js](../../../web/src/lib/authErrors.js)'e, yeni 
 | SMS kanalı API anahtarı (Kratos tarafı) | Kratos | `.env` | Secrets Manager |
 | `Sms__RelayApiKey` | portfolio-service | `.env` | Secrets Manager |
 | `Sms__DailyLimit` | portfolio-service | 16 | 16 |
-| `Sms__Mode` | portfolio-service | `Mailpit` | `VatanSms` |
-| `Sms__MailpitSmtp` | portfolio-service | `mailpit:1025` | — |
-| `VatanSms__*` (kullanıcı, şifre/anahtar, başlık) | portfolio-service | — | Secrets Manager |
+| `Sms__Enabled`, `Sms__Url`, `Sms__Sender`, `Sms__AuthHeader`, `Sms__AuthValue`, `Sms__BodyTemplate` | portfolio-service | Mailpit HTTP API | Seçilen REST sağlayıcı, Secrets Manager |
+| `Auth__RequiredAal`, `Auth__EmailOtpEnabled` | portfolio-service (`/api/auth/options`) | `.env` | Secrets Manager |
+
+> **2026-10-02:** Sağlayıcıya özel gönderici (VatanSMS/SOAP) yerine generic REST gönderici geldi; ayrıntı [generic SMS spec](2026-10-02-generic-sms-sender-design.md).
 
 Kratos'ta dizi içindeki ayarın env ile ezilme biçimi (`COURIER_CHANNELS_0_…`) plan aşamasında doğrulanır. Olmazsa kanal ayarı bütünüyle env'den verilir.
 
@@ -143,6 +144,8 @@ Prosedür [COMMANDS.md](../../30-operations/COMMANDS.md)'ye "2FA / doğrulama na
 |---|---|---|---|
 | `AUTH_REQUIRED_AAL` | `aal2` | `aal1` | Kratos `SESSION_WHOAMI_REQUIRED_AAL` |
 | `AUTH_VERIFICATION_ENABLED` | `true` | `false` | Kratos `SELFSERVICE_FLOWS_VERIFICATION_ENABLED`, portfolio + market `Auth__RequireVerifiedAddresses` |
+| `SMS_ENABLED` | `true` | `false` | portfolio `Sms__Enabled` (relay 503, girişte SMS seçeneği yok) |
+| `EMAIL_OTP_ENABLED` | `true` | `false` | portfolio `Auth__EmailOtpEnabled` (girişte e-posta seçeneği yok; yalnızca arayüz) |
 
 Doğrulama kapalıyken kayıt olan kullanıcıların adresleri doğrulanmamış kalır. Anahtar tekrar açılırsa bu kullanıcılar e-postayı `/verification`'dan, telefonu girişteki SMS 2FA ile doğrular (§3.3).
 

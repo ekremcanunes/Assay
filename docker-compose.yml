@@ -39,6 +39,13 @@ services:
       SELFSERVICE_FLOWS_LOGOUT_AFTER_DEFAULT_BROWSER_RETURN_URL: ${APP_URL:-http://localhost}/login
       SELFSERVICE_FLOWS_LOGIN_UI_URL: ${APP_URL:-http://localhost}/login
       SELFSERVICE_FLOWS_REGISTRATION_UI_URL: ${APP_URL:-http://localhost}/register
+      SELFSERVICE_FLOWS_VERIFICATION_UI_URL: ${APP_URL:-http://localhost}/verification
+      # Açma/kapama (spec §10.1): .env'de değiştir → docker compose up -d
+      SESSION_WHOAMI_REQUIRED_AAL: ${AUTH_REQUIRED_AAL:-aal2}
+      SELFSERVICE_FLOWS_VERIFICATION_ENABLED: ${AUTH_VERIFICATION_ENABLED:-true}
+      COURIER_SMTP_CONNECTION_URI: ${COURIER_SMTP_CONNECTION_URI:-smtp://mailpit:1025/?disable_starttls=true}
+      COURIER_SMTP_FROM_ADDRESS: ${COURIER_SMTP_FROM_ADDRESS:-no-reply@assay.com.tr}
+      COURIER_CHANNELS_0_REQUEST_CONFIG_AUTH_CONFIG_VALUE: ${SMS_RELAY_API_KEY}
     volumes:
       - ./kratos:/etc/config/kratos
     depends_on:
@@ -86,9 +93,17 @@ services:
       - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
       - ServiceUrls__MarketService=http://market-service:5002
       - Kratos__BaseUrl=http://kratos:4433
-      - Sms__Mode=${SMS_MODE:-Mailpit}
+      - Sms__Enabled=${SMS_ENABLED:-true}
       - Sms__DailyLimit=${SMS_DAILY_LIMIT:-16}
       - Sms__RelayApiKey=${SMS_RELAY_API_KEY}
+      - Sms__Url=${SMS_URL}
+      - Sms__Sender=${SMS_SENDER}
+      - Sms__AuthHeader=${SMS_AUTH_HEADER}
+      - Sms__AuthValue=${SMS_AUTH_VALUE}
+      - Sms__BodyTemplate=${SMS_BODY_TEMPLATE}
+      # Kratos'a giden AUTH_REQUIRED_AAL ile ayni deger: /api/auth/options frontend'e 2. adim seceneklerini soyler.
+      - Auth__RequiredAal=${AUTH_REQUIRED_AAL:-aal2}
+      - Auth__EmailOtpEnabled=${EMAIL_OTP_ENABLED:-true}
     depends_on:
       - market-service
       - kratos

@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.ory.sh/presets/kratos/identity.email.schema.json",
+  "$id": "https://assay.com.tr/schemas/identity.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Person",
   "type": "object",
@@ -10,17 +10,35 @@
         "email": {
           "type": "string",
           "format": "email",
-          "title": "E-Mail",
+          "title": "E-posta",
+          "maxLength": 320,
           "ory.sh/kratos": {
-            "credentials": {
-              "password": {
-                "identifier": true
-              }
-            }
+            "credentials": { "password": { "identifier": true } },
+            "verification": { "via": "email" }
           }
-        }
+        },
+        "phone": {
+          "type": "string",
+          "format": "tel",
+          "pattern": "^\\+905[0-9]{9}$",
+          "title": "Telefon",
+          "ory.sh/kratos": {
+            "credentials": { "password": { "identifier": true } },
+            "verification": { "via": "sms" }
+          }
+        },
+        "name": {
+          "type": "object",
+          "properties": {
+            "first": { "type": "string", "title": "Ad", "minLength": 1, "maxLength": 50 },
+            "last": { "type": "string", "title": "Soyad", "minLength": 1, "maxLength": 50 }
+          },
+          "required": ["first", "last"],
+          "additionalProperties": false
+        },
+        "consent": { "type": "boolean", "title": "KVKK ve kullanım koşulları onayı", "const": true }
       },
-      "required": ["email"],
+      "required": ["email", "phone", "name", "consent"],
       "additionalProperties": false
     }
   }

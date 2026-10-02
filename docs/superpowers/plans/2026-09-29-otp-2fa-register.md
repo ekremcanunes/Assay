@@ -1121,6 +1121,7 @@ git commit -m "feat(web): genisletilmis kayit formu ve dogrulama sayfasi"
 - Consumes: Görev 4'ün `toE164TR`, `createFlow`, `getFlow`, `submitFlow`, `AuthCard`, metin anahtarları.
 - Consumes: `location.state` → `{ step: 'channel', via?: 'phone', refresh?: boolean }` (Verification ve ProtectedRoute gönderir), `{ registered: true }`.
 - Produces: `useAuth()` → `{ session, loading, needs2fa, logout, setSession }`.
+- Consumes (2026-10-02 eki): `GET /api/auth/options` → `{ mfaRequired, channels: { sms, email } }`. 2. adım ekranı yalnızca açık kanalları gösterir; tek kanal açıksa seçim adımı atlanır. 500 `auth_misconfigured` → kullanıcıya genel "giriş şu an yapılamıyor" mesajı. Bkz. [generic SMS spec](../specs/2026-10-02-generic-sms-sender-design.md) §4.5.
 
 - [ ] **Adım 1: AuthContext — 2FA eksik durumu**
 
@@ -1408,162 +1409,28 @@ git commit -m "feat(web): iki adimli giris (sifre + SMS/e-posta OTP)"
 
 ---
 
-### Görev 6: VatanSMS gönderici ve prod yapılandırması
+### Görev 6: Prod SMS sağlayıcısı ve prod yapılandırması
 
-**Files:**
-- Create: `portfolio-service/Services/VatanSmsOptions.cs`
-- Create: `portfolio-service/Services/VatanSmsSender.cs`
-- Modify: `portfolio-service/Program.cs`
-- Modify: `docker-compose.yml`, `.env.example`
+> **2026-10-02:** Sağlayıcıya özel gönderici (VatanSMS/SOAP) kaldırıldı. Kod tarafı generic REST göndericiyle tamamlandı ([generic SMS spec](../specs/2026-10-02-generic-sms-sender-design.md)); bu görevde kod yazılmaz.
 
-**Interfaces:**
-- Consumes: Görev 1'in `ISmsSender`, `SmsOptions.Mode`.
-- Config: `VatanSms:CustomerNo`, `VatanSms:Username`, `VatanSms:Password`, `VatanSms:Sender`.
+- [ ] **Adım 1: Sağlayıcı seç ve API'sini kontrol et (kullanıcıyla)**
 
-- [ ] **Adım 1: Hesap ve gerçek yanıt biçimi (kullanıcıyla)**
+Sağlayıcının REST API dokümanından gönderim adresini, kimlik doğrulama biçimini ve JSON gövdesini çıkar. Generic spec §6'daki dört sınıra karşı kontrol et (form gövdesi, 200 + gövdede hata, numara biçimi, tek header). Biri gerekiyorsa DUR, kullanıcıyla `HttpSmsSender` eklemesini konuş.
 
-Kullanıcı vatansms.com'dan paketi alır ve panelden müşteri no, kullanıcı adı, şifre ve başlığı (orjinatör) verir. Kendi numarasına tek bir SMS gönderip `return` değerini gör:
-```bash
-curl -s https://panel.vatansms.com/webservis/service.php -H "Content-Type: text/xml; charset=utf-8" \
-  -H "SOAPAction: urn:testnamespace#TekSmsiBirdenCokNumarayaGonder" --data-binary @- <<'EOF'
-<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:TekSmsiBirdenCokNumarayaGonder">
-  <soap:Body><urn:TekSmsiBirdenCokNumarayaGonder>
-    <kullanicino>MUSTERI_NO</kullanicino><kullaniciadi>KULLANICI</kullaniciadi><sifre>SIFRE</sifre>
-    <orjinator>BASLIK</orjinator><numaralar>5XXXXXXXXX</numaralar><mesaj>Assay test</mesaj>
-    <zaman></zaman><zamanasimi></zamanasimi><tip>Turkce</tip><ticari>0</ticari>
-  </urn:TekSmsiBirdenCokNumarayaGonder></soap:Body>
-</soap:Envelope>
-EOF
-```
-Bir kez de yanlış şifreyle gönder. Başarılı `return` değerinin **pozitif bir sayı** (SMS ID) olduğunu, hatalı olanın olmadığını doğrula. Değilse DUR, iki yanıtı kullanıcıya göster; Adım 2'deki `IsSuccess` kuralı birlikte belirlenir.
+- [ ] **Adım 2: Dev'de gerçek SMS denemesi (kısa süreli)**
 
-- [ ] **Adım 2: Gönderici**
+Dev `.env`'de geçici olarak `SMS_URL`, `SMS_SENDER`, `SMS_AUTH_HEADER`, `SMS_AUTH_VALUE`, `SMS_BODY_TEMPLATE` sağlayıcının değerleriyle → `docker compose up -d portfolio-service` → Görev 1 Adım 8'in 1. curl komutunu **kendi numaranla** çalıştır. Beklenen: `200` ve telefona SMS. Sonra değerleri `.env.example`'daki Mailpit değerlerine geri al, `DELETE FROM "SmsDailyUsage";`.
 
-`portfolio-service/Services/VatanSmsOptions.cs`:
-```csharp
-namespace portfolio_service.Services;
-
-public class VatanSmsOptions
-{
-    public string CustomerNo { get; set; } = "";
-    public string Username { get; set; } = "";
-    public string Password { get; set; } = "";
-    public string Sender { get; set; } = "";   // SMS başlığı (orjinatör)
-}
-```
-
-`portfolio-service/Services/VatanSmsSender.cs`:
-```csharp
-using System.Text;
-using System.Xml.Linq;
-using Microsoft.Extensions.Options;
-
-namespace portfolio_service.Services;
-
-// Prod: vatansms.com SOAP servisi, TekSmsiBirdenCokNumarayaGonder (WSDL: panel.vatansms.com/webservis/service.php?wsdl).
-public class VatanSmsSender(HttpClient http, IOptions<VatanSmsOptions> options) : ISmsSender
-{
-    private const string Endpoint = "https://panel.vatansms.com/webservis/service.php";
-    private static readonly XNamespace Soap = "http://schemas.xmlsoap.org/soap/envelope/";
-    private static readonly XNamespace Op = "urn:TekSmsiBirdenCokNumarayaGonder";
-
-    public async Task SendAsync(string to, string message, CancellationToken ct)
-    {
-        var o = options.Value;
-        // VatanSMS numarayı ülke kodu olmadan ister: +905321234567 → 5321234567
-        var number = to.StartsWith("+90") ? to[3..] : to;
-
-        // XElement değerleri kaçışlar; mesajdaki özel karakterler XML'i bozmaz.
-        var envelope = new XElement(Soap + "Envelope",
-            new XAttribute(XNamespace.Xmlns + "soap", Soap),
-            new XAttribute(XNamespace.Xmlns + "urn", Op),
-            new XElement(Soap + "Body",
-                new XElement(Op + "TekSmsiBirdenCokNumarayaGonder",
-                    new XElement("kullanicino", o.CustomerNo),
-                    new XElement("kullaniciadi", o.Username),
-                    new XElement("sifre", o.Password),
-                    new XElement("orjinator", o.Sender),
-                    new XElement("numaralar", number),
-                    new XElement("mesaj", message),
-                    new XElement("zaman", ""),
-                    new XElement("zamanasimi", ""),
-                    new XElement("tip", "Turkce"),
-                    new XElement("ticari", "0"))));   // OTP ticari ileti değil (İYS sorgusu yapılmaz)
-
-        using var req = new HttpRequestMessage(HttpMethod.Post, Endpoint)
-        {
-            Content = new StringContent(envelope.ToString(), Encoding.UTF8, "text/xml"),
-        };
-        req.Headers.Add("SOAPAction", "urn:testnamespace#TekSmsiBirdenCokNumarayaGonder");
-
-        using var res = await http.SendAsync(req, ct);
-        res.EnsureSuccessStatusCode();   // SOAP Fault → HTTP 500 → exception
-        var result = XDocument.Parse(await res.Content.ReadAsStringAsync(ct))
-            .Descendants("return").FirstOrDefault()?.Value;
-
-        if (!IsSuccess(result))
-            throw new InvalidOperationException($"VatanSMS gönderimi reddetti: {result}");
-    }
-
-    // Adım 1'de doğrulandı: başarıda return = SMS ID (pozitif sayı).
-    private static bool IsSuccess(string? result) => long.TryParse(result, out var id) && id > 0;
-}
-```
-
-- [ ] **Adım 3: Kayıt**
-
-`Program.cs`'te Görev 1'de eklenen `builder.Services.AddSingleton<ISmsSender, MailpitSmsSender>();` satırını şununla değiştir:
-```csharp
-builder.Services.Configure<VatanSmsOptions>(builder.Configuration.GetSection("VatanSms"));
-if (builder.Configuration["Sms:Mode"] == "VatanSms")
-    builder.Services.AddHttpClient<ISmsSender, VatanSmsSender>();
-else
-    builder.Services.AddSingleton<ISmsSender, MailpitSmsSender>();
-```
-
-`docker-compose.yml` → `portfolio-service.environment`:
-```yaml
-      - VatanSms__CustomerNo=${VATANSMS_CUSTOMER_NO:-}
-      - VatanSms__Username=${VATANSMS_USERNAME:-}
-      - VatanSms__Password=${VATANSMS_PASSWORD:-}
-      - VatanSms__Sender=${VATANSMS_SENDER:-}
-```
-
-`.env.example` SMS bölümüne:
-```bash
-# Yalnızca SMS_MODE=VatanSms iken (prod). Panel: panel.vatansms.com
-VATANSMS_CUSTOMER_NO=
-VATANSMS_USERNAME=
-VATANSMS_PASSWORD=
-VATANSMS_SENDER=
-```
-
-- [ ] **Adım 4: Build ve gerçek SMS denemesi (dev'de, kısa süreli)**
-
-```bash
-cd portfolio-service && dotnet build && cd ..
-```
-Dev `.env`'de geçici olarak `SMS_MODE=VatanSms` + VatanSMS bilgileri → `docker compose up -d portfolio-service` → Görev 1 Adım 8'in 1. curl komutunu **kendi numaranla** çalıştır. Beklenen: `200` ve telefona SMS. Sonra `SMS_MODE=Mailpit`'e geri al, VatanSMS bilgilerini dev `.env`'den sil, `DELETE FROM "SmsDailyUsage";`.
-
-- [ ] **Adım 5: Prod yapılandırması (kullanıcı yapar, adımlar burada)**
+- [ ] **Adım 3: Prod yapılandırması (kullanıcı yapar, adımlar burada)**
 
 1. **Resend:** hesap aç → Domains → `assay.com.tr` ekle → verilen SPF/DKIM kayıtlarını Cloudflare DNS'e ekle (proxy kapalı, "DNS only") → doğrulanınca API Keys → "Sending access" anahtarı üret.
 2. **Secrets Manager** `assay/prod/env` secret'ına anahtarları ekle (değerlerde tek tırnak olmamalı, `deploy.sh` reddeder):
-   - `SMS_MODE=VatanSms`
-   - `SMS_DAILY_LIMIT=16`
    - `SMS_RELAY_API_KEY=<openssl rand -hex 32>`
-   - `VATANSMS_CUSTOMER_NO`, `VATANSMS_USERNAME`, `VATANSMS_PASSWORD`, `VATANSMS_SENDER`
+   - `SMS_ENABLED=true`, `SMS_DAILY_LIMIT=16`
+   - `SMS_URL`, `SMS_SENDER`, `SMS_AUTH_HEADER`, `SMS_AUTH_VALUE`, `SMS_BODY_TEMPLATE` (Adım 1'deki değerler)
    - `COURIER_SMTP_CONNECTION_URI=smtps://resend:<RESEND_API_KEY>@smtp.resend.com:465`
    - `COURIER_SMTP_FROM_ADDRESS=no-reply@assay.com.tr`
-   - `AUTH_REQUIRED_AAL=aal2`
-   - `AUTH_VERIFICATION_ENABLED=true`
-
-- [ ] **Adım 6: Commit**
-
-```bash
-git add portfolio-service docker-compose.yml .env.example
-git commit -m "feat(portfolio): VatanSMS SOAP gondericisi (prod SMS)"
-```
+   - `AUTH_REQUIRED_AAL=aal2`, `AUTH_VERIFICATION_ENABLED=true`, `EMAIL_OTP_ENABLED=true`
 
 ---
 
