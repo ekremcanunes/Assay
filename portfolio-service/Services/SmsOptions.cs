@@ -3,7 +3,8 @@ namespace portfolio_service.Services;
 // Sağlayıcıdan bağımsız SMS ayarları. Değerler .env'den gelir (SMS_*); bkz. docs/20-modules/SMS-RELAY.md.
 public class SmsOptions
 {
-    public bool Enabled { get; set; } = true;
+    // Varsayılan kapalı: telefon şu an doğrulanabilir adres değil (identity.schema.json). Bkz. SMS-RELAY.md.
+    public bool Enabled { get; set; } = false;
     public int DailyLimit { get; set; } = 16;
     public string RelayApiKey { get; set; } = "";
     public string Url { get; set; } = "";

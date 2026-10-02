@@ -98,6 +98,16 @@ Değişiklik sonrası `docker compose up -d` (restart **yetmez**). Prod'da değe
 | SMS kanalı açık, şablon geçerli JSON değil | Servis **açılmaz** (`InvalidOperationException`) |
 | 2FA zorunlu, SMS ve e-posta ikisi de kapalı | Error log, servis açılır; `/api/auth/options` 500 döner |
 
+### Şu anki durum: SMS kapalı (2026-10-02)
+
+SMS sağlayıcı entegrasyonu KEP gerektirdiği için ertelendi; 2FA ve doğrulama yalnızca e-postayla yapılır. Kod yerinde, `SMS_ENABLED` varsayılanı `false`.
+
+SMS'i açmak **yalnızca `.env` değildir.** Telefon şu an kimlik şemasında doğrulanabilir adres değil; Kratos ona SMS gönderemez. Sırayla:
+
+1. `kratos/identity.schema.json` → `phone` alanına `"ory.sh/kratos": { "credentials": { "password": { "identifier": true } }, "verification": { "via": "sms" } }` geri eklenir.
+2. Sağlayıcı değerleri girilir (§6), `SMS_ENABLED=true`.
+3. Frontend'de SMS yolları (OTP planı Görev 4–5 notları) eklenir.
+
 ### Hangi ayar neyi kapatır
 
 | İstenen | Ayar |

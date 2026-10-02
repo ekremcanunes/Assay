@@ -21,11 +21,7 @@
           "type": "string",
           "format": "tel",
           "pattern": "^\\+905[0-9]{9}$",
-          "title": "Telefon",
-          "ory.sh/kratos": {
-            "credentials": { "password": { "identifier": true } },
-            "verification": { "via": "sms" }
-          }
+          "title": "Telefon"
         },
         "name": {
           "type": "object",
