@@ -93,7 +93,7 @@ services:
       - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
       - ServiceUrls__MarketService=http://market-service:5002
       - Kratos__BaseUrl=http://kratos:4433
-      - Sms__Enabled=${SMS_ENABLED:-true}
+      - Sms__Enabled=${SMS_ENABLED:-false}
       - Sms__DailyLimit=${SMS_DAILY_LIMIT:-16}
       - Sms__RelayApiKey=${SMS_RELAY_API_KEY}
       - Sms__Url=${SMS_URL}

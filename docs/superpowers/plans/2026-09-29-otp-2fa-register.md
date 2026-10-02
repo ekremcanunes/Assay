@@ -571,6 +571,8 @@ git commit -m "feat(kratos): 2FA (code mfa), SMS/e-posta dogrulama ve genisletil
 
 ### Görev 3: Backend doğrulama kontrolü
 
+> **2026-10-02 notu:** Telefon artık `verifiable_addresses`'ta yok (spec §4); kontrol kodu aynen geçerli, pratikte yalnızca e-postaya bakar. Adım 4'teki elle doğrulamada "yalnızca SMS ile AAL2" yerine: e-posta kodunu girmeden **e-postayla** AAL2'ye geç; 2FA kodu adresi doğruladığı için (spec §3.3) 403 beklenmez. 403'ü görmek için `AUTH_REQUIRED_AAL=aal1` ile şifreyle gir.
+
 **Files:**
 - Modify: `portfolio-service/Middleware/KratosMiddleware.cs`
 - Modify: `market-service/Middleware/KratosMiddleware.cs`
@@ -641,6 +643,8 @@ git commit -m "feat(api): dogrulanmamis e-posta/telefonla API erisimini engelle"
 ---
 
 ### Görev 4: Frontend — ortak parçalar, kayıt, doğrulama sayfası
+
+> **2026-10-02 notu (e-posta tek kanal, spec §6):** Kayıt formu telefonu almaya ve normalize etmeye devam eder. Kayıt yanıtındaki `continue_with` yalnızca e-posta doğrulamasını içerir; `Verification.jsx`'teki SMS adımı ve "Telefonunu SMS koduyla doğrula" düğmesi bu görevde **yazılmaz**. `auth.errAccountExists` metni yalnızca e-postayı anar. Aşağıdaki kod bu nota göre sadeleştirilerek uygulanır.
 
 **Files:**
 - Create: `web/src/lib/phone.js`
@@ -1110,6 +1114,8 @@ git commit -m "feat(web): genisletilmis kayit formu ve dogrulama sayfasi"
 ---
 
 ### Görev 5: Frontend — iki adımlı giriş ve oturum durumu
+
+> **2026-10-02 notu (e-posta tek kanal, spec §6):** 1. adım yalnızca e-posta + şifre (`auth.identifier` = "E-posta", telefon normalizasyonu girişte yok). 2. adımda kanallar `/api/auth/options`'tan gelir; yalnızca e-posta açıkken seçim ekranı atlanır ve kod doğrudan e-postaya istenir. `via: 'phone'` yolları, SMS ipucu ve Verification'dan gelen `state.via === 'phone'` bu görevde **yazılmaz**. Adım 5'teki elle doğrulamada SMS'e dair maddeler (1, 2, 5, 6) SMS açılana kadar atlanır. Aşağıdaki kod bu nota göre sadeleştirilerek uygulanır.
 
 **Files:**
 - Modify: `web/src/pages/Login.jsx` (yeniden yazılır)

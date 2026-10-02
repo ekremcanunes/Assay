@@ -16,6 +16,7 @@ Hedef:
 |---|---|---|
 | Giriş modeli | 1. faktör şifre (tanımlayıcı: telefon **veya** e-posta), 2. faktör `code` | Kratos'ta `code` ya 1. ya 2. faktör olabilir, ikisi birden değil (§3). "Tel + OTP ile şifresiz giriş" bu yüzden elendi |
 | 2FA kanalı | SMS (varsayılan) + e-posta; kullanıcı seçer | SMS sağlayıcı çökerse, günlük tavan dolarsa kimse kilitlenmez |
+| **SMS ertelendi (2026-10-02)** | 2FA ve doğrulama **yalnızca e-posta** (prod: Resend). Telefon kayıtta alınır ama yalnızca profil bilgisidir: giriş kimliği değil, doğrulanmaz. SMS kodu (relay, generic gönderici) yerinde ve kapalı (`SMS_ENABLED=false`) | SMS sağlayıcı entegrasyonu KEP (Kayıtlı Elektronik Posta) gerektirdi. Telefon doğrulanamayınca §9'daki kontrol herkesi kilitlerdi |
 | TOTP / passkey | Yok | Öğrenme projesinde authenticator uygulaması istenmiyor |
 | Kullanıcı verisi | Kratos trait'lerinde (Neon, `identities.traits`). Uygulama DB'sine profil tablosu **eklenmez** | Alanlar kimlikle ilgili ve az |
 | Mevcut kullanıcılar | Silinir, yeniden kayıt alınır | Az sayıda test kullanıcısı; geçiş kodu gereksiz |
@@ -47,11 +48,13 @@ Hedef:
 | Trait | Kural | Şifre tanımlayıcısı | Doğrulama (= 2FA kanalı, §3.8) |
 |---|---|---|---|
 | `email` | `format: email`, zorunlu | ✅ | `via: email` |
-| `phone` | `format: tel`, `^\+905[0-9]{9}$`, zorunlu | ✅ | `via: sms` |
+| `phone` | `format: tel`, `^\+905[0-9]{9}$`, zorunlu | ❌ (2026-10-02) | ❌ (2026-10-02) |
 | `name.first`, `name.last` | string, 1–50 karakter, zorunlu | | |
 | `consent` | `boolean`, `const: true`, zorunlu | | |
 
-Telefon TR cep ile sınırlı; VatanSMS paketi yurt içi.
+Telefon TR cep ile sınırlı.
+
+**2026-10-02:** SMS ertelendiği için telefondaki `ory.sh/kratos` bloğu (`credentials.password.identifier`, `verification.via: sms`) kaldırıldı. Telefon `verifiable_addresses`'a girmez: doğrulama SMS'i gitmez, §9'daki kontrol yalnızca e-postaya bakar, giriş yalnızca e-postayla olur. SMS geri geldiğinde blok geri eklenir; mevcut kullanıcıların telefonu ilk SMS 2FA'sında doğrulanır (§3.3).
 
 ## 5. Kratos ayarları — `kratos/kratos.yml`
 
@@ -67,6 +70,8 @@ Telefon TR cep ile sınırlı; VatanSMS paketi yurt içi.
 Yeni dosyalar: `kratos/sms-body.jsonnet` (`{ to: ctx.recipient, message: ctx.body, type: ctx.template_type }`), `kratos/templates/**`.
 
 ## 6. Ekran akışları
+
+> **2026-10-02 — e-posta tek kanal.** SMS açılana kadar aşağıdaki akışlarda: kayıtta telefon alınır ama doğrulanmaz; `/verification` yalnızca e-posta kodunu ister; girişte 1. adım yalnızca e-posta + şifre; 2. adımda kanallar `GET /api/auth/options`'tan gelir (SMS kapalı → yalnızca e-posta, seçim ekranı atlanır). SMS'e dair adımlar SMS açıldığında geçerlidir.
 
 **Kayıt — `/register`** ([Register.jsx](../../../web/src/pages/Register.jsx))
 1. Alanlar: Ad, Soyad, E-posta, Telefon (`+90` ön ekli), Şifre (göster/gizle), KVKK kutucuğu.
