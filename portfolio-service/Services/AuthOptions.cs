@@ -8,7 +8,7 @@ public class AuthOptions
         "2FA zorunlu ama SMS ve e-posta kanallarinin ikisi de kapali. " +
         "SMS_ENABLED veya EMAIL_OTP_ENABLED degerini acin ya da AUTH_REQUIRED_AAL=aal1 yapin.";
 
-    public string RequiredAal { get; set; } = "aal2";
+    public string RequiredAal { get; set; } = "highest_available";
     public bool EmailOtpEnabled { get; set; } = true;
 
     public bool MfaRequired => RequiredAal != "aal1";

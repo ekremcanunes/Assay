@@ -82,7 +82,7 @@ Gövdeyi Kratos tarafında `kratos/sms-body.jsonnet` üretir.
 | `SMS_AUTH_VALUE` | `Sms.AuthValue` | Evet | (boş) | Header değeri: `Bearer <token>`, `Basic <base64(kullanıcı:şifre)>`… |
 | `SMS_BODY_TEMPLATE` | `Sms.BodyTemplate` | Hayır | (boş) | JSON gövde şablonu. Yer tutucular: `{to}` (E.164, `+905…`), `{message}`, `{sender}` |
 | `EMAIL_OTP_ENABLED` | `Auth.EmailOtpEnabled` | Hayır | `true` | `false` → girişte e-posta seçeneği gösterilmez |
-| `AUTH_REQUIRED_AAL` | `Auth.RequiredAal` | Hayır | `aal2` | Kratos'a da gider; zorunluluğu Kratos uygular |
+| `AUTH_REQUIRED_AAL` | `Auth.RequiredAal` | Hayır | `highest_available` | Kratos'a da gider; zorunluluğu Kratos uygular |
 
 Zincir: `.env` → `docker-compose.yml` (`Sms__Url=${SMS_URL}`) → .NET config (`__` bölüm ayracı) → `SmsOptions` / `AuthOptions`. Prod'da `.env` Secrets Manager'daki tek secret'tan (`assay/prod/env`) üretilir; anahtar eklemek maliyeti değiştirmez.
 

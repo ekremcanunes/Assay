@@ -54,7 +54,7 @@ session:
   cookie:
     persistent: false                   # tarayıcı kapanınca cookie silinsin
   whoami:
-    required_aal: aal2                  # her girişte 2FA; AUTH_REQUIRED_AAL ezer
+    required_aal: highest_available     # 2FA yapabilen kullaniciya zorunlu (Kratos v1.2: aal1|highest_available); AUTH_REQUIRED_AAL ezer
 
 log:
   level: info
