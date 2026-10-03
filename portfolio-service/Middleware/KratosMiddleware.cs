@@ -1,13 +1,16 @@
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Options;
+using portfolio_service.Services;
 
 namespace portfolio_service.Middleware;
 
-public class KratosMiddleware(RequestDelegate next, IHttpClientFactory httpClientFactory, IConfiguration configuration)
+public class KratosMiddleware(RequestDelegate next, IHttpClientFactory httpClientFactory, IConfiguration configuration,
+    IOptions<AuthOptions> authOptions)
 {
     public async Task InvokeAsync(HttpContext context)
     {
         // /internal/*: Kratos'un sunucudan sunucuya çağrıları (SMS relay). Kullanıcı oturumu yok; API anahtarıyla korunur.
-        // /api/auth/options: 2FA adımından önce (AAL1) çağrılır; whoami bu noktada reddeder. Hassas veri dönmez.
+        // /api/auth/options: 2FA adımından önce (AAL1) çağrılır; aşağıdaki AAL kontrolü bu noktada reddeder. Hassas veri dönmez.
         if (context.Request.Path.StartsWithSegments("/internal")
             || context.Request.Path.StartsWithSegments("/api/auth/options"))
         {
@@ -46,6 +49,15 @@ public class KratosMiddleware(RequestDelegate next, IHttpClientFactory httpClien
                 return;
             }
 
+            // 2FA zorunluluğu burada uygulanır: Kratos v1.2 e-posta kodunu "2FA yapabilen" kimlik bilgisi saymadığı için
+            // highest_available AAL1 oturumu whoami'de reddetmez. Frontend 403 aal2_required alınca kod adımına gider.
+            if (authOptions.Value.MfaRequired && session.Aal != "aal2")
+            {
+                context.Response.StatusCode = 403;
+                await context.Response.WriteAsJsonAsync(new { error = "aal2_required" });
+                return;
+            }
+
             context.Items["UserId"] = session.Identity.Id;
         }
         catch
@@ -59,5 +71,7 @@ public class KratosMiddleware(RequestDelegate next, IHttpClientFactory httpClien
     }
 }
 
-public record KratosSession([property: JsonPropertyName("identity")] KratosIdentity? Identity);
+public record KratosSession(
+    [property: JsonPropertyName("identity")] KratosIdentity? Identity,
+    [property: JsonPropertyName("authenticator_assurance_level")] string? Aal);
 public record KratosIdentity([property: JsonPropertyName("id")] string Id);

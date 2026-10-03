@@ -17,6 +17,9 @@ export function kratosErrorText(body, t) {
       return t('auth.errEmailExists')
     case 4000005: // password policy (too short vb.)
       return t('auth.errPasswordShort')
+    case 4010008: // login code invalid / already used
+    case 4070006: // verification code invalid / already used
+      return t('auth.errOtpInvalid')
     default:
       return m.text || t('auth.errGeneric')
   }

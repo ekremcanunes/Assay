@@ -10,6 +10,7 @@ Proje dokümanları bu klasörde, numaralı kategori klasörleri altında tutulu
 | `20-modules/` | Modül tasarımları | O modülde çalışırken |
 | `30-operations/` | Operasyon (komutlar, çalıştırma) | Servis ayağa kaldırırken, sorun giderirken |
 | `40-learning/` | Öğrenme notları | Referans; bağlayıcı değildir |
+| `50-planning/` | Planlama (backlog) | Yeni işe başlamadan, ertelenen işleri hatırlamak için |
 | `superpowers/` | Plan/spec/verification arşivi | Tarihsel kayıt; içindeki eski dosya yolları güncel olmayabilir |
 
 ## Dokümanlar
@@ -25,6 +26,7 @@ Proje dokümanları bu klasörde, numaralı kategori klasörleri altında tutulu
 - [40-learning/LINUX-BASICS.md](40-learning/LINUX-BASICS.md) — Linux temel kavramlar: stdout/stderr, journalctl, konteyner log zinciri.
 - [40-learning/AWS-BASICS.md](40-learning/AWS-BASICS.md) — Bu projede kullanılacak AWS servisleri: OIDC, ECR, EC2, maliyet kalemleri, bölge seçimi.
 - [40-learning/PROD-PIPELINE-GUNLUGU.md](40-learning/PROD-PIPELINE-GUNLUGU.md) — Prod pipeline günlüğü (2026-09-26/27): Kratos sırları, compose image/build ayrımı, deploy.sh tasarımı, OIDC `sub` olayı, pipeline tetikleme sorunu ve "deploy birimi" kök nedeni.
+- [50-planning/BACKLOG.md](50-planning/BACKLOG.md) — Sonraya bırakılan işler: sorun, seçenekler, öneri (ilk madde: kayıtta hesabın OTP'den önce oluşması).
 - [40-learning/NGINX-LEARNING.md](40-learning/NGINX-LEARNING.md) — Nginx & reverse proxy notları: nginx.conf satır satır, `proxy_pass` sondaki `/` kuralı, Compose DNS, session cookie akışı, rebuild gerekliliği, proxy atlamayı engelleme.
 
 ## Kurallar

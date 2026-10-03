@@ -74,6 +74,7 @@ services:
       - TwelveData__ApiKey=${TWELVEDATA_API_KEY}
       - REDIS_CONNECTION=redis:6379
       - Kratos__BaseUrl=http://kratos:4433
+      - Auth__RequiredAal=${AUTH_REQUIRED_AAL:-highest_available}
     depends_on:
       - redis
       - kratos

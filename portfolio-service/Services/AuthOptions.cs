@@ -1,6 +1,6 @@
 namespace portfolio_service.Services;
 
-// 2FA ayarları. RequiredAal, Kratos'a verilen AUTH_REQUIRED_AAL ile aynı değerdir; zorunluluğu Kratos uygular,
+// 2FA ayarları. RequiredAal, Kratos'a verilen AUTH_REQUIRED_AAL ile aynı değerdir; zorunluluğu KratosMiddleware uygular,
 // burada yalnızca frontend'e hangi seçeneklerin gösterileceğini söylemek için okunur.
 public class AuthOptions
 {

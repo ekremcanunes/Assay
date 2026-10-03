@@ -12,6 +12,7 @@
 - `docs/20-modules/` — modül tasarımları (`GOLD-MODULE.md` — altın modülü, `SMS-RELAY.md` — SMS relay ve sağlayıcı entegrasyonu).
 - `docs/30-operations/` — operasyon (`COMMANDS.md` — Docker, Redis, Kratos, psql, EF Core, hata ayıklama sırası).
 - `docs/40-learning/` — öğrenme notları (bağlayıcı değil).
+- `docs/50-planning/` — planlama (`BACKLOG.md` — sonraya bırakılan işler ve seçenekleri).
 - `docs/superpowers/` — geçmiş plan/spec/verification arşivi (tarihsel kayıt; içindeki eski dosya yolları güncel olmayabilir).
 - Yeni doküman → `docs/` altında kategorisine uygun klasöre; `docs/README.md` indeksi de güncellenir. Kök dizine veya servis klasörlerine doküman konmaz.
 
