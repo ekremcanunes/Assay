@@ -219,7 +219,7 @@ function TechDetail({ tech }) {
 
       <section className="py-6">
         <span className="label mb-5 block text-muted-foreground">Nasıl entegre edildi</span>
-        <div className="grid gap-7">
+        <div className="grid grid-cols-1 gap-7">
           {blocks.map((b) => <DetailBlock key={b.title} b={b} />)}
         </div>
       </section>
@@ -493,7 +493,7 @@ export default function Landing() {
             </svg>
           </div>
 
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="rounded-lg bg-foreground p-6">
               <div className="mb-3 flex items-center justify-between gap-3 border-b border-background/15 pb-3">
                 <span className="flex items-center gap-2 font-mono text-micro text-background/60">

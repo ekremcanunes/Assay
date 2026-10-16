@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, CandlestickChart, Coins, Wallet, BarChart2, LogOut, Globe, Menu, X } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { NavLink, Outlet, useLocation, useNavigationType } from 'react-router-dom'
+import { LayoutDashboard, CandlestickChart, Wallet, LogOut, Globe, Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { APP_NAME } from '@/lib/app'
 import { useAuth } from '@/contexts/AuthContext'
@@ -71,6 +71,17 @@ export default function Layout() {
   const { t, lang, switchLang } = useLanguage()
   const now = useClock()
   const [menuOpen, setMenuOpen] = useState(false)
+  const mainRef = useRef(null)
+  const { pathname } = useLocation()
+  const navType = useNavigationType()
+
+  // Yeni sayfaya geçince en üstten başla (mobilde belge, masaüstünde main kayar).
+  // Geri/ileri (POP) dokunulmaz: tarayıcı eski konumu kendisi geri getirir.
+  useEffect(() => {
+    if (navType === 'POP') return
+    window.scrollTo(0, 0)
+    mainRef.current?.scrollTo(0, 0)
+  }, [pathname, navType])
 
   const email = session?.identity?.traits?.email ?? ''
   const initials = (email.slice(0, 2) || '··').toUpperCase()
@@ -78,11 +89,9 @@ export default function Layout() {
   const generalNav = [
     { to: '/overview', label: t('nav.overview'), short: t('nav.overviewShort'), icon: LayoutDashboard },
     { to: '/assets', label: t('nav.assets'), short: t('nav.assetsShort'), icon: Wallet },
-    { to: '/analytics', label: t('nav.analytics'), short: t('nav.analyticsShort'), icon: BarChart2 },
   ]
   const marketNav = [
     { to: '/market', label: t('nav.market'), short: t('nav.marketShort'), icon: CandlestickChart },
-    { to: '/gold-fx', label: t('nav.goldFx'), short: t('nav.goldFxShort'), icon: Coins },
   ]
 
   const clock = `${now.toLocaleDateString('tr-TR')} · ${now.toLocaleTimeString('tr-TR')}`
@@ -118,7 +127,7 @@ export default function Layout() {
   )
 
   return (
-    <div className="flex h-dvh bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground md:flex md:h-dvh">
       {/* Masaüstü kenar çubuğu — mobilde alt çubuk + menü sayfası devralır */}
       <aside className="hidden w-[212px] shrink-0 flex-col gap-0.5 border-r border-border bg-card py-2.5 pl-0 pr-2.5 md:flex">
         {/* Marka rozeti */}
@@ -149,13 +158,14 @@ export default function Layout() {
       </aside>
 
       {/* Bone içerik tuvali — padding'i Page bileşeni yönetir (başlık kenara yapışsın diye) */}
-      {/* Mobilde tam genişlik; alt çubuğun altında içerik kalmasın diye pb-[56px] */}
-      <main className="flex-1 overflow-auto bg-background pb-[56px] text-foreground md:pb-0">
+      {/* Mobilde kaydırmayı belge yapar (adres çubuğu gizlenebilsin); md+ eski düzen.
+          Alt çubuğun altında içerik kalmasın diye çubuk yüksekliği + iPhone ana ekran çizgisi kadar boşluk */}
+      <main ref={mainRef} className="min-w-0 bg-background pb-[calc(56px+env(safe-area-inset-bottom))] text-foreground md:flex-1 md:overflow-auto md:pb-0">
         <Outlet />
       </main>
 
       {/* Mobil alt navigasyon — ana 5 sayfa + ikincil öğeler için menü */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-border bg-card md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-border bg-card pb-[env(safe-area-inset-bottom)] md:hidden">
         {[...generalNav, ...marketNav].map((item) => (
           <TabItem key={item.to} to={item.to} label={item.short} icon={item.icon} end={item.end} />
         ))}
@@ -173,7 +183,7 @@ export default function Layout() {
       {menuOpen && (
         <div className="fixed inset-0 z-50 bg-foreground/50 md:hidden" onClick={() => setMenuOpen(false)}>
           <div
-            className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 rounded-t-lg border-t border-border bg-card p-3 pb-6"
+            className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 rounded-t-lg border-t border-border bg-card p-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-2 pb-1">

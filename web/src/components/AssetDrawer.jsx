@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useAssetTransactions } from '@/hooks/queries'
 import PriceChart from './PriceChart'
+import { buyPath } from '@/lib/portfolioCategories'
 import { ArrowDownRight, Plus, TrendingUp, TrendingDown, Maximize2, Minimize2 } from 'lucide-react'
 
 const fmt = (v, currency) =>
@@ -39,11 +41,23 @@ export default function AssetDrawer({ holding, onClose, onSell }) {
   const { data: lots = [], isLoading: lotsLoading } = useAssetTransactions(isMarket ? null : holding?.symbol)
   const [expanded, setExpanded] = useState(false)
 
+  const panelRef = useRef(null)
+
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
+
+  // Panel açıkken arkadaki sayfa kaymaz; odak panele geçer (klavye ve ekran okuyucu panelde başlar)
+  useEffect(() => {
+    if (!holding) return
+    const root = document.documentElement
+    const prev = root.style.overflow
+    root.style.overflow = 'hidden'
+    return () => { root.style.overflow = prev }
+  }, [holding])
+  useEffect(() => { panelRef.current?.focus() }, [holding, expanded])
 
   if (!holding) return null
 
@@ -161,7 +175,7 @@ export default function AssetDrawer({ holding, onClose, onSell }) {
 
   const actionBtn = isMarket ? (
     <button
-      onClick={() => navigate('/assets/buy')}
+      onClick={() => navigate(buyPath({ type: holding.assetType, symbol: holding.symbol, name: holding.name }))}
       className="flex w-full items-center justify-center gap-2 rounded-md bg-foreground py-3 font-semibold text-background hover:opacity-90"
     >
       <Plus className="h-4 w-4" />
@@ -188,17 +202,23 @@ export default function AssetDrawer({ holding, onClose, onSell }) {
     />
   )
 
+  // Panel her zaman sayfa köküne çizilir (portal): atası transform/animasyon taşısa bile
+  // `fixed` ekrana göre konumlanır (aksi halde detay sayfalarında liste kutusuna hapsoluyordu).
   // --- GENİŞLETİLMİŞ: tam ekran, iki kolon (bilgi sol, büyük grafik sağ) ---
   if (expanded) {
-    return (
+    return createPortal(
       <div className="fixed inset-0 z-50 bg-foreground/50 p-4 md:p-8" onClick={onClose}>
         <div
-          className="modal-in mx-auto flex h-full max-w-6xl flex-col rounded-lg border border-border bg-card"
+          ref={panelRef}
+          tabIndex={-1}
+          role="dialog"
+          aria-modal="true"
+          className="modal-in mx-auto flex h-full max-w-6xl flex-col rounded-lg border border-border bg-card outline-none"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="px-6 pt-6 font-mono text-micro">{header}</div>
-          <div className="grid flex-1 grid-cols-1 overflow-hidden md:grid-cols-[360px_1fr]">
-            <div className="overflow-y-auto border-border p-6 font-mono text-micro md:border-r">
+          <div className="grid flex-1 grid-cols-1 overflow-y-auto overscroll-contain md:grid-cols-[360px_1fr] md:overflow-hidden">
+            <div className="border-border p-6 font-mono text-micro md:overflow-y-auto md:border-r">
               {priceBlock}
               {statsBlock}
               {!isMarket && positionBlock}
@@ -210,15 +230,20 @@ export default function AssetDrawer({ holding, onClose, onSell }) {
             </div>
           </div>
         </div>
-      </div>
+      </div>,
+      document.body
     )
   }
 
   // --- KATLANMIŞ: yan panel ---
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-40 bg-foreground/40 backdrop-blur-[1px]" onClick={onClose}>
       <div
-        className="fixed bottom-0 right-0 top-0 flex w-full max-w-md flex-col justify-between overflow-y-auto border-l border-border bg-card p-6 font-mono text-micro"
+        ref={panelRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        className="fixed bottom-0 right-0 top-0 flex w-full max-w-md flex-col justify-between overflow-y-auto overscroll-contain border-l border-border bg-card p-6 font-mono text-micro outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div>
@@ -234,6 +259,7 @@ export default function AssetDrawer({ holding, onClose, onSell }) {
         </div>
         <div className="pt-6">{actionBtn}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

@@ -66,8 +66,8 @@ export default function Overview() {
       title={t('overview.title')}
       actions={
         <>
-          <GhostAction onClick={() => navigate('/assets')}>
-            {t('overview.allAssets')}
+          <GhostAction onClick={() => navigate('/assets')} aria-label={t('overview.allAssets')}>
+            <span className="hidden sm:inline">{t('overview.allAssets')}</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </GhostAction>
           <PrimaryAction onClick={() => navigate('/assets/buy')}>
