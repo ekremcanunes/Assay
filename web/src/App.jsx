@@ -12,6 +12,7 @@ import Assets from './pages/Assets'
 import AddAsset from './pages/AddAsset'
 import AssetCategory from './pages/AssetCategory'
 import Landing from './pages/Landing'
+import LandingTech from './pages/LandingTech'
 import Login from './pages/Login'
 import Register from './pages/Register'
 
@@ -47,6 +48,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<RootGate />} />
             <Route path="/landing" element={<Landing />} />
+            <Route path="/landing/tech/:slug" element={<LandingTech />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route

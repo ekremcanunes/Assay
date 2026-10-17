@@ -79,7 +79,7 @@ export default function OtpInput({ value, onChange, onComplete, disabled, invali
           autoComplete={i === 0 ? 'one-time-code' : 'off'}
           aria-label={`${label} ${i + 1}`}
           className={cn(
-            'tabular h-12 w-full min-w-0 rounded-none border-0 border-b bg-secondary text-center font-mono text-figure text-foreground',
+            'tabular h-14 w-full min-w-0 md:h-12 rounded-none border-0 border-b bg-secondary text-center font-mono text-figure text-foreground',
             'focus:border-foreground focus:outline-none focus:shadow-[inset_0_0_0_2px_hsl(var(--foreground))] disabled:opacity-50',
             invalid ? 'border-destructive' : value[i] ? 'border-foreground' : 'border-input',
           )}

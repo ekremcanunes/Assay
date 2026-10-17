@@ -3,11 +3,11 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { isValidEmail, kratosErrorText } from '../lib/authErrors'
-import { authLabelCls, authInputCls, authSubmitCls } from '../lib/authStyles'
+import { authLabelCls, authInputCls, authSubmitCls, authPageCls, authCardCls, authDockCls } from '../lib/authStyles'
 import { APP_NAME, KRATOS_URL } from '../lib/app'
 import assayMark from '../assets/assay-mark.svg'
-import { Eye, EyeOff } from 'lucide-react'
 import AuthVisual from '../components/AuthVisual'
+import PasswordToggle from '../components/PasswordToggle'
 import CodeStep from '../components/CodeStep'
 
 const csrfOf = (flow) => flow?.ui?.nodes?.find((n) => n.attributes?.name === 'csrf_token')?.attributes?.value
@@ -160,14 +160,19 @@ export default function Login() {
   }
 
   return (
-    <div className="paper flex min-h-screen items-center bg-background p-6 md:p-12">
-      <div className="edge-accent relative z-10 w-full max-w-[360px] overflow-hidden rounded-r-lg border border-l-0 border-border bg-card p-7">
+    <div className={authPageCls}>
+      <div className={authCardCls}>
         {step === 'password' ? (
-          <div key="password">
-            <Link to="/landing" aria-label={`${APP_NAME} tanıtım sayfası`} className="inline-block rounded-sm hover:opacity-70">
-              <img src={assayMark} alt="" className="h-[30px] w-[30px]" />
-            </Link>
-            <h1 className="mt-4 text-head font-bold text-foreground">{t('auth.signIn')}</h1>
+          <div key="password" className="flex flex-1 flex-col">
+            <div className="flex items-center justify-between">
+              <Link to="/landing" aria-label={`${APP_NAME} tanıtım sayfası`} className="inline-block rounded-sm hover:opacity-70">
+                <img src={assayMark} alt="" className="h-[30px] w-[30px]" />
+              </Link>
+              <Link to="/landing" className="py-2.5 text-ui text-muted-foreground hover:text-foreground md:hidden">
+                <span aria-hidden="true">&larr;</span> {APP_NAME} nedir?
+              </Link>
+            </div>
+            <h1 className="mt-6 text-head font-bold text-foreground md:mt-4">{t('auth.signIn')}</h1>
             <p className="mt-1 text-ui text-muted-foreground">{APP_NAME} — {t('auth.signInSubtitle')}</p>
 
             {error && (
@@ -176,11 +181,13 @@ export default function Login() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="mt-1" noValidate>
+            <form onSubmit={handleSubmit} className="mt-1 flex flex-1 flex-col" noValidate>
               <label className={authLabelCls} htmlFor="login-email">{t('auth.email')}</label>
               <input
                 id="login-email"
                 type="email"
+                inputMode="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
@@ -193,33 +200,30 @@ export default function Login() {
                 <input
                   id="login-password"
                   type={showPass ? 'text' : 'password'}
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`${authInputCls} pr-10`}
+                  className={`${authInputCls} pr-16`}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPass((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
-                  aria-label={showPass ? t('auth.hidePassword') : t('auth.showPassword')}
-                >
-                  {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                <PasswordToggle shown={showPass} onToggle={() => setShowPass((v) => !v)} />
               </div>
               {fieldErr.password && <p className="mt-1 text-micro text-down">{fieldErr.password}</p>}
 
-              <button type="submit" disabled={loading} className={authSubmitCls}>
-                {loading ? t('auth.signingIn') : t('auth.signIn')}
-              </button>
+              {/* mobilde buton ekranın altına iner */}
+              <div className="flex-1 md:hidden" />
+              <div className={authDockCls}>
+                <button type="submit" disabled={loading} className={authSubmitCls}>
+                  {loading ? t('auth.signingIn') : t('auth.signIn')}
+                </button>
+                <p className="mt-3 text-center text-ui text-muted-foreground md:mt-5 md:text-left">
+                  {t('auth.noAccount')}{' '}
+                  <Link to="/register" reloadDocument className="font-semibold text-foreground underline underline-offset-4 hover:opacity-70">{t('auth.createOne')}</Link>
+                </p>
+              </div>
             </form>
 
-            <p className="mt-5 text-ui text-muted-foreground">
-              {t('auth.noAccount')}{' '}
-              <Link to="/register" reloadDocument className="font-semibold text-foreground underline underline-offset-4 hover:opacity-70">{t('auth.createOne')}</Link>
-            </p>
-
-            <p className="mt-4 border-t border-border pt-4">
+            <p className="mt-4 hidden border-t border-border pt-4 md:block">
               <Link to="/landing" className="inline-flex items-center gap-1.5 text-ui text-muted-foreground hover:text-foreground">
                 <span aria-hidden="true">&larr;</span> {APP_NAME} nedir?
               </Link>

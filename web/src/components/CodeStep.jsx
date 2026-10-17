@@ -67,7 +67,7 @@ export default function CodeStep({
             />
             <p className="mt-2 text-micro text-muted-foreground">{t('auth.otpPasteHint')}</p>
 
-            <button type="submit" disabled={loading || code.length !== 6 || !ready} className={authSubmitCls}>
+            <button type="submit" disabled={loading || code.length !== 6 || !ready} className={`${authSubmitCls} mt-6`}>
               {loading && ready ? t('auth.otpVerifying') : t('auth.otpVerify')}
             </button>
           </form>

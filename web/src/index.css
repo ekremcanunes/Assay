@@ -206,6 +206,8 @@ body {
 
 /* Mimari diyagramındaki akan hat — istek yolunu gösterir */
 @keyframes flow { to { stroke-dashoffset: -24; } }
+/* Landing "Fiyat sor" rota çizgisi */
+@keyframes wire-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @media (prefers-reduced-motion: reduce) { [class*="animation:flow"] { animation: none !important; } }
 
 /* Modal giriş animasyonu */
