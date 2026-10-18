@@ -25,3 +25,8 @@ services:
     ports:
       - "4433:4433"
       - "4434:4434"
+  mailpit:
+    # Dev e-posta + SMS kutusu: Kratos mailleri ve SMS relay'in SMS'leri buraya duser. Arayuz: http://localhost:8025
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"

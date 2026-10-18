@@ -36,6 +36,15 @@ public class KratosMiddleware(RequestDelegate next, IHttpClientFactory httpClien
                 await context.Response.WriteAsync("Unauthorized");
                 return;
             }
+
+            // 2FA zorunluluğu: portfolio-service ile aynı kural (compose iki servise aynı AUTH_REQUIRED_AAL değerini verir).
+            var mfaRequired = (configuration["Auth:RequiredAal"] ?? "highest_available") != "aal1";
+            if (mfaRequired && session.Aal != "aal2")
+            {
+                context.Response.StatusCode = 403;
+                await context.Response.WriteAsJsonAsync(new { error = "aal2_required" });
+                return;
+            }
         }
         catch
         {
@@ -48,5 +57,7 @@ public class KratosMiddleware(RequestDelegate next, IHttpClientFactory httpClien
     }
 }
 
-public record KratosSession([property: JsonPropertyName("identity")] KratosIdentity? Identity);
+public record KratosSession(
+    [property: JsonPropertyName("identity")] KratosIdentity? Identity,
+    [property: JsonPropertyName("authenticator_assurance_level")] string? Aal);
 public record KratosIdentity([property: JsonPropertyName("id")] string Id);

@@ -11,7 +11,7 @@ Bu doküman **planlama** aşamasındadır — aşağıdaki kontrollerin çoğu h
 | CD (prod) | AWS CodePipeline |
 | Prod hedefi | EC2 + docker compose (ilk aşama) |
 | Yığın | .NET 9 ×2 servis, React/Vite, Docker, Postgres, Redis, Ory Kratos |
-| Prod durumu | Henüz çıkılmadı |
+| Prod durumu | 2026-09-27'de çıkıldı: `https://assay.com.tr` (Cloudflare → EC2) |
 
 **Public repo'nun iki sonucu var:**
 
@@ -19,6 +19,34 @@ Bu doküman **planlama** aşamasındadır — aşağıdaki kontrollerin çoğu h
 2. **Risk:** Yanlışlıkla commit'lenen bir sır, push edildiği **saniye** içinde yakalanır (botlar public commit akışını sürekli tarar). Commit'i silmek işe yaramaz — sır yanmıştır, tek çözüm onu iptal edip yenilemektir. Bu yüzden sır kontrolü bu projede 1 numaralı öncelik.
 
 ## 2. Mevcut Durum (dürüst değerlendirme)
+
+### 2026-09-28: prod sonrası değerlendirme
+
+**Ağ ve giriş katmanı iyi durumda:**
+
+- Dışarıya tek kapı **443**, yalnızca Cloudflare IP'lerinden (AWS managed prefix list `cloudflare-ipv4`). 80 ve 22 kapalı; `http://` yönlendirmesini Cloudflare'in "Always Use HTTPS" ayarı yapıyor. Yönetim erişimi yalnızca SSM Session Manager ile (port yok, IAM + MFA).
+- Uçtan uca HTTPS: Cloudflare Edge sertifikası + EC2'de nginx'te Cloudflare Origin sertifikası, mod **Full (strict)**.
+- DDoS koruması Cloudflare'de; login/kayıt için nginx rate limit (IP başına 10/dk), gerçek kullanıcı IP'si `CF-Connecting-IP`'den.
+- Sırlar Secrets Manager'da (`assay/prod/env`, `assay/prod/tls`); EC2 rolü yalnızca bu iki secret'ı okuyabiliyor. GitHub → AWS OIDC, statik anahtar yok.
+- Immutable imajlar (SHA tag, ECR immutable); prod'a çıkış SNS e-postası + insan onayıyla.
+
+> Cloudflare IP aralıkları değişirse **iki yer** birlikte güncellenir: `web/nginx.prod.conf` (`set_real_ip_from`) ve AWS prefix list `cloudflare-ipv4`.
+
+**Açık kalanlar:**
+
+| Konu | Neden önemli | Öncelik |
+|---|---|---|
+| **İzleme / alarm yok** | Loglar yalnızca EC2'deki Docker'da. Saldırı ya da çökme olursa haber alınmıyor | Yüksek |
+| **Veritabanı yedeği** | Neon'da otomatik yedek / zamanda geri dönme (PITR) planına bağlı; doğrulanmadı | Yüksek |
+| **Güvenlik başlıkları** | HSTS, `X-Frame-Options`, `Content-Security-Policy` yok (clickjacking, bazı XSS türleri) | Orta |
+| **İmaj taraması** | Trivy ve hadolint CI'da yok (§8 P1 madde 6) | Orta |
+| **Container'lar root mu** | Doğrulanmadı; root çalışan container ele geçirilirse etki büyür | Orta |
+| **Şifre sıfırlama / e-posta doğrulama** | Kratos courier hâlâ test SMTP'sine (`mailslurper`) bakıyor; hesap kurtarma yolu yok | Orta |
+| EBS şifrelemesi | Doğrulanmadı (§8 P1 madde 8) | Düşük |
+| CodeQL zorunlu kontrol | Tarama çalışıyor ama merge'ü engellemiyor | Düşük |
+| AWS root hesabında MFA | IAM kullanıcısında var; root teyit edilmedi | Kontrol et |
+
+### İlk değerlendirme (prod öncesi, tarihsel)
 
 Bugün var olan tek workflow `.github/workflows/wsl-deploy.yml`; **dev amaçlı**, `test` branch'ine push olunca WSL2'deki self-hosted runner'da `docker compose up` çalıştırıyor. Prod pipeline'ı henüz yazılmadı.
 

@@ -2,6 +2,14 @@ import axios from 'axios'
 
 const api = axios.create({ baseURL: '', withCredentials: true })
 
+// Oturum şifreyle açılmış ama e-posta kodu girilmemiş (AAL1): backend 403 aal2_required döner → kod adımına git.
+api.interceptors.response.use(undefined, (error) => {
+  if (error.response?.status === 403 && error.response.data?.error === 'aal2_required') {
+    window.location.assign('/login?aal2=1')
+  }
+  return Promise.reject(error)
+})
+
 export const assetApi = {
   getAll: () => api.get('/api/assets'),
   buy: (data) => api.post('/api/assets/buy', data),

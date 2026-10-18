@@ -206,6 +206,8 @@ body {
 
 /* Mimari diyagramındaki akan hat — istek yolunu gösterir */
 @keyframes flow { to { stroke-dashoffset: -24; } }
+/* Landing "Fiyat sor" rota çizgisi */
+@keyframes wire-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @media (prefers-reduced-motion: reduce) { [class*="animation:flow"] { animation: none !important; } }
 
 /* Modal giriş animasyonu */
@@ -215,6 +217,26 @@ body {
 }
 .modal-in { animation: modal-in .16s ease-out; }
 @media (prefers-reduced-motion: reduce) { .modal-in { animation: none; } }
+
+/* Giriş: şifre → kod adımı geçişi, yanlış kodda kutu sallanması, doğrulama ikonu */
+@keyframes step-in {
+  from { opacity: 0; transform: translateX(14px); }
+  to   { opacity: 1; transform: none; }
+}
+.step-in { animation: step-in .22s cubic-bezier(0,0,.38,.9); }
+@keyframes otp-shake {
+  0%, 100% { transform: none; }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+.otp-shake { animation: otp-shake .32s cubic-bezier(0,0,.38,.9); }
+@keyframes mascot-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+.mascot-bob { animation: mascot-bob 2.4s ease-in-out infinite; }
+@keyframes mascot-pop { 0% { transform: scale(.4); opacity: 0; } 70% { transform: scale(1.12); } 100% { transform: scale(1); opacity: 1; } }
+.mascot-pop { transform-box: fill-box; transform-origin: center; animation: mascot-pop .3s cubic-bezier(0,0,.38,.9); }
+@media (prefers-reduced-motion: reduce) {
+  .step-in, .otp-shake, .mascot-bob, .mascot-pop { animation: none; }
+}
 
 /*
   Geçişler: 110ms + cubic-bezier(0,0,.38,.9) — sert duran "productive"
@@ -229,3 +251,17 @@ body {
                 opacity .11s cubic-bezier(0,0,.38,.9);
   }
 }
+
+/* Karttan sayfaya geçiş (View Transitions) — desteklemeyen tarayıcı animasyonsuz geçer */
+::view-transition-group(*) { animation-duration: 420ms; animation-timing-function: cubic-bezier(.2, .8, .2, 1); }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise .4s cubic-bezier(.2, .8, .2, 1) .2s backwards; } /* backwards: bitince transform kalmaz → içindeki fixed elemanlar ekrana göre konumlanır */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+  .rise { animation: none; }
+}
+
+/* Buton dokunuşu: yumuşak renk geçişi + basınca hafif içeri (gölge yok). Hover renkleri bileşende. */
+.press { transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .1s; }
+.press:active:not(:disabled) { transform: scale(.97); }
+@media (prefers-reduced-motion: reduce) { .press:active:not(:disabled) { transform: none; } }

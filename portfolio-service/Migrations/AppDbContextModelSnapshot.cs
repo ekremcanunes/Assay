@@ -18,7 +18,7 @@ namespace portfolio_service.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.16")
+                .HasAnnotation("ProductVersion", "9.0.20")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -64,6 +64,19 @@ namespace portfolio_service.Migrations
                         .IsUnique();
 
                     b.ToTable("Assets");
+                });
+
+            modelBuilder.Entity("portfolio_service.Models.SmsDailyUsage", b =>
+                {
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Date");
+
+                    b.ToTable("SmsDailyUsage");
                 });
 
             modelBuilder.Entity("portfolio_service.Models.Transaction", b =>

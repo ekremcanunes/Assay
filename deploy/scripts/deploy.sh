@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
+# Shebang: env'e bak, bash nerede kuruluysa o dizinden çağırır. (Alternatif: bash deploy.sh demek)
 # Prod EC2'de calisir. Kullanim: IMAGE_TAG=<git-sha> ./deploy/scripts/deploy.sh
-set -euo pipefail
-
+set -euo pipefail #-e=errexit, -u=nounset, -o pipefail / Amaç: Hatalar aninda yakalansin, tanimsiz degiskenler kullanilmasin, pipe'larda hata olursa script durdurulsun.
 # Govde main() icinde: bash fonksiyonu calistirmadan once tamamini okur, boylece
 # asagidaki git checkout bu dosyayi degistirse bile calisan kopya etkilenmez.
-main() {
+deploy() { #
   : "${IMAGE_TAG:?IMAGE_TAG tanimli degil (deploy edilecek commit SHA degeri)}"
 
   local AWS_REGION=eu-central-1
@@ -16,9 +16,14 @@ main() {
 
   cd "$APP_DIR"
 
-  # Compose ve kratos/ config'i, imajla ayni commit'ten gelsin.
-  git fetch --quiet origin main-prod
-  git checkout --quiet --detach "$IMAGE_TAG"
+  # Compose ve kratos/ config'i, imajla ayni commit'ten gelsin. Checkout bu dosyanin kendisini
+  # de degistirir; bellekteki ESKI surum devam etmesin diye diskteki YENI surumle bastan basla.
+  
+  if [[ "${RE_DEPLOY:-}" != "$IMAGE_TAG" ]]; then
+    git fetch --quiet origin main-prod # Head 
+    git checkout --quiet --detach "$IMAGE_TAG" # Problem burada yaşanıyor script çalışırken yeni committen gelen build içinde deploy.sh değişiyor. 
+    RE_DEPLOY="$IMAGE_TAG" exec "$APP_DIR/deploy/scripts/deploy.sh" 
+  fi
 
   # umask 077: .env ilk andan itibaren yalnizca sahibi tarafindan okunabilir (600).
   # Degerler tek tirnakla yazilir -> compose icerideki $ karakterini degisken sanmaz.
@@ -59,4 +64,4 @@ open("certs/origin.key", "wb").write(base64.b64decode(s["ORIGIN_KEY_B64"]))
   docker compose -f docker-compose.yml ps
 }
 
-main "$@"
+deploy "$@"

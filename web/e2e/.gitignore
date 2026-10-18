@@ -1,0 +1,9 @@
+# Playwright çıktıları
+test-results/
+playwright-report/
+
+# Oturum cookie'si (storageState) — ASLA commit'lenmez
+auth.json
+
+# Tarama ekran görüntüleri
+audit-shots/
