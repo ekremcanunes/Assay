@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext'
 import { isValidEmail, kratosErrorText } from '../lib/authErrors'
 import { authLabelCls, authInputCls, authSubmitCls, authPageCls, authCardCls, authDockCls } from '../lib/authStyles'
-import { APP_NAME, KRATOS_URL } from '../lib/app'
+import { APP_NAME } from '../lib/app'
+import { csrfOf, browserFlowUrl, getFlow, submitFlow, classifyFlowError } from '../lib/kratosFlow'
 import { toE164TR } from '../lib/phone'
 import assayMark from '../assets/assay-mark.svg'
 import AuthVisual from '../components/AuthVisual'
@@ -13,18 +14,8 @@ import { Checkbox } from '../components/ui/checkbox'
 
 const EMPTY = { first: '', last: '', email: '', phone: '', password: '', consent: false }
 
-const csrfOf = (flow) => flow?.ui?.nodes?.find((n) => n.attributes?.name === 'csrf_token')?.attributes?.value
-
-// Kratos tarayıcı akışına JSON gönderir (cookie + CSRF).
-const postFlow = async (kind, flowId, payload) => {
-  const res = await fetch(`${KRATOS_URL}/self-service/${kind}?flow=${flowId}`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify(payload),
-  })
-  return { ok: res.ok, body: await res.json() }
-}
+// Kullanılamayan akışta baştan başla: Kratos yeni ?flow= ile /register'a geri yollar.
+const restartRegistration = () => window.location.replace(browserFlowUrl('registration'))
 
 export default function Register() {
   const [flow, setFlow] = useState(null)
@@ -42,22 +33,35 @@ export default function Register() {
   const [sentAt, setSentAt] = useState(null)
   const [shake, setShake] = useState(0)
 
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
   const { t } = useLanguage()
+
+  // Kayıt akışı bozulduğunda ne yapılacağı (kararı lib/kratosFlow verir)
+  const applyDecision = async (d) => {
+    if (d.action === 'go_app') return navigate('/overview')
+    if (d.action === 'redirect') return window.location.assign(d.url)
+    if (d.action === 'use_flow') {
+      // Süre doldu: Kratos'un verdiği yeni akışa geç; doldurulan form yerinde kalır
+      const r = await getFlow('registration', d.flowId)
+      if (!r.flow) return restartRegistration()
+      setFlow(r.flow)
+      setSearchParams({ flow: r.flow.id }, { replace: true })
+      return setError(t('auth.errFlowExpired'))
+    }
+    return restartRegistration()
+  }
 
   useEffect(() => {
     const flowId = searchParams.get('flow')
-    if (flowId) {
-      fetch(`${KRATOS_URL}/self-service/registration/flows?id=${flowId}`, {
-        credentials: 'include',
-        headers: { Accept: 'application/json' },
-      })
-        .then((res) => res.json())
-        .then(setFlow)
-    } else {
-      window.location.replace(`${KRATOS_URL}/self-service/registration/browser`)
-    }
-  }, [searchParams])
+    if (!flowId) return restartRegistration()
+    if (flow?.id === flowId) return // süre dolunca geçilen yeni akış zaten yüklü
+    // Hata gövdesi asla "akış" diye saklanmaz: okunamayan akışta karar uygulanır (çoğunlukla yeni akış)
+    getFlow('registration', flowId).then((r) => {
+      if (r.flow) return setFlow(r.flow)
+      return applyDecision(r.decision.action === 'show' ? { action: 'restart' } : r.decision)
+    })
+  }, [searchParams]) // eslint-disable-line react-hooks/exhaustive-deps -- yalnızca URL değişince çalışmalı
 
   const set = (key) => (value) => setForm((f) => ({ ...f, [key]: value }))
 
@@ -82,7 +86,7 @@ export default function Register() {
 
     setLoading(true)
     try {
-      const { ok, body } = await postFlow('registration', flow.id, {
+      const { ok, status, body } = await submitFlow('registration', flow.id, {
         method: 'password',
         password: form.password,
         csrf_token: csrfOf(flow),
@@ -93,16 +97,19 @@ export default function Register() {
           consent: true,
         },
       })
-      if (!ok) return setError(kratosErrorText(body, t))
+      if (!ok) {
+        const d = classifyFlowError(status, body)
+        if (d.action !== 'show') return applyDecision(d)
+        if (body?.ui) setFlow(body) // güncel akış (yeni CSRF dahil) ile devam
+        return setError(kratosErrorText(body, t))
+      }
 
       const next = body.continue_with?.find((c) => c.action === 'show_verification_ui')
       if (!next) return window.location.assign('/login') // doğrulama kapalı (AUTH_VERIFICATION_ENABLED=false)
       setStep('verify')
-      const res = await fetch(`${KRATOS_URL}/self-service/verification/flows?id=${next.flow.id}`, {
-        credentials: 'include',
-        headers: { Accept: 'application/json' },
-      })
-      setVerifyFlow(await res.json())
+      const r = await getFlow('verification', next.flow.id)
+      if (!r.flow) return setError(t('auth.errGeneric'))
+      setVerifyFlow(r.flow)
       setMascot('open')
       setSentAt(Date.now())
     } finally {
@@ -116,7 +123,7 @@ export default function Register() {
     setError(null)
     setLoading(true)
     try {
-      const { body } = await postFlow('verification', verifyFlow.id, { method: 'code', code: value, csrf_token: csrfOf(verifyFlow) })
+      const { body } = await submitFlow('verification', verifyFlow.id, { method: 'code', code: value, csrf_token: csrfOf(verifyFlow) })
       if (body?.state === 'passed_challenge') return setMascot('done')
       if (body?.ui) setVerifyFlow(body)
       setCode('')
@@ -131,7 +138,7 @@ export default function Register() {
     if (!verifyFlow) return
     setError(null)
     setCode('')
-    const { body } = await postFlow('verification', verifyFlow.id, { method: 'code', email: form.email.trim(), csrf_token: csrfOf(verifyFlow) })
+    const { body } = await submitFlow('verification', verifyFlow.id, { method: 'code', email: form.email.trim(), csrf_token: csrfOf(verifyFlow) })
     if (body?.ui) setVerifyFlow(body)
     if (body?.ui?.messages?.some((m) => m.id === 1080003)) setSentAt(Date.now())
     else setError(kratosErrorText(body, t))

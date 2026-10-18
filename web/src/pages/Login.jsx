@@ -5,23 +5,15 @@ import { useLanguage } from '../contexts/LanguageContext'
 import { isValidEmail, kratosErrorText } from '../lib/authErrors'
 import { authLabelCls, authInputCls, authSubmitCls, authPageCls, authCardCls, authDockCls } from '../lib/authStyles'
 import { APP_NAME, KRATOS_URL } from '../lib/app'
+import { csrfOf, browserFlowUrl, getFlow, submitFlow, classifyFlowError } from '../lib/kratosFlow'
+import { markOtpPending, clearOtpPending, isOtpPendingFresh } from '../lib/otpPending'
 import assayMark from '../assets/assay-mark.svg'
 import AuthVisual from '../components/AuthVisual'
 import PasswordToggle from '../components/PasswordToggle'
 import CodeStep from '../components/CodeStep'
 
-const csrfOf = (flow) => flow?.ui?.nodes?.find((n) => n.attributes?.name === 'csrf_token')?.attributes?.value
-
-// Kratos akışına JSON gönderir; tarayıcı akışı olduğu için cookie (oturum + CSRF) her istekte gider.
-const postFlow = async (flowId, payload) => {
-  const res = await fetch(`${KRATOS_URL}/self-service/login?flow=${flowId}`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify(payload),
-  })
-  return { ok: res.ok, body: await res.json() }
-}
+// Kullanılamayan akışta baştan başla: Kratos yeni ?flow= ile /login'e geri yollar.
+const restartLogin = () => window.location.replace(browserFlowUrl('login'))
 
 export default function Login() {
   const [flow, setFlow] = useState(null)
@@ -33,8 +25,9 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
 
   // 2. adım (e-posta kodu). Kratos v1.2 zorunluluğu kendisi uygulamıyor; backend 403 aal2_required döner (KratosMiddleware).
-  const [searchParams] = useSearchParams()
-  const [step, setStep] = useState(() => (searchParams.get('aal2') ? 'otp' : 'password'))
+  // Kod adımına yalnız bu sekmede şifre az önce doğrulandıysa devam edilir; aksi halde yarım oturum kapatılır (otpPending).
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [step, setStep] = useState(() => (searchParams.get('aal2') && isOtpPendingFresh() ? 'otp' : 'password'))
   const [otpFlow, setOtpFlow] = useState(null)
   const [otpEmail, setOtpEmail] = useState('')
   const [code, setCode] = useState('')
@@ -46,6 +39,21 @@ export default function Login() {
   const { session, loading: sessionLoading, setSession, logout } = useAuth()
   const { t } = useLanguage()
 
+  // Şifre akışı bozulduğunda ne yapılacağı (kararı lib/kratosFlow verir)
+  const applyDecision = async (d) => {
+    if (d.action === 'go_app') return navigate('/overview')
+    if (d.action === 'redirect') return window.location.assign(d.url)
+    if (d.action === 'use_flow') {
+      // Süre doldu: Kratos'un verdiği yeni akışa geç; yazılan e-posta yerinde kalır
+      const r = await getFlow('login', d.flowId)
+      if (!r.flow) return restartLogin()
+      setFlow(r.flow)
+      setSearchParams({ flow: r.flow.id }, { replace: true })
+      return setError(t('auth.errFlowExpired'))
+    }
+    return restartLogin()
+  }
+
   // Kod adımı: AAL2 akışını aç, kodu e-postaya gönder. Gönderim sürerken maskot 'idle', kutular kilitli.
   // İlk state güncellemesi await'ten sonra: effect'ten çağrıldığında zincirleme render olmasın.
   const sendOtp = async (address) => {
@@ -53,11 +61,16 @@ export default function Login() {
       credentials: 'include',
       headers: { Accept: 'application/json' },
     })
-    const f = await res.json()
+    const f = await res.json().catch(() => null)
     setOtpEmail(address)
-    if (!res.ok) return setError(kratosErrorText(f, t))
+    if (!res.ok || !f?.id) {
+      const d = classifyFlowError(res.status, f)
+      if (d.action === 'go_app') return navigate('/overview') // oturum zaten AAL2
+      clearOtpPending()
+      return restartLogin()
+    }
     // Kod gönderildiğinde Kratos 400 + güncel akış döner (mesaj 1010014); hata değil, beklenen durum.
-    const { body } = await postFlow(f.id, { method: 'code', identifier: address, csrf_token: csrfOf(f) })
+    const { body } = await submitFlow('login', f.id, { method: 'code', identifier: address, csrf_token: csrfOf(f) })
     if (body?.ui) setOtpFlow(body)
     if (body?.ui?.messages?.some((m) => m.id === 1010014)) {
       setMascot('open')
@@ -68,27 +81,25 @@ export default function Login() {
   }
 
   useEffect(() => {
-    // Panelden 403 aal2_required ile gelindi: şifre adımı geçilmiş, oturum AAL1. Doğrudan kod adımına geç.
+    // Panelden 403 aal2_required ile gelindi: oturum AAL1, şifre adımı geçilmiş.
     if (searchParams.get('aal2')) {
       if (sessionLoading) return
       const address = session?.identity?.traits?.email
+      if (!address) return restartLogin()
       // eslint-disable-next-line react-hooks/set-state-in-effect -- sendOtp'taki tüm setState'ler await'ten sonra
-      if (address) sendOtp(address)
-      else window.location.replace(`${KRATOS_URL}/self-service/login/browser`)
+      if (isOtpPendingFresh()) sendOtp(address)
+      else logout() // şifre bu sekmede az önce girilmedi: yarım oturumu kapat, şifreden başlasın
       return
     }
     const flowId = searchParams.get('flow')
-    if (flowId) {
-      fetch(`${KRATOS_URL}/self-service/login/flows?id=${flowId}`, {
-        credentials: 'include',
-        headers: { Accept: 'application/json' },
-      })
-        .then((res) => res.json())
-        .then(setFlow)
-    } else {
-      window.location.replace(`${KRATOS_URL}/self-service/login/browser`)
-    }
-  }, [searchParams, sessionLoading]) // eslint-disable-line react-hooks/exhaustive-deps -- sendOtp her render'da yeni; yalnızca URL/oturum yüklenince çalışmalı
+    if (!flowId) return restartLogin()
+    if (flow?.id === flowId) return // süre dolunca geçilen yeni akış zaten yüklü
+    // Hata gövdesi asla "akış" diye saklanmaz: okunamayan akışta karar uygulanır (çoğunlukla yeni akış)
+    getFlow('login', flowId).then((r) => {
+      if (r.flow) return setFlow(r.flow)
+      return applyDecision(r.decision.action === 'show' ? { action: 'restart' } : r.decision)
+    })
+  }, [searchParams, sessionLoading]) // eslint-disable-line react-hooks/exhaustive-deps -- yalnızca URL/oturum yüklenince çalışmalı
 
   const validate = () => {
     const e = {}
@@ -106,11 +117,17 @@ export default function Login() {
 
     setLoading(true)
     try {
-      const { ok, body } = await postFlow(flow.id, { method: 'password', identifier: email, password, csrf_token: csrfOf(flow) })
-      if (!ok) return setError(kratosErrorText(body, t))
+      const { ok, status, body } = await submitFlow('login', flow.id, { method: 'password', identifier: email, password, csrf_token: csrfOf(flow) })
+      if (!ok) {
+        const d = classifyFlowError(status, body)
+        if (d.action !== 'show') return applyDecision(d)
+        if (body?.ui) setFlow(body) // güncel akış (yeni CSRF dahil) ile devam
+        return setError(kratosErrorText(body, t))
+      }
       setSession(body)
       const options = await fetch('/api/auth/options').then((r) => (r.ok ? r.json() : null)).catch(() => null)
       if (options?.mfaRequired && options.channels?.email) {
+        markOtpPending()
         setStep('otp')
         return sendOtp(email)
       }
@@ -125,12 +142,21 @@ export default function Login() {
     setError(null)
     setLoading(true)
     try {
-      const { ok, body } = await postFlow(otpFlow.id, { method: 'code', code: value, identifier: otpEmail, csrf_token: csrfOf(otpFlow) })
+      const { ok, status, body } = await submitFlow('login', otpFlow.id, { method: 'code', code: value, identifier: otpEmail, csrf_token: csrfOf(otpFlow) })
       if (ok) {
+        clearOtpPending()
         setMascot('done')
         setSession(body)
         setTimeout(() => navigate('/overview'), 650)
         return
+      }
+      const d = classifyFlowError(status, body)
+      if (d.action === 'go_app') return navigate('/overview')
+      if (d.action !== 'show') {
+        // Kod akışı kullanılamıyor (süre doldu vb.): yeni akış aç, yeni kod gönder
+        setCode('')
+        setError(t('auth.errFlowExpired'))
+        return sendOtp(otpEmail)
       }
       if (body?.ui) setOtpFlow(body)
       setCode('')
@@ -145,10 +171,17 @@ export default function Login() {
     if (!otpFlow) return
     setError(null)
     setCode('')
-    const { body } = await postFlow(otpFlow.id, { method: 'code', identifier: otpEmail, resend: 'code', csrf_token: csrfOf(otpFlow) })
+    const { status, body } = await submitFlow('login', otpFlow.id, { method: 'code', identifier: otpEmail, resend: 'code', csrf_token: csrfOf(otpFlow) })
     if (body?.ui) setOtpFlow(body)
-    if (body?.ui?.messages?.some((m) => m.id === 1010014)) setSentAt(Date.now())
-    else setError(kratosErrorText(body, t))
+    if (body?.ui?.messages?.some((m) => m.id === 1010014)) return setSentAt(Date.now())
+    if (classifyFlowError(status, body).action !== 'show') return sendOtp(otpEmail) // akış bitmiş: yenisini aç
+    setError(kratosErrorText(body, t))
+  }
+
+  // Başka hesap: yarım oturumu kapat (işaret de silinir)
+  const otherAccount = () => {
+    clearOtpPending()
+    logout()
   }
 
   if (!flow && step === 'password') {
@@ -246,7 +279,7 @@ export default function Login() {
             sentAt={sentAt}
             footer={
               <p className="mt-4 border-t border-border pt-4">
-                <button type="button" onClick={logout} className="inline-flex items-center gap-1.5 text-ui text-muted-foreground hover:text-foreground">
+                <button type="button" onClick={otherAccount} className="inline-flex items-center gap-1.5 text-ui text-muted-foreground hover:text-foreground">
                   <span aria-hidden="true">&larr;</span> {t('auth.otpOtherAccount')}
                 </button>
               </p>

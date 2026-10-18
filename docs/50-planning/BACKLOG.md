@@ -156,3 +156,49 @@ Sonraya bırakılan işler. Her madde: sorun, neden önemli, seçenekler, öneri
 **Sorun.** `DB_CONNECTION_STRING` örneğinde şifre alanı dolu (4 karakter). Muhtemelen yer tutucu ama doğrulanmadı. Geçmişte bu dosyaya gerçek bir anahtar yazılıp geri alınmıştı.
 
 **Öneri.** Dosyayı açıp şifre ve host alanlarının yer tutucu olduğunu gözle doğrula (`<sifre>` gibi açıkça yer tutucu bir biçime çevir). Gerçek değer çıkarsa: o sırrı döndür (rotate) ve geçmişten temizlemeyi değerlendir.
+
+---
+
+## Piyasa kartları ayrı veri serisinden besleniyor
+
+*Eklendi: 2026-10-19 · Bağlam: grafik veri kaynakları incelemesi*
+
+**Sorun.** Portföy kartları ve varlık panelindeki mum grafiği `usePriceHistory` (`/api/market/history`) kullanıyor; Piyasa kartları (Borsa, Altın & Döviz) ise `/api/market/overview` içindeki ayrı `spark` serisini. İki yol farklı hesaplıyor: overview'da altının 1 aylık serisi **bütün günler bugünün** USD/TL kuruyla gram TL'ye çevriliyor; history'de **her gün kendi kuruyla**. Piyasa kartındaki altın grafiği panelin grafiğinden biraz farklı görünebiliyor.
+
+**Öneri.** Piyasa kartlarını da `usePriceHistory`'ye geçir (XU100.IS ve XAU, `1mo` veya `1y`). İki yer tek kaynaktan beslenir, altın farkı kaybolur, React Query önbelleği paylaşılır. Bedeli: Piyasa açılışında iki ek istek (önbellekten gelir). Sonra `MarketOverviewService`'teki `Spark` üretimi kaldırılabilir — kullanılan başka yer yoksa.
+
+---
+
+## Servisler arası kimlik doğrulama yok (güvenilir ağ modeli)
+
+*Eklendi: 2026-10-19 · Bağlam: servisler arası iletişim incelemesi*
+
+**Durum.** Bütün container'lar tek Docker ağında; dışarıya yalnız nginx açık (prod'da 443, yalnız Cloudflare). İçeride servis kimliği yok: nginx → portfolio-service, portfolio-service → market-service, servisler → Kratos `whoami` kullanıcı çerezini iletip kullanıcı düzeyinde doğrulanıyor; servisin kendisi kanıtlanmıyor. Tek istisna Kratos → `/internal/sms` (`X-Api-Key`). Compose'taki `expose` bir kısıtlama değildir — ağdaki her container her porta ulaşır.
+
+**Neden önemli.** Bugün doğrudan açık yok; risk bir container ele geçirilirse (ör. bağımlılık açığı) **yanal hareket**: içeriden Kratos yönetim API'si (4434, kimlik doğrulaması yok — kullanıcıları listeleme/silme/değiştirme) ve şifresiz Redis (sahte fiyat yazma). Kodda 4434'ü kullanan hiçbir servis yok.
+
+**Önlemler (öncelik sırasıyla).**
+
+| # | Önlem | Etki | İş |
+|---|---|---|---|
+| 1 | Kratos yönetim API'sini container içine kapat (`serve.admin.host: 127.0.0.1`) | Kullanılmayan en tehlikeli kapı kapanır | Çok küçük (kratos.yml) |
+| 2 | Redis'e şifre (`requirepass`) | Yetkisiz okuma/yazma engellenir | Küçük (compose + iki servisin bağlantı ayarı + Secrets Manager) |
+| 3 | Docker ağlarını ayır (Kratos yalnız ihtiyacı olanlarla, Redis yalnız servislerle) | Yanal hareket alanı daralır | Orta |
+| 4 | Servisler arası karşılıklı TLS (mTLS) | "Sıfır güven" modeli | Büyük; bu ölçekte gereksiz |
+
+**Öneri.** 1 ve 2 yapılsın; 3 ve 4 ölçek büyürse. Not: dev'de `docker-compose.override.yml` 4434'ü host'a açıyor; 1 uygulanınca dev'de de kapanır, gerekirse yalnız dev'de açık bırakılır.
+
+---
+
+## Aktif oturumlar listesi ve yeni cihaz bildirimi
+
+*Eklendi: 2026-10-19 · Bağlam: aynı hesaba iki cihazdan giriş sorusu*
+
+**Durum.** Kratos bir hesabın aynı anda birden fazla oturumuna izin veriyor (her cihaz kendi çerezi). Bu beklenen davranış; kullanıcı ise hangi cihazların açık olduğunu göremiyor ve yeni bir cihazdan girildiğinden haberi olmuyor.
+
+**Karar (2026-10-19).** Girişte diğer cihazları otomatik çıkarmak **yok** — Assay bir takip uygulaması (para/emir yok), giriş zaten şifre + e-posta kodu; otomatik atma güvenlikten çok kullanım zorluğu getirir ve saldırganla "birbirini atma" yarışına döner. Onun yerine görünürlük:
+
+1. **Aktif oturumlar** (Menü → Güvenlik): cihaz/tarayıcı, yaklaşık konum, son etkinlik; "Bu cihaz" etiketi; satır başına "Çıkış yap" ve toplu **"Diğer cihazlardan çıkış yap"**. Kratos hazır sağlıyor: `GET /sessions` (diğer oturumlar), `DELETE /sessions/{id}`, `DELETE /sessions` (mevcut hariç hepsi). Cihaz bilgisi oturumun `devices` alanından (user agent, IP, konum).
+2. **Yeni cihazdan giriş e-postası:** "Hesabına yeni bir cihazdan girildi — sen değilsen diğer cihazlardan çık ve şifreni değiştir." Kratos'ta hazır değil: login `after` hook'unda `web_hook` ile portfolio-service'e bildirim (Kratos → `/internal/...`, mevcut SMS relay gibi API anahtarlı), servis cihazı daha önce görüp görmediğine bakıp Resend ile e-posta gönderir.
+
+**Not.** "Yeni cihaz" tanımı (user agent + IP alt ağı mı, çerez tabanlı cihaz kimliği mi) tasarımda netleşmeli; yanlış tanım her girişte e-posta üretir.
