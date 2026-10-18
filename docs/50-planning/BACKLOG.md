@@ -124,3 +124,35 @@ Sonraya bırakılan işler. Her madde: sorun, neden önemli, seçenekler, öneri
 **Sorun.** Silinen/yeniden yazılan sayfalardan (`GoldFx`, eski `Market`, eski takvim, eski landing menüsü) `LanguageContext.jsx`'te kullanılmayan anahtarlar kaldı.
 
 **Öneri.** Anahtarlar `t('…')` kullanımlarıyla karşılaştırılıp liste çıkarılır; silmeden önce kullanıcıya gösterilir.
+
+---
+
+## kratos.yml'de Kratos'un örnek sırları duruyor
+
+*Eklendi: 2026-10-18 · Bağlam: repo sır taraması*
+
+**Sorun.** `kratos/kratos.yml` → `secrets.cookie` ve `secrets.cipher`, Kratos'un herkesçe bilinen örnek değerlerini içeriyor (`PLEASE-CHANGE-ME…`, `32-LONG-SECRET…`). Compose bunları `KRATOS_SECRETS_COOKIE` / `KRATOS_SECRETS_CIPHER` ile eziyor.
+
+**Neden önemli.** Prod'da değişkenlerden biri eksik kalırsa Kratos hata vermez, bu örnek değerlerle sessizce çalışır. Bu değerler oturum çerezini imzalıyor ve hassas veriyi şifreliyor.
+
+**Öneri.** (1) Secrets Manager `assay/prod/env` içinde ikisinin dolu olduğunu kontrol et. (2) Örnek değerleri `kratos.yml`'den sil — değişken yoksa Kratos açılmaz, hata görünür olur (fail-fast). Dev için `.env.example` açıklaması yeterli.
+
+---
+
+## `.playwright-mcp/` kayıtları repoya girmiş
+
+*Eklendi: 2026-10-18 · Bağlam: repo sır taraması*
+
+**Sorun.** `689df43` commit'iyle Playwright MCP tarayıcı aracının konsol kaydı ve sayfa görüntüsü (`.playwright-mcp/*.log`, `*.yml`) repoya girdi; `mobil-design` ve `test`'te var. İçerik zararsız (giriş yönlendirme ekranı) ama repoya ait değil; ileride oturum açık sayfaların görüntüleri de girebilir.
+
+**Öneri.** Kök `.gitignore`'a `.playwright-mcp/` ekle, `git rm -r --cached .playwright-mcp` ile takipten çıkar (dosyalar diskte kalır).
+
+---
+
+## `.env.example`'daki bağlantı metinleri kontrol edilmeli
+
+*Eklendi: 2026-10-18 · Bağlam: repo sır taraması*
+
+**Sorun.** `DB_CONNECTION_STRING` örneğinde şifre alanı dolu (4 karakter). Muhtemelen yer tutucu ama doğrulanmadı. Geçmişte bu dosyaya gerçek bir anahtar yazılıp geri alınmıştı.
+
+**Öneri.** Dosyayı açıp şifre ve host alanlarının yer tutucu olduğunu gözle doğrula (`<sifre>` gibi açıkça yer tutucu bir biçime çevir). Gerçek değer çıkarsa: o sırrı döndür (rotate) ve geçmişten temizlemeyi değerlendir.

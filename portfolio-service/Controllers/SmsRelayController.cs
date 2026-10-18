@@ -24,10 +24,13 @@ public class SmsRelayController(
         if (expected.Length == 0 || !CryptographicOperations.FixedTimeEquals(expected, given))
             return Unauthorized();
 
+        // Log'a yazılmadan önce satır sonları atılır: gövdeden gelen değer log'da sahte satır üretemesin (CWE-117).
+        var templateType = (req.Type ?? string.Empty).Replace("\r", string.Empty).Replace("\n", string.Empty);
+
         // SMS_ENABLED=false ya da SMS_URL boş: sayaç artırılmadan reddedilir.
         if (!options.Value.IsAvailable)
         {
-            logger.LogWarning("SMS kanalı kapalı, istek reddedildi {TemplateType}", req.Type);
+            logger.LogWarning("SMS kanalı kapalı, istek reddedildi {TemplateType}", templateType);
             return StatusCode(StatusCodes.Status503ServiceUnavailable);
         }
 
@@ -45,11 +48,11 @@ public class SmsRelayController(
         catch (Exception ex)
         {
             await counter.DecrementAsync(ct);
-            logger.LogError(ex, "SMS sağlayıcısı hata döndü {TemplateType}", req.Type);
+            logger.LogError(ex, "SMS sağlayıcısı hata döndü {TemplateType}", templateType);
             return StatusCode(StatusCodes.Status502BadGateway);
         }
 
-        logger.LogInformation("SMS gönderildi {TemplateType}", req.Type);
+        logger.LogInformation("SMS gönderildi {TemplateType}", templateType);
         return Ok();
     }
 }
