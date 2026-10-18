@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 /*
   Ortak makbuz-stili modal. Her sayfada küçük değişikliklerle kullanılır.
@@ -14,7 +15,8 @@ export function Modal({ open, onClose, title, subtitle, children, actions, maxWi
 
   if (!open) return null
 
-  return (
+  // Sayfa köküne çizilir (portal): atası transform taşısa bile ekranın ortasında açılır
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4 backdrop-blur-[1px]"
       onClick={onClose}
@@ -34,6 +36,7 @@ export function Modal({ open, onClose, title, subtitle, children, actions, maxWi
         {children}
         {actions && <div className="mt-6 flex gap-3">{actions}</div>}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

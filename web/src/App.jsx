@@ -7,11 +7,12 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import Overview from './pages/Overview'
 import Market from './pages/Market'
-import GoldFx from './pages/GoldFx'
+import MarketDetail from './pages/MarketDetail'
 import Assets from './pages/Assets'
 import AddAsset from './pages/AddAsset'
-import Analytics from './pages/Analytics'
+import AssetCategory from './pages/AssetCategory'
 import Landing from './pages/Landing'
+import LandingTech from './pages/LandingTech'
 import Login from './pages/Login'
 import Register from './pages/Register'
 
@@ -47,6 +48,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<RootGate />} />
             <Route path="/landing" element={<Landing />} />
+            <Route path="/landing/tech/:slug" element={<LandingTech />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route
@@ -58,11 +60,14 @@ export default function App() {
             >
               <Route path="/overview" element={<Overview />} />
               <Route path="/market" element={<Market />} />
-              <Route path="/gold-fx" element={<GoldFx />} />
+              <Route path="/market/:panel" element={<MarketDetail />} />
               <Route path="/assets" element={<Assets />} />
               <Route path="/assets/buy" element={<AddAsset />} />
-              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/assets/:category" element={<AssetCategory />} />
               {/* Eski route'lar yönlendirmesi */}
+              <Route path="/gold-fx" element={<Navigate to="/market/gold-fx" replace />} />
+              {/* Analiz yeniden tasarlanana kadar menüde yok (bkz. mobil faz 1 spec §3.1) */}
+              <Route path="/analytics" element={<Navigate to="/overview" replace />} />
               <Route path="/portfolios" element={<Navigate to="/assets" replace />} />
               <Route path="/portfolios/:id" element={<Navigate to="/assets" replace />} />
               <Route path="/transactions" element={<Navigate to="/assets" replace />} />

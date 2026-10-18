@@ -206,6 +206,8 @@ body {
 
 /* Mimari diyagramındaki akan hat — istek yolunu gösterir */
 @keyframes flow { to { stroke-dashoffset: -24; } }
+/* Landing "Fiyat sor" rota çizgisi */
+@keyframes wire-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @media (prefers-reduced-motion: reduce) { [class*="animation:flow"] { animation: none !important; } }
 
 /* Modal giriş animasyonu */
@@ -249,3 +251,17 @@ body {
                 opacity .11s cubic-bezier(0,0,.38,.9);
   }
 }
+
+/* Karttan sayfaya geçiş (View Transitions) — desteklemeyen tarayıcı animasyonsuz geçer */
+::view-transition-group(*) { animation-duration: 420ms; animation-timing-function: cubic-bezier(.2, .8, .2, 1); }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise .4s cubic-bezier(.2, .8, .2, 1) .2s backwards; } /* backwards: bitince transform kalmaz → içindeki fixed elemanlar ekrana göre konumlanır */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+  .rise { animation: none; }
+}
+
+/* Buton dokunuşu: yumuşak renk geçişi + basınca hafif içeri (gölge yok). Hover renkleri bileşende. */
+.press { transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .1s; }
+.press:active:not(:disabled) { transform: scale(.97); }
+@media (prefers-reduced-motion: reduce) { .press:active:not(:disabled) { transform: none; } }

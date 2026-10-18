@@ -1,37 +1,43 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { marketApi } from '@/services/api'
 import { useBuyAsset, usePriceOnDate } from '@/hooks/queries'
 import { todayString, toApiDate, formatDisplayDate } from '@/lib/date'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Page } from '@/components/Page'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { MoneyInput } from '@/components/ui/money-input'
-import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
+import PriceCalendar from '@/components/PriceCalendar'
 import { deviationOf } from '@/lib/priceDeviation'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { ArrowLeft, AlertTriangle, Search, X } from 'lucide-react'
+import { slugOf } from '@/lib/portfolioCategories'
+import { catOf } from '@/lib/assetColors'
+import { formatPct } from '@/lib/format'
+import { cn } from '@/lib/utils'
+import { AlertTriangle, CalendarDays, Search, X } from 'lucide-react'
 
-const assetTypes = ['Stock', 'Currency', 'Gold']
+const assetTypes = ['Gold', 'Stock', 'Currency']
 const currencySymbols = ['USD', 'EUR', 'GBP']
 const currencies = ['TRY', 'USD']
+
+// Seçili/seçili değil hap düğmesi (tür, döviz, para birimi)
+const pill = (on) => cn('press h-9 shrink-0 rounded-full border px-3.5 text-ui',
+  on ? 'border-foreground bg-foreground text-background' : 'border-border bg-card text-foreground hover:border-foreground')
 
 export default function AddAsset() {
   const navigate = useNavigate()
   const { t, lang } = useLanguage()
-  const [assetType, setAssetType] = useState('')
-  const [symbol, setSymbol] = useState('')
-  const [selectedName, setSelectedName] = useState('')
+  const [params, setParams] = useSearchParams()
+  // Ön seçim (?type=&symbol=&name=): bir varlığın içinden "Al" ile gelindiyse o varlık seçili açılır
+  const initType = assetTypes.includes(params.get('type')) ? params.get('type') : ''
+  const initSymbol = initType === 'Gold' ? 'XAU'
+    : initType === 'Currency' ? (currencySymbols.includes(params.get('symbol')) ? params.get('symbol') : '')
+    : initType === 'Stock' ? (params.get('symbol') ?? '') : ''
+  const [assetType, setAssetType] = useState(initType)
+  const [symbol, setSymbol] = useState(initSymbol)
+  const [selectedName, setSelectedName] = useState(() => (initType === 'Gold' ? t('assets.gold') : initType === 'Stock' && initSymbol ? (params.get('name') ?? '') : ''))
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [searching, setSearching] = useState(false)
@@ -45,6 +51,23 @@ export default function AddAsset() {
   const buyMutation = useBuyAsset()
 
   const { data: reference, isFetching: refFetching, isError: refError } = usePriceOnDate(symbol, assetType, date)
+
+  // Takvim URL'de (?date=pick): telefonun geri tuşu yalnızca takvimi kapatır, formu değil
+  const calOpen = params.get('date') === 'pick'
+  const openCal = () => setParams((p) => { p.set('date', 'pick'); return p })
+  // Sayfa doğrudan ?date=pick ile açıldıysa geri gitmek uygulamadan çıkarırdı → parametreyi sil
+  const closeCal = () =>
+    window.history.state?.idx > 0 ? navigate(-1) : setParams((p) => { p.delete('date'); return p }, { replace: true })
+
+  const today = todayString()
+  const { data: nowRef } = usePriceOnDate(date !== today ? symbol : null, assetType, today)
+  const pickPrice = (v) => (currency === 'USD' ? v?.priceInUsd : v?.priceInTry)
+  const thenPrice = reference?.available ? pickPrice(reference) : null
+  const nowPrice = date === today ? thenPrice : nowRef?.available ? pickPrice(nowRef) : null
+  const sinceThen = thenPrice != null && nowPrice != null && date !== today ? ((nowPrice - thenPrice) / thenPrice) * 100 : null
+  const totalCost = quantity && unitPrice ? parseFloat(quantity) * parseFloat(unitPrice) : null
+  const money = (v) => new Intl.NumberFormat(currency === 'TRY' ? 'tr-TR' : 'en-US', { style: 'currency', currency }).format(v)
+  const unitWord = assetType === 'Gold' ? t('buy.unitGram') : assetType === 'Stock' ? t('buy.unitPiece') : (symbol || '')
 
   const refPrice = reference?.available
     ? (currency === 'USD' ? reference.priceInUsd : reference.priceInTry)
@@ -124,233 +147,263 @@ export default function AddAsset() {
         currency,
         date: toApiDate(date),
       })
-      navigate(`/assets?tab=${assetType}`)
+      navigate(`/assets/${slugOf(assetType)}`)
     } catch (err) {
       setError(err.response?.data?.error?.message ?? err.message)
     }
   }
 
+  const canBuy = !buyMutation.isPending && assetType && symbol && quantity && unitPrice
+
   return (
     <Page
       eyebrow={t('assets.title')}
       title={t('assets.buyAsset')}
-      actions={
-        <Button variant="ghost" size="icon" onClick={() => navigate('/assets')} aria-label={t('common.cancel')}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-      }
+      // Geri = geldiği sayfa (Piyasa, kategori…); doğrudan açıldıysa Portföy
+      back={{ label: t('common.back'), onClick: () => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/assets')) }}
     >
-      <Card className="max-w-md">
-        <CardHeader>
-          <CardTitle className="font-display text-body tracking-tight">{t('assets.buyAsset')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {error && (
-            <div className="mb-4 rounded-md border border-destructive/25 bg-destructive/10 px-3 py-2 text-ui text-destructive">
-              {error}
+      <form onSubmit={handleSubmit} className="max-w-md space-y-4 pb-24 md:pb-0">
+        {error && (
+          <div className="rounded-md border border-destructive/25 bg-destructive/10 px-3 py-2 text-ui text-destructive">{error}</div>
+        )}
+
+        {/* Tür — açılır menü yerine üç düğme: tek dokunuş, seçim hep görünür */}
+        <div className="space-y-1.5">
+          <Label>{t('common.type')}</Label>
+          <div role="radiogroup" aria-label={t('common.type')} className="grid grid-cols-3 gap-1 rounded-lg border border-border bg-secondary p-[3px]">
+            {assetTypes.map((type) => (
+              <button
+                key={type}
+                type="button"
+                role="radio"
+                aria-checked={assetType === type}
+                onClick={() => handleTypeChange(type)}
+                className={cn('press flex h-10 items-center justify-center gap-1.5 rounded-md text-ui font-semibold',
+                  assetType === type ? 'bg-card text-foreground ring-1 ring-border' : 'text-muted-foreground hover:text-foreground')}
+              >
+                <i className={cn('h-2 w-2 rounded-sm', catOf(type).dot)} />
+                {t(`assets.${type.toLowerCase()}`)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Varlık / sembol — tür seçilince */}
+        {assetType && (
+          <div className="space-y-1.5">
+            <Label>{t(`assets.${assetType.toLowerCase()}`)}</Label>
+
+            {assetType === 'Currency' && (
+              <div className="flex gap-1.5">
+                {currencySymbols.map((s) => (
+                  <button key={s} type="button" aria-pressed={symbol === s} onClick={() => setSymbol(s)} className={pill(symbol === s)}>{s}</button>
+                ))}
+              </div>
+            )}
+
+            {assetType === 'Stock' && symbol && (
+              <div className="flex items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-2">
+                <div className="min-w-0">
+                  <div className="text-ui font-semibold text-foreground">{symbol}</div>
+                  <div className="truncate text-ui text-foreground">{selectedName}</div>
+                </div>
+                <Button type="button" variant="ghost" size="icon" onClick={handleClearSymbol} aria-label={t('common.clear')}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            {assetType === 'Stock' && !symbol && (
+              <div className="relative">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={t('assets.searchPlaceholder')}
+                    className="pl-9"
+                    autoComplete="off"
+                  />
+                </div>
+                {(searching || results.length > 0) && (
+                  <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-input bg-popover">
+                    {searching && (
+                      <div className="px-3 py-2 text-ui text-muted-foreground">{t('common.loading')}</div>
+                    )}
+                    {!searching && results.map((r) => (
+                      <button
+                        key={`${r.symbol}-${r.exchange}`}
+                        type="button"
+                        onClick={() => handleSelectResult(r)}
+                        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-secondary"
+                      >
+                        <div className="min-w-0">
+                          <div className="text-ui font-semibold text-foreground">{r.symbol}</div>
+                          <div className="truncate text-ui text-foreground">{r.name}</div>
+                        </div>
+                        <span className="tabular shrink-0 text-micro text-muted-foreground">{r.exchange}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {assetType === 'Gold' && (
+              <div className="flex items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-2.5">
+                <span className="text-ui font-medium text-foreground">{t('assets.goldGram')}</span>
+                <span className="tabular text-micro text-muted-foreground">XAU</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Miktar */}
+        <div className="space-y-1.5">
+          <Label htmlFor="quantity">
+            {assetType === 'Gold' ? t('assets.grams') : assetType === 'Currency' ? t('assets.amount') : t('assets.quantity')}
+          </Label>
+          <MoneyInput
+            id="quantity"
+            placeholder="0"
+            value={quantity}
+            onChange={setQuantity}
+            required
+          />
+        </div>
+
+        {/* Alış tarihi — tam ekran fiyatlı takvimi açar */}
+        <div className="space-y-1.5">
+          <Label>{t('assets.purchaseDate')}</Label>
+          <button
+            type="button"
+            onClick={openCal}
+            className="press flex h-12 w-full items-center justify-between rounded-md border border-border bg-card px-3 text-body text-foreground hover:border-foreground"
+          >
+            <span>{formatDisplayDate(date, lang)}{date === today && <span className="text-muted-foreground"> · {t('buy.todayTag')}</span>}</span>
+            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </div>
+
+        {/* Birim fiyat + para birimi (altın ve döviz TL'ye kilitli → seçici gizli) */}
+        <div className="flex items-end gap-3">
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <Label htmlFor="unitPrice">
+              {assetType === 'Gold' ? t('assets.pricePerGram') : assetType === 'Currency' ? t('assets.buyRate') : t('assets.purchasePrice')}
+            </Label>
+            <MoneyInput
+              id="unitPrice"
+              currency={currency}
+              placeholder="0,00"
+              value={unitPrice}
+              onChange={(v) => { setUnitPrice(v); setPriceSource('manual') }}
+              required
+            />
+          </div>
+          {assetType === 'Stock' && (
+            <div className="space-y-1.5">
+              <Label>{t('assets.currencyLabel')}</Label>
+              <div className="flex gap-1.5">
+                {currencies.map((c) => (
+                  <button key={c} type="button" aria-pressed={currency === c} onClick={() => setCurrency(c)} className={pill(currency === c)}>{c}</button>
+                ))}
+              </div>
             </div>
           )}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Asset Type */}
-            <div className="space-y-1.5">
-              <Label>{t('common.type')}</Label>
-              <Select value={assetType} onValueChange={handleTypeChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t('common.type')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {assetTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {t(`assets.${type.toLowerCase()}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+        </div>
 
-            {/* Asset / Symbol */}
-            <div className="space-y-1.5">
-              <Label>{assetType ? t(`assets.${assetType.toLowerCase()}`) : t('assets.name')}</Label>
+        {/* Fiyatın nereden geldiği — kullanıcı hangi sayıya baktığını bilsin */}
+        {refFetching ? (
+          <p className="label text-muted-foreground">{t('assets.priceFetching')}</p>
+        ) : reference && !reference.available ? (
+          <p className="text-micro text-muted-foreground">{t('assets.priceUnavailableOnDate')}</p>
+        ) : reference?.available && priceSource === 'auto' ? (
+          <p className="label text-muted-foreground">
+            {reference.priceKind === 'live'
+              ? t('assets.priceFromLive')
+              : t('assets.priceFromClose').replace('{date}', formatDisplayDate(reference.effectiveDate, lang))}
+            {reference.priceKind === 'close' && reference.effectiveDate !== reference.requestedDate && (
+              <span className="ml-1 normal-case tracking-normal">
+                · {t('assets.priceFellBack').replace('{requested}', formatDisplayDate(reference.requestedDate, lang))}
+              </span>
+            )}
+          </p>
+        ) : priceSource === 'manual' && refPrice != null && tier !== 'none' ? (
+          <p className={
+            tier === 'confirm' ? 'flex items-center gap-1.5 text-micro text-margin'
+            : tier === 'warn' ? 'flex items-center gap-1.5 text-micro text-warn'
+            : 'text-micro text-muted-foreground'
+          }>
+            {tier !== 'info' && <AlertTriangle className="h-3 w-3 shrink-0" />}
+            {tier === 'info'
+              ? t('assets.deviationInfo').replace('{price}', refPrice.toFixed(2))
+              : t('assets.deviationWarn').replace('{price}', refPrice.toFixed(2)).replace('{pct}', pct)}
+            <button type="button" onClick={() => { setPriceSource('auto'); setUnitPrice('') }}
+              className="ml-1 underline hover:no-underline">
+              {t('assets.useThatDayPrice')}
+            </button>
+          </p>
+        ) : refError ? (
+          <p className="text-micro text-muted-foreground">{t('assets.priceFetchError')}</p>
+        ) : null}
 
-              {assetType === 'Currency' && (
-                <Select value={symbol} onValueChange={setSymbol}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('assets.name')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {currencySymbols.map((s) => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-
-              {assetType === 'Stock' && symbol && (
-                <div className="flex items-center justify-between gap-2 rounded-md border border-border bg-secondary/40 px-3 py-2">
-                  <div className="min-w-0">
-                    <div className="text-ui font-medium text-foreground">{symbol}</div>
-                    <div className="truncate text-micro text-muted-foreground">{selectedName}</div>
-                  </div>
-                  <Button type="button" variant="ghost" size="icon" onClick={handleClearSymbol}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-
-              {assetType === 'Stock' && !symbol && (
-                <div className="relative">
-                  <div className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      placeholder={t('assets.searchPlaceholder')}
-                      className="pl-9"
-                      autoComplete="off"
-                    />
-                  </div>
-                  {(searching || results.length > 0) && (
-                    <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-input bg-popover">
-                      {searching && (
-                        <div className="px-3 py-2 text-ui text-muted-foreground">{t('common.loading')}</div>
-                      )}
-                      {!searching && results.map((r) => (
-                        <button
-                          key={`${r.symbol}-${r.exchange}`}
-                          type="button"
-                          onClick={() => handleSelectResult(r)}
-                          className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-secondary"
-                        >
-                          <div className="min-w-0">
-                            <div className="text-ui font-medium text-foreground">{r.symbol}</div>
-                            <div className="truncate text-micro text-muted-foreground">{r.name}</div>
-                          </div>
-                          <span className="tabular shrink-0 text-micro text-muted-foreground">{r.exchange}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {assetType === 'Gold' && (
-                <div className="flex items-center gap-2 rounded-md border border-border bg-secondary/40 px-3 py-2">
-                  <span className="text-ui font-medium text-foreground">XAU</span>
-                  <span className="text-micro text-muted-foreground">· {t('assets.goldGram')}</span>
-                </div>
-              )}
-
-              {!assetType && (
-                <Select disabled>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('assets.name')} />
-                  </SelectTrigger>
-                </Select>
-              )}
-            </div>
-
-            {/* Quantity */}
-            <div className="space-y-1.5">
-              <Label htmlFor="quantity">
-                {assetType === 'Gold' ? t('assets.grams') : assetType === 'Currency' ? t('assets.amount') : t('assets.quantity')}
-              </Label>
-              <MoneyInput
-                id="quantity"
-                placeholder="0"
-                value={quantity}
-                onChange={setQuantity}
-                required
-              />
-            </div>
-
-            {/* Purchase date */}
-            <div className="space-y-1.5">
-              <Label htmlFor="date">{t('assets.purchaseDate')}</Label>
-              <DatePicker
-                id="date"
-                value={date}
-                onChange={(v) => { setDate(v); if (priceSource === 'auto') setUnitPrice('') }}
-                clearable={false}
-                disabledDates={{ after: new Date() }}
-              />
-            </div>
-
-            {/* Unit price + currency */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="unitPrice">
-                  {assetType === 'Gold' ? t('assets.pricePerGram') : assetType === 'Currency' ? t('assets.buyRate') : t('assets.purchasePrice')}
-                </Label>
-                <MoneyInput
-                  id="unitPrice"
-                  currency={currency}
-                  placeholder="0,00"
-                  value={unitPrice}
-                  onChange={(v) => { setUnitPrice(v); setPriceSource('manual') }}
-                  required
-                />
+        {/* O gün / bugün karşılaştırması — yalnızca otomatik fiyatta */}
+        {priceSource === 'auto' && thenPrice != null && (
+          <div className="space-y-2.5 rounded-lg border border-border bg-card p-3.5">
+            {date === today ? (
+              <div className="flex items-baseline justify-between">
+                <span className="text-ui text-muted-foreground">{t('buy.livePrice')}</span>
+                <span className="tabular text-body text-foreground">{money(thenPrice)}</span>
               </div>
-              <div className="space-y-1.5">
-                <Label>{t('assets.currencyLabel')}</Label>
-                <Select value={currency} onValueChange={setCurrency} disabled={assetType === 'Gold' || assetType === 'Currency'}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {currencies.map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Fiyatın nereden geldiği — kullanıcı hangi sayıya baktığını bilsin */}
-            {refFetching ? (
-              <p className="label text-muted-foreground">{t('assets.priceFetching')}</p>
-            ) : reference && !reference.available ? (
-              <p className="text-micro text-muted-foreground">{t('assets.priceUnavailableOnDate')}</p>
-            ) : reference?.available && priceSource === 'auto' ? (
-              <p className="label text-muted-foreground">
-                {reference.priceKind === 'live'
-                  ? t('assets.priceFromLive')
-                  : t('assets.priceFromClose').replace('{date}', formatDisplayDate(reference.effectiveDate, lang))}
-                {reference.priceKind === 'close' && reference.effectiveDate !== reference.requestedDate && (
-                  <span className="ml-1 normal-case tracking-normal">
-                    · {t('assets.priceFellBack').replace('{requested}', formatDisplayDate(reference.requestedDate, lang))}
+            ) : (
+              <>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-ui text-muted-foreground">{t('buy.thenPrice')}</span>
+                  <span className="tabular text-body text-foreground">{money(thenPrice)}</span>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-ui text-muted-foreground">{t('buy.nowPrice')}</span>
+                  <span className="tabular text-body text-foreground">{nowPrice != null ? money(nowPrice) : '…'}</span>
+                </div>
+                <div className="flex items-baseline justify-between border-t border-border pt-2.5">
+                  <span className="label text-muted-foreground">{t('buy.sinceThen')}</span>
+                  <span className={cn('tabular text-figure font-semibold', sinceThen == null ? 'text-muted-foreground' : sinceThen >= 0 ? 'text-up' : 'text-down')}>
+                    {formatPct(sinceThen)}
                   </span>
-                )}
-              </p>
-            ) : priceSource === 'manual' && refPrice != null && tier !== 'none' ? (
-              <p className={
-                tier === 'confirm' ? 'flex items-center gap-1.5 text-micro text-margin'
-                : tier === 'warn' ? 'flex items-center gap-1.5 text-micro text-warn'
-                : 'text-micro text-muted-foreground'
-              }>
-                {tier !== 'info' && <AlertTriangle className="h-3 w-3 shrink-0" />}
-                {tier === 'info'
-                  ? t('assets.deviationInfo').replace('{price}', refPrice.toFixed(2))
-                  : t('assets.deviationWarn').replace('{price}', refPrice.toFixed(2)).replace('{pct}', pct)}
-                <button type="button" onClick={() => { setPriceSource('auto'); setUnitPrice('') }}
-                  className="ml-1 underline hover:no-underline">
-                  {t('assets.useThatDayPrice')}
-                </button>
-              </p>
-            ) : refError ? (
-              <p className="text-micro text-muted-foreground">{t('assets.priceFetchError')}</p>
-            ) : null}
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
-            <div className="flex gap-2 pt-2">
-              <Button type="submit" disabled={buyMutation.isPending || !assetType || !symbol || !quantity || !unitPrice}>
-                {buyMutation.isPending ? '...' : t('assets.buy')}
-              </Button>
-              <Button type="button" variant="outline" onClick={() => navigate('/assets')}>
-                {t('common.cancel')}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+        {totalCost != null && !Number.isNaN(totalCost) && (
+          <div className="flex items-baseline justify-between px-0.5">
+            <span className="label text-muted-foreground">{t('buy.total')}</span>
+            <span className="tabular text-figure font-semibold text-foreground">{money(totalCost)}</span>
+          </div>
+        )}
+
+        {/* Al: mobilde alt menünün hemen üstüne sabit, masaüstünde formun sonunda */}
+        <div className="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] z-30 border-t border-border bg-background px-4 py-3 md:static md:border-0 md:bg-transparent md:p-0 md:pt-2">
+          <Button type="submit" className="h-12 w-full text-body" disabled={!canBuy}>
+            {buyMutation.isPending
+              ? '...'
+              : quantity
+                ? t('buy.cta').replace('{qty}', Number(quantity).toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US')).replace('{unit}', unitWord)
+                : t('assets.buy')}
+          </Button>
+        </div>
+      </form>
+
+      <PriceCalendar
+        open={calOpen}
+        symbol={symbol}
+        assetType={assetType}
+        label={assetType === 'Gold' ? t('assets.goldGram') : symbol}
+        value={date}
+        onClose={closeCal}
+        onSelect={(v) => { setDate(v); if (priceSource === 'auto') setUnitPrice(''); closeCal() }}
+      />
 
       <Modal
         open={confirmOpen}

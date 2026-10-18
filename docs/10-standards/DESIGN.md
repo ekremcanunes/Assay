@@ -96,6 +96,15 @@ Self-host (`@fontsource-variable`), CDN yok. Tüm sayısal değerlere `.tabular`
 
 **`.label`** — Inter 600 + uppercase + `0.12em` tracking, 11px. Eyebrow, tablo başlığı, kart etiketi, sidebar bölüm ayracı: hepsi bu tek sınıf. Elle `text-[11px] uppercase tracking-[0.12em]` yazılmaz.
 
+**Ölçek dışı izinli iki istisna** (başka yerde kullanılmaz):
+
+| Nerede | Boyut | Neden |
+|--------|-------|-------|
+| Mobilde form alanı yazısı ([`authStyles`](../../web/src/lib/authStyles.js) ve önek) | 16px (`text-[16px] md:text-ui`) | iOS Safari 16px altı alana odaklanınca sayfayı yakınlaştırır |
+| Fiyatlı takvim hücresindeki kısa fiyat ([`PriceCalendar`](../../web/src/components/PriceCalendar.jsx)) | 9.5px | 7 sütunlu ızgarada hücreye sığmak zorunda; en fazla 5 karakter |
+
+**Şirket adı ikincil metin değildir.** Hisse listelerinde sembolün altındaki şirket adı `text-ui text-foreground` — sembolden yalnız boy ve ağırlıkla ayrılır, gri yazılmaz.
+
 > **Dikkat:** ölçek sınıfları Tailwind'in varsayılan adları değil. [`lib/utils.js`](../../web/src/lib/utils.js)'teki `cn()` bunları `extendTailwindMerge` ile `font-size` grubuna kaydeder — bildirilmezse tailwind-merge `text-ui`'yi renk sanıp eler ve boyut sessizce 16px'e düşer. **Yeni basamak eklenirse oraya da eklenmeli.**
 
 ---
@@ -138,6 +147,8 @@ Yükseklik ≥ 40px (form içi 36px). Radius `rounded-md` (8px). **Gölge yok.**
 
 `bg-secondary` dolgu + **yalnızca alt kenarlık** (`border-b border-input`). Çerçeveli input yok. Odakta 2px iç ink çerçeve, dış halka yok. Ortak stiller: [`lib/authStyles.js`](../../web/src/lib/authStyles.js).
 
+Mobilde (`md` altı) alan 52px yükseklik ve 16px yazı (§3.1 istisnası); stil aynı. Doğru klavye ve otomatik doldurma için her alana `autoComplete` / `inputMode` verilir.
+
 ### 5.3 Yüzeyler
 
 - Kart / panel: `rounded-lg` (12px) + `border border-border` veya `bg-card` üzerinde `bg-background`.
@@ -156,6 +167,13 @@ CSS [`index.css`](../../web/src/index.css)'te:
 - **`.label`**, **`.tabular`** — §3
 - **`.modal-in`** — modal giriş animasyonu, `prefers-reduced-motion`'a saygılı
 - **`@keyframes flow`** — mimari diyagramındaki akan hat
+- **`.press`** — her butonun basma hissi (`active` → `scale(.97)`); hover rengi butonun kendi sınıfında
+- **`.rise`** — detay sayfasında içeriğin aşağıdan gelişi (`backwards` dolgu: animasyon bitince `transform` kalmaz, içindeki `fixed` öğeleri kapsamaz)
+- **`@keyframes wire-fill`** — landing "Fiyat sor" rota çizgisi
+- **[`StoryCard`](../../web/src/components/StoryCard.jsx) / [`StoryHero`](../../web/src/components/StoryHero.jsx) / [`CardRail`](../../web/src/components/CardRail.jsx)** — karttan sayfaya geçiş dili (Portföy, Piyasa)
+- **[`SnapRail`](../../web/src/components/landing/SnapRail.jsx)** — landing mobil kart rayı (tek kart, nokta göstergesi)
+- **[`PriceDemo`](../../web/src/components/landing/PriceDemo.jsx)** — önbellek canlandırması (§6)
+- **Takvim ısısı** — varlığın **kategori rengi** kart zeminiyle karıştırılır (%10 → %100, 5 kademe, ay içi göreli). Voltaj kullanılmaz.
 - **[`AuthVisual`](../../web/src/components/AuthVisual.jsx)** — auth sağ alanı: mouse'a bükülen ızgara + temsili mum grafiği (`--up`/`--down`, voltaj yalnızca hareketli ortalama hattında; fiyat/eksen rakamı yok, §6). Yalnızca `lg`+ ekranda lazy yüklenir.
 
 ### 5.5 Sayfa iskeleti
@@ -169,6 +187,21 @@ CSS [`index.css`](../../web/src/index.css)'te:
 
 110ms + `cubic-bezier(0,0,.38,.9)`. Sert duran "productive" easing — yumuşak `ease-out` butonu kart gibi gösterir. `prefers-reduced-motion`'a saygılı.
 
+Sayfalar arası kart büyümesi **View Transitions API** ile (`navigate(to, { viewTransition: true })` + aynı `view-transition-name`); kütüphane yok, desteklemeyen tarayıcıda animasyonsuz açılır.
+
+### 5.7 Mobil
+
+Tek kod tabanı, önce mobil. Sınır **`md`**: altı telefon, üstü masaüstü. Masaüstü düzeni mobil için bozulmaz; mobilde farklı biçim gerekiyorsa iki dal `md:hidden` / `hidden md:block` ile yazılır.
+
+- **Gezinme:** alt menü 4 sekme — Özet · Portföy · Piyasa · Menü — çentik payı `env(safe-area-inset-bottom)`. Masaüstünde sidebar.
+- **Kaydırma:** mobilde sayfanın kendisi (belge) kayar. Yeni sayfa en üstten açılır; geri tuşunda tarayıcı eski konumu geri getirir ([`Layout`](../../web/src/components/Layout.jsx)).
+- **Kart dili:** liste yerine kart → dokununca kart sayfanın başlığına büyür (§5.6). Rayda **ekranda tek kart**; komşu kart kenardan sızmaz (aradaki boşluk = kenar boşluğu). Kart içinde kart yok.
+- **Ana eylem altta sabit:** Al, Giriş yap, Hesap oluştur — alt menünün / ekranın hemen üstünde, miktarı veya eylemi yazar ("25 gram al").
+- **Dokunma alanı ≥ 44px.** İkon düğmeler `h-11 w-11`; kısa metin bağlantılarına dikey dolgu.
+- **Açılır katmanlar** (yan panel, modal, takvim) sayfa köküne çizilir (`createPortal`). Animasyonla `transform` taşıyan bir ata, içindeki `position: fixed` öğeyi ekrana değil kendisine göre konumlar; portal bunu önler. Açıkken arka sayfa kaymaz, odak katmana geçer.
+- **Tekrarı azalt:** masaüstünde yan yana duran tekrarlı içerik (ör. landing'deki ikon ızgarası + 3 tablo) mobilde gizlenir; yerine özet biçim (ızgara, dikey adımlar, katlanır liste) gelir. Uzun detay kendi sayfasına taşınır.
+- **Geçici kontrol:** her ekran Playwright ile 360 / 375 / 390 genişlikte yatay taşma (`scrollWidth === innerWidth`) için taranır.
+
 ---
 
 ## 6. Veri dürüstlüğü
@@ -178,6 +211,7 @@ Bunlar renk ya da font değil, **anlam** taşır. Palet değişirse bile geçerl
 - Elimizde olmayan piyasa verisi **uydurulmaz, mock'lanmaz**: sektör/endüstri, F/K, piyasa değeri, temettü, emir defteri/derinlik, seans içi tick, haber akışı, duyarlılık skoru. Hiçbir kaynağımız bunları vermiyor.
 - BIST 30 içi arama **client-side filtredir** — 30 satır için ağ turu ya da DB indeksi kurulmaz. Filtre boş dönerse `/market/search` ile tüm BIST evreni önerilir.
 - Piyasa sembolleri Postgres'te tutulmaz; DB yalnızca portföy ve işlemler içindir.
+- **Canlandırma gerçek veri gibi sunulmaz.** Davranışı anlatan demo (landing "Fiyat sor") üzerinde açıkça "Canlandırma · gerçek istek değil" yazar; fiyatları sabit örnektir. Rastgele üretilip canlı servis logu gibi akan kutu **yasak** (eski hero "stdout" kutusu bu yüzden kaldırıldı).
 - Grafik renkleri **token'dan okunur** — [`PriceChart`](../../web/src/components/PriceChart.jsx) `token('--up')` ile çalışır. Palet değişirse `applyOptions` yeniden çağrılmalı.
 
 ---
@@ -196,3 +230,6 @@ Bunlar renk ya da font değil, **anlam** taşır. Palet değişirse bile geçerl
 - ❌ Ad-hoc `<h1>` — başlık `Page`'in işi.
 - ❌ Elimizde olmayan piyasa verisini uydurmak (§6).
 - ❌ `window.confirm` — ortak `Modal`.
+- ❌ Mobilde 16px altı form alanı (iOS yakınlaştırır) — §5.2.
+- ❌ Mobilde kart içinde kart; rayda komşu kartın kenardan sızması — §5.7.
+- ❌ `transform`/animasyon taşıyan bir kabın içine `fixed` panel/modal koymak — portal kullan, §5.7.

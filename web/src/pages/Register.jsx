@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext'
 import { isValidEmail, kratosErrorText } from '../lib/authErrors'
-import { authLabelCls, authInputCls, authSubmitCls } from '../lib/authStyles'
+import { authLabelCls, authInputCls, authSubmitCls, authPageCls, authCardCls, authDockCls } from '../lib/authStyles'
 import { APP_NAME, KRATOS_URL } from '../lib/app'
 import { toE164TR } from '../lib/phone'
 import assayMark from '../assets/assay-mark.svg'
-import { Eye, EyeOff } from 'lucide-react'
 import AuthVisual from '../components/AuthVisual'
+import PasswordToggle from '../components/PasswordToggle'
 import CodeStep from '../components/CodeStep'
 import { Checkbox } from '../components/ui/checkbox'
 
@@ -145,30 +145,45 @@ export default function Register() {
     )
   }
 
-  const field = (key, type, label, placeholder = '') => (
-    <div>
+  // prefix: alanın solunda sabit metin (telefonda "+90" — kullanıcı yalnız 10 haneyi yazar)
+  const field = (key, type, label, placeholder = '', { autoComplete, inputMode, prefix } = {}) => (
+    <div className="min-w-0">
       <label className={authLabelCls} htmlFor={`register-${key}`}>{label}</label>
-      <input
-        id={`register-${key}`}
-        type={type}
-        value={form[key]}
-        onChange={(e) => set(key)(e.target.value)}
-        placeholder={placeholder}
-        className={authInputCls}
-      />
+      <div className="relative">
+        {prefix && (
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-mono text-[16px] text-muted-foreground md:text-ui">{prefix}</span>
+        )}
+        <input
+          id={`register-${key}`}
+          type={type}
+          autoComplete={autoComplete}
+          inputMode={inputMode}
+          value={form[key]}
+          onChange={(e) => set(key)(e.target.value)}
+          placeholder={placeholder}
+          className={`${authInputCls} ${prefix ? 'pl-12 md:pl-11' : ''}`}
+        />
+      </div>
       {fieldErr[key] && <p className="mt-1 text-micro text-down">{fieldErr[key]}</p>}
     </div>
   )
 
+  const passOk = form.password.length >= 8
+
   return (
-    <div className="paper flex min-h-screen items-center bg-background p-6 md:p-12">
-      <div className="edge-accent relative z-10 w-full max-w-[360px] overflow-hidden rounded-r-lg border border-l-0 border-border bg-card p-7">
+    <div className={authPageCls}>
+      <div className={authCardCls}>
         {step === 'form' ? (
-          <div key="form">
-            <Link to="/landing" aria-label={`${APP_NAME} tanıtım sayfası`} className="inline-block rounded-sm hover:opacity-70">
-              <img src={assayMark} alt="" className="h-[30px] w-[30px]" />
-            </Link>
-            <h1 className="mt-4 text-head font-bold text-foreground">{t('auth.createAccount')}</h1>
+          <div key="form" className="flex flex-1 flex-col">
+            <div className="flex items-center justify-between">
+              <Link to="/landing" aria-label={`${APP_NAME} tanıtım sayfası`} className="inline-block rounded-sm hover:opacity-70">
+                <img src={assayMark} alt="" className="h-[30px] w-[30px]" />
+              </Link>
+              <Link to="/landing" className="py-2.5 text-ui text-muted-foreground hover:text-foreground md:hidden">
+                <span aria-hidden="true">&larr;</span> {APP_NAME} nedir?
+              </Link>
+            </div>
+            <h1 className="mt-6 text-head font-bold text-foreground md:mt-4">{t('auth.createAccount')}</h1>
             <p className="mt-1 text-ui text-muted-foreground">{APP_NAME} — {t('auth.createAccountSubtitle')}</p>
 
             {error && (
@@ -177,55 +192,58 @@ export default function Register() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="mt-1" noValidate>
+            <form onSubmit={handleSubmit} className="mt-1 flex flex-1 flex-col" noValidate>
               <div className="grid grid-cols-2 gap-3">
-                {field('first', 'text', t('auth.firstName'))}
-                {field('last', 'text', t('auth.lastName'))}
+                {field('first', 'text', t('auth.firstName'), '', { autoComplete: 'given-name' })}
+                {field('last', 'text', t('auth.lastName'), '', { autoComplete: 'family-name' })}
               </div>
-              {field('email', 'email', t('auth.email'), 'you@example.com')}
-              {field('phone', 'tel', t('auth.phone'), '05XX XXX XX XX')}
+              {field('email', 'email', t('auth.email'), 'you@example.com', { autoComplete: 'email', inputMode: 'email' })}
+              {field('phone', 'tel', t('auth.phone'), '5XX XXX XX XX', { autoComplete: 'tel-national', inputMode: 'numeric', prefix: '+90' })}
 
               <label className={authLabelCls} htmlFor="register-password">{t('auth.password')}</label>
               <div className="relative">
                 <input
                   id="register-password"
                   type={showPass ? 'text' : 'password'}
+                  autoComplete="new-password"
                   value={form.password}
                   onChange={(e) => set('password')(e.target.value)}
                   placeholder="••••••••"
-                  className={`${authInputCls} pr-10`}
+                  className={`${authInputCls} pr-16`}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPass((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
-                  aria-label={showPass ? t('auth.hidePassword') : t('auth.showPassword')}
-                >
-                  {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                <PasswordToggle shown={showPass} onToggle={() => setShowPass((v) => !v)} />
               </div>
-              {fieldErr.password && <p className="mt-1 text-micro text-down">{fieldErr.password}</p>}
+              {fieldErr.password ? (
+                <p className="mt-1 text-micro text-down">{fieldErr.password}</p>
+              ) : (
+                // Kural yazarken işaretlenir; gönderince hata metni bunun yerine geçer
+                <p className={`mt-1.5 text-micro ${passOk ? 'text-up' : 'text-muted-foreground'}`}>
+                  {passOk ? '✓' : '○'} {t('auth.passwordRule')}
+                </p>
+              )}
 
               <Checkbox
                 id="register-consent"
                 checked={form.consent}
                 onCheckedChange={set('consent')}
                 label={<span className="text-micro text-muted-foreground">{t('auth.consent')}</span>}
-                className="mt-4 items-start"
+                className="mt-4 min-h-11 items-start py-1"
               />
               {fieldErr.consent && <p className="mt-1 text-micro text-down">{fieldErr.consent}</p>}
 
-              <button type="submit" disabled={loading} className={authSubmitCls}>
-                {loading ? t('auth.creatingAccount') : t('auth.createAccount')}
-              </button>
+              <div className="flex-1 md:hidden" />
+              <div className={authDockCls}>
+                <button type="submit" disabled={loading} className={authSubmitCls}>
+                  {loading ? t('auth.creatingAccount') : t('auth.createAccount')}
+                </button>
+                <p className="mt-3 text-center text-ui text-muted-foreground md:mt-5 md:text-left">
+                  {t('auth.alreadyHaveAccount')}{' '}
+                  <Link to="/login" reloadDocument className="font-semibold text-foreground underline underline-offset-4 hover:opacity-70">{t('auth.signIn')}</Link>
+                </p>
+              </div>
             </form>
 
-            <p className="mt-5 text-ui text-muted-foreground">
-              {t('auth.alreadyHaveAccount')}{' '}
-              <Link to="/login" reloadDocument className="font-semibold text-foreground underline underline-offset-4 hover:opacity-70">{t('auth.signIn')}</Link>
-            </p>
-
-            <p className="mt-4 border-t border-border pt-4">
+            <p className="mt-4 hidden border-t border-border pt-4 md:block">
               <Link to="/landing" className="inline-flex items-center gap-1.5 text-ui text-muted-foreground hover:text-foreground">
                 <span aria-hidden="true">&larr;</span> {APP_NAME} nedir?
               </Link>
@@ -241,7 +259,7 @@ export default function Register() {
             doneContent={
               <>
                 <p className="mt-4 text-ui text-foreground">{t('auth.verifyDone')}</p>
-                <Link to="/login" reloadDocument className={`${authSubmitCls} block text-center`}>{t('auth.signIn')}</Link>
+                <Link to="/login" reloadDocument className={`${authSubmitCls} mt-6 block text-center`}>{t('auth.signIn')}</Link>
               </>
             }
             error={error}

@@ -1,0 +1,4 @@
+[     262ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost/.ory/sessions/whoami:0
+[     682ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost/.ory/sessions/whoami:0
+[     932ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost/login?flow=f6d465f6-cf34-46b6-9a11-e68b1801248f:0
+[   24936ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://localhost/.ory/self-service/login?flow=e7852c0c-a440-43ad-b908-6738e44ab732:0
