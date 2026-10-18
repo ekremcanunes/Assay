@@ -5,14 +5,22 @@ name: "CodeQL Advanced"
 # --- Ne zaman çalışır ---
 on:
   push:
-    branches: [ "test", "main-prod" ]        # test ve main-prod branch'ine her push'ta
-  pull_request:
-    branches: [ "test", "main-prod" ]        # test veya main-prod'a açılan PR'larda
+    branches: [ "test", "main-prod" ]        # test ve main-prod branch'ine her push'ta (merge'ler de push'tur)
+    # Push'taki TÜM değişen dosyalar bu listedeyse tarama atlanır (yalnız doküman commit'leri).
+    paths-ignore: [ "docs/**", "**/*.md", ".superpowers/**" ]
+  # pull_request tetikleyicisi bilinçli olarak yok: aynı kod birleşince push taramasıyla zaten taranıyor.
+  # CodeQL main-prod PR'larında ZORUNLU kontrol yapılırsa geri eklenmeli — o zaman paths-ignore
+  # yalnız-doküman PR'larında kontrolü sonsuza dek "bekliyor"da bırakır, ayrıca çözülmeli.
   schedule:
     # Her Çarşamba 22:27 UTC. Kod değişmese bile CodeQL kuralları güncellenince
     # yeni açık yakalanabilsin diye haftalık tam tarama. Dakika değeri kurulumda
     # rastgele üretilir (herkes aynı anda tetiklemesin diye).
     - cron: '27 22 * * 3'
+
+# Aynı dala kısa sürede art arda push gelirse yalnız sonuncusu taranır, öncekiler iptal edilir.
+concurrency:
+  group: codeql-${{ github.ref }}-${{ github.event_name }}   # haftalık tarama push yüzünden iptal olmasın
+  cancel-in-progress: true
 
 jobs:
   analyze:
