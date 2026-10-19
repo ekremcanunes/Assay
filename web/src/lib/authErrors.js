@@ -19,6 +19,7 @@ export function kratosErrorText(body, t) {
       return t('auth.errPasswordShort')
     case 4010008: // login code invalid / already used
     case 4070006: // verification code invalid / already used
+    case 4060006: // recovery code invalid / already used
       return t('auth.errOtpInvalid')
     default:
       return m.text || t('auth.errGeneric')
