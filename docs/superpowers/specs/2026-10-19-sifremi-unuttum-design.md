@@ -48,6 +48,7 @@ selfservice:
 
 - `courier.templates.recovery_code.valid.email`: subject + html + plaintext, `kratos/templates/recovery_code/valid/` altında. Mevcut `verification_code` şablonlarıyla aynı sade biçim, değişken `{{ .RecoveryCode }}`.
 - `docker-compose.yml`: `SELFSERVICE_FLOWS_RECOVERY_UI_URL: ${APP_URL:-http://localhost}/recovery` (diğer UI URL'leri gibi).
+- `kratos/identity.schema.json`: `email` trait'ine `"recovery": { "via": "email" }`. **(2026-10-19 sonradan eklendi:** ilk sürümde eksikti; Kratos adresi kurtarma adresi saymadığı için kod göndermiyordu. Kurtarma adresi kimlik oluşturulurken/güncellenirken üretilir: mevcut kimlikler admin API ile içerik değişmeden yeniden kaydedildi.)
 - `SELFSERVICE_FLOWS_SETTINGS_UI_URL` zaten tanımlı, değişmez.
 - `selfservice.flows.settings.after.password.hooks: [revoke_active_sessions]` — şifre değişince diğer cihazlardaki oturumlar kapanır (§8-2).
 

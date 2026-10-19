@@ -78,6 +78,8 @@
 
 - [ ] **Step 3: Compose env** — `SELFSERVICE_FLOWS_RECOVERY_UI_URL: ${APP_URL:-http://localhost}/recovery`
 
+- [ ] **Step 3b (sonradan eklendi):** `kratos/identity.schema.json` `email` → `"recovery": { "via": "email" }`. Bu olmadan Kratos "unknown address" der, kod göndermez. Mevcut kimlikler admin API ile yeniden kaydedilir (kurtarma adresi ancak kayıt/güncellemede üretilir).
+
 - [ ] **Step 4: Kratos'u yeniden başlat ve sağlığını doğrula**
 
 Run: `docker compose up -d kratos && curl -s http://localhost:4433/health/ready`
