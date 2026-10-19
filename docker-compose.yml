@@ -40,6 +40,7 @@ services:
       SELFSERVICE_FLOWS_LOGIN_UI_URL: ${APP_URL:-http://localhost}/login
       SELFSERVICE_FLOWS_REGISTRATION_UI_URL: ${APP_URL:-http://localhost}/register
       SELFSERVICE_FLOWS_VERIFICATION_UI_URL: ${APP_URL:-http://localhost}/verification
+      SELFSERVICE_FLOWS_RECOVERY_UI_URL: ${APP_URL:-http://localhost}/recovery
       # Açma/kapama (spec §10.1): .env'de değiştir → docker compose up -d
       SESSION_WHOAMI_REQUIRED_AAL: ${AUTH_REQUIRED_AAL:-highest_available}
       SELFSERVICE_FLOWS_VERIFICATION_ENABLED: ${AUTH_VERIFICATION_ENABLED:-true}
