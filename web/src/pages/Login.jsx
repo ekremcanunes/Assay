@@ -7,6 +7,7 @@ import { authLabelCls, authInputCls, authSubmitCls, authPageCls, authCardCls, au
 import { APP_NAME, KRATOS_URL } from '../lib/app'
 import { csrfOf, browserFlowUrl, getFlow, submitFlow, classifyFlowError } from '../lib/kratosFlow'
 import { markOtpPending, clearOtpPending, isOtpPendingFresh } from '../lib/otpPending'
+import { hasPasswordUpdated, clearPasswordUpdated } from '../lib/passwordNotice'
 import assayMark from '../assets/assay-mark.svg'
 import AuthVisual from '../components/AuthVisual'
 import PasswordToggle from '../components/PasswordToggle'
@@ -34,6 +35,9 @@ export default function Login() {
   const [mascot, setMascot] = useState('idle')
   const [sentAt, setSentAt] = useState(null)
   const [shake, setShake] = useState(0)
+  // Şifre sıfırlamadan sonra çıkış: Kratos önce ?flow= olmadan yollar, Login yeni akışa yönlenir.
+  // İşaret yalnız akışlı açılışta okunur ve gösterildikten sonra silinir; yoksa yönlenme sırasında kaybolurdu.
+  const [notice] = useState(() => !!searchParams.get('flow') && hasPasswordUpdated())
 
   const navigate = useNavigate()
   const { session, loading: sessionLoading, setSession, logout } = useAuth()
@@ -79,6 +83,10 @@ export default function Login() {
       setError(kratosErrorText(body, t))
     }
   }
+
+  useEffect(() => {
+    if (notice) clearPasswordUpdated()
+  }, [notice])
 
   useEffect(() => {
     // Panelden 403 aal2_required ile gelindi: oturum AAL1, şifre adımı geçilmiş.
@@ -208,6 +216,11 @@ export default function Login() {
             <h1 className="mt-6 text-head font-bold text-foreground md:mt-4">{t('auth.signIn')}</h1>
             <p className="mt-1 text-ui text-muted-foreground">{APP_NAME} — {t('auth.signInSubtitle')}</p>
 
+            {notice && !error && (
+              <div className="mt-4 rounded-md border border-border bg-secondary px-3 py-2 text-micro text-foreground" role="status">
+                {t('auth.passwordUpdated')}
+              </div>
+            )}
             {error && (
               <div className="mt-4 rounded-md border border-destructive/40 bg-destructive/8 px-3 py-2 text-micro text-destructive" role="alert">
                 {error}
@@ -242,6 +255,9 @@ export default function Login() {
                 <PasswordToggle shown={showPass} onToggle={() => setShowPass((v) => !v)} />
               </div>
               {fieldErr.password && <p className="mt-1 text-micro text-down">{fieldErr.password}</p>}
+              <Link to="/recovery" reloadDocument className="mt-1 self-end py-2.5 text-ui text-muted-foreground underline underline-offset-4 hover:text-foreground">
+                {t('auth.forgotPassword')}
+              </Link>
 
               {/* mobilde buton ekranın altına iner */}
               <div className="flex-1 md:hidden" />

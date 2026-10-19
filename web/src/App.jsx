@@ -16,6 +16,8 @@ import LandingTech from './pages/LandingTech'
 import AuthError from './pages/AuthError'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import Recovery from './pages/Recovery'
+import Settings from './pages/Settings'
 
 
 function RootGate() {
@@ -52,6 +54,8 @@ export default function App() {
             <Route path="/landing/tech/:slug" element={<LandingTech />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/recovery" element={<Recovery />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="/error" element={<AuthError />} />
             <Route
               element={
