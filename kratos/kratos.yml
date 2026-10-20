@@ -34,6 +34,10 @@ selfservice:
     settings:
       ui_url: http://localhost/settings
       privileged_session_max_age: 15m   # ayarlar sayfası için kısa oturum doğrulama süresi
+      after:
+        password:
+          hooks:
+            - hook: revoke_active_sessions   # şifre değişince diğer cihazlardaki oturumlar kapanır
     logout:
       after:
         default_browser_return_url: http://localhost/login
@@ -47,6 +51,11 @@ selfservice:
       enabled: true                     # AUTH_VERIFICATION_ENABLED ezer
       use: code
       ui_url: http://localhost/verification
+      lifespan: 15m
+    recovery:                           # şifremi unuttum: e-postaya kod → yeni şifre (settings akışı)
+      enabled: true
+      use: code
+      ui_url: http://localhost/recovery
       lifespan: 15m
 
 session:
@@ -101,3 +110,10 @@ courier:
           body:
             html: file:///etc/config/kratos/templates/verification_code/valid/email.body.gotmpl
             plaintext: file:///etc/config/kratos/templates/verification_code/valid/email.body.plaintext.gotmpl
+    recovery_code:
+      valid:
+        email:
+          subject: file:///etc/config/kratos/templates/recovery_code/valid/email.subject.gotmpl
+          body:
+            html: file:///etc/config/kratos/templates/recovery_code/valid/email.body.gotmpl
+            plaintext: file:///etc/config/kratos/templates/recovery_code/valid/email.body.plaintext.gotmpl
