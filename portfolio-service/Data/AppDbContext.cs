@@ -7,7 +7,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<Asset> Assets => Set<Asset>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
-    public DbSet<SmsDailyUsage> SmsDailyUsage => Set<SmsDailyUsage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -35,7 +34,5 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasIndex(t => t.Date);
             entity.HasIndex(t => t.Type);
         });
-
-        modelBuilder.Entity<SmsDailyUsage>().HasKey(s => s.Date);
     }
 }

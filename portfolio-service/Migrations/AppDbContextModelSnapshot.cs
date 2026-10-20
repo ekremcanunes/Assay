@@ -66,19 +66,6 @@ namespace portfolio_service.Migrations
                     b.ToTable("Assets");
                 });
 
-            modelBuilder.Entity("portfolio_service.Models.SmsDailyUsage", b =>
-                {
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
-
-                    b.Property<int>("Count")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Date");
-
-                    b.ToTable("SmsDailyUsage");
-                });
-
             modelBuilder.Entity("portfolio_service.Models.Transaction", b =>
                 {
                     b.Property<Guid>("Id")

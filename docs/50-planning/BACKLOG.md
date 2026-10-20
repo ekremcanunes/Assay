@@ -169,11 +169,37 @@ Sonraya bırakılan işler. Her madde: sorun, neden önemli, seçenekler, öneri
 
 ---
 
+## Portföy kartı: sayı portföyün, grafik endeksin
+
+*Eklendi: 2026-10-19 · Bağlam: Portföy Hisse kartı ile Piyasa Borsa kartı karşılaştırması*
+
+**Sorun.** İki kart da BIST 100 çiziyor ama farklı aralıkta ve farklı anlamda:
+
+| | Piyasa / Borsa | Portföy / Hisse |
+|---|---|---|
+| Büyük sayı | BIST 100 endeks puanı | Kullanıcının hisselerinin TL değeri |
+| Yüzde | Günlük değişim (önceki kapanışa göre) | Gerçekleşmemiş K/Z (maliyete göre, `summarizeCategories`) |
+| Grafik | BIST 100, `1mo` (~22 nokta, `spark`) | BIST 100, `1y` (~250 nokta, `usePriceHistory`) |
+
+Portföy kartında değer ve yüzde kullanıcının, hemen altındaki grafik endeksin (`CATEGORY_SERIES` — bilinçli karar, kartta "BIST 100 · son 1 yıl" etiketi var). Okuyan grafiği kendi portföyü sanabilir; DESIGN.md veri dürüstlüğü açısından zayıf nokta. Altın ve Döviz kartları için de aynısı geçerli.
+
+**Seçenekler.**
+
+| | Yaklaşım | Artı | Eksi |
+|---|---|---|---|
+| **A** | Olduğu gibi bırak | İş yok; etiket durumu söylüyor | Yanlış okuma riski sürer |
+| **B** | Aralıkları eşitle (ikisi de `1mo` veya `1y`) | Görsel tutarlılık; yukarıdaki "ayrı veri serisi" maddesiyle birlikte yapılabilir | Anlam farkı (portföy vs endeks) çözülmez |
+| **C** | Portföy kartına gerçek portföy değeri serisi | En dürüst; sayı, yüzde ve grafik aynı şeyi anlatır | Backend'de günlük portföy değeri geçmişi yok — işlem geçmişi + tarihsel fiyatlarla hesaplanmalı ya da günlük anlık görüntü (snapshot) tutulmalı; büyük iş |
+
+**Öneri.** Kısa vadede B (tek kaynak maddesiyle beraber); C ayrı bir tasarım turu.
+
+---
+
 ## Servisler arası kimlik doğrulama yok (güvenilir ağ modeli)
 
 *Eklendi: 2026-10-19 · Bağlam: servisler arası iletişim incelemesi*
 
-**Durum.** Bütün container'lar tek Docker ağında; dışarıya yalnız nginx açık (prod'da 443, yalnız Cloudflare). İçeride servis kimliği yok: nginx → portfolio-service, portfolio-service → market-service, servisler → Kratos `whoami` kullanıcı çerezini iletip kullanıcı düzeyinde doğrulanıyor; servisin kendisi kanıtlanmıyor. Tek istisna Kratos → `/internal/sms` (`X-Api-Key`). Compose'taki `expose` bir kısıtlama değildir — ağdaki her container her porta ulaşır.
+**Durum.** Bütün container'lar tek Docker ağında; dışarıya yalnız nginx açık (prod'da 443, yalnız Cloudflare). İçeride servis kimliği yok: nginx → portfolio-service, portfolio-service → market-service, servisler → Kratos `whoami` kullanıcı çerezini iletip kullanıcı düzeyinde doğrulanıyor; servisin kendisi kanıtlanmıyor. Compose'taki `expose` bir kısıtlama değildir — ağdaki her container her porta ulaşır.
 
 **Neden önemli.** Bugün doğrudan açık yok; risk bir container ele geçirilirse (ör. bağımlılık açığı) **yanal hareket**: içeriden Kratos yönetim API'si (4434, kimlik doğrulaması yok — kullanıcıları listeleme/silme/değiştirme) ve şifresiz Redis (sahte fiyat yazma). Kodda 4434'ü kullanan hiçbir servis yok.
 
@@ -199,6 +225,6 @@ Sonraya bırakılan işler. Her madde: sorun, neden önemli, seçenekler, öneri
 **Karar (2026-10-19).** Girişte diğer cihazları otomatik çıkarmak **yok** — Assay bir takip uygulaması (para/emir yok), giriş zaten şifre + e-posta kodu; otomatik atma güvenlikten çok kullanım zorluğu getirir ve saldırganla "birbirini atma" yarışına döner. Onun yerine görünürlük:
 
 1. **Aktif oturumlar** (Menü → Güvenlik): cihaz/tarayıcı, yaklaşık konum, son etkinlik; "Bu cihaz" etiketi; satır başına "Çıkış yap" ve toplu **"Diğer cihazlardan çıkış yap"**. Kratos hazır sağlıyor: `GET /sessions` (diğer oturumlar), `DELETE /sessions/{id}`, `DELETE /sessions` (mevcut hariç hepsi). Cihaz bilgisi oturumun `devices` alanından (user agent, IP, konum).
-2. **Yeni cihazdan giriş e-postası:** "Hesabına yeni bir cihazdan girildi — sen değilsen diğer cihazlardan çık ve şifreni değiştir." Kratos'ta hazır değil: login `after` hook'unda `web_hook` ile portfolio-service'e bildirim (Kratos → `/internal/...`, mevcut SMS relay gibi API anahtarlı), servis cihazı daha önce görüp görmediğine bakıp Resend ile e-posta gönderir.
+2. **Yeni cihazdan giriş e-postası:** "Hesabına yeni bir cihazdan girildi — sen değilsen diğer cihazlardan çık ve şifreni değiştir." Kratos'ta hazır değil: login `after` hook'unda `web_hook` ile portfolio-service'e bildirim (Kratos → `/internal/...`, API anahtarlı), servis cihazı daha önce görüp görmediğine bakıp Resend ile e-posta gönderir.
 
 **Not.** "Yeni cihaz" tanımı (user agent + IP alt ağı mı, çerez tabanlı cihaz kimliği mi) tasarımda netleşmeli; yanlış tanım her girişte e-posta üretir.
