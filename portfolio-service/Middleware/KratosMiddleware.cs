@@ -9,10 +9,8 @@ public class KratosMiddleware(RequestDelegate next, IHttpClientFactory httpClien
 {
     public async Task InvokeAsync(HttpContext context)
     {
-        // /internal/*: Kratos'un sunucudan sunucuya çağrıları (SMS relay). Kullanıcı oturumu yok; API anahtarıyla korunur.
         // /api/auth/options: 2FA adımından önce (AAL1) çağrılır; aşağıdaki AAL kontrolü bu noktada reddeder. Hassas veri dönmez.
-        if (context.Request.Path.StartsWithSegments("/internal")
-            || context.Request.Path.StartsWithSegments("/api/auth/options"))
+        if (context.Request.Path.StartsWithSegments("/api/auth/options"))
         {
             await next(context);
             return;

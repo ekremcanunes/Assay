@@ -95,19 +95,6 @@ courier:
     connection_uri: smtp://mailpit:1025/?disable_starttls=true   # COURIER_SMTP_CONNECTION_URI ezer
     from_address: no-reply@assay.com.tr                          # COURIER_SMTP_FROM_ADDRESS ezer
     from_name: Assay
-  channels:
-    - id: sms
-      type: http
-      request_config:
-        url: http://portfolio-service:5001/internal/sms
-        method: POST
-        body: file:///etc/config/kratos/sms-body.jsonnet
-        auth:
-          type: api_key
-          config:
-            name: X-Api-Key
-            value: PLEASE-CHANGE-ME                              # COURIER_CHANNELS_0_REQUEST_CONFIG_AUTH_CONFIG_VALUE ezer
-            in: header
   templates:
     login_code:
       valid:
@@ -116,9 +103,6 @@ courier:
           body:
             html: file:///etc/config/kratos/templates/login_code/valid/email.body.gotmpl
             plaintext: file:///etc/config/kratos/templates/login_code/valid/email.body.plaintext.gotmpl
-        sms:
-          body:
-            plaintext: file:///etc/config/kratos/templates/login_code/valid/sms.body.gotmpl
     verification_code:
       valid:
         email:
@@ -126,9 +110,6 @@ courier:
           body:
             html: file:///etc/config/kratos/templates/verification_code/valid/email.body.gotmpl
             plaintext: file:///etc/config/kratos/templates/verification_code/valid/email.body.plaintext.gotmpl
-        sms:
-          body:
-            plaintext: file:///etc/config/kratos/templates/verification_code/valid/sms.body.gotmpl
     recovery_code:
       valid:
         email:
