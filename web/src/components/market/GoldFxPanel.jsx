@@ -29,7 +29,8 @@ export default function GoldFxPanel({ strip }) {
   const open = (q) =>
     setDrawer({
       symbol: q.symbol,
-      market: true,
+      market: '',
+      isMarketQuote: true,
       assetType: q.symbol === 'XAU' ? 'Gold' : 'Currency',
       nativeCurrency: 'TRY',
       nativePrice: q.price,

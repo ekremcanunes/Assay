@@ -37,8 +37,8 @@ function typeConfig(holding, t) {
 export default function AssetDrawer({ holding, onClose, onSell }) {
   const { t } = useLanguage()
   const navigate = useNavigate()
-  const isMarket = !!holding?.market // piyasa modu: sahip olunmayan, sadece izlenen sembol
-  const { data: lots = [], isLoading: lotsLoading } = useAssetTransactions(isMarket ? null : holding?.symbol)
+  const isMarket = !!holding?.isMarketQuote // piyasa modu: sahip olunmayan, sadece izlenen sembol
+  const { data: lots = [], isLoading: lotsLoading } = useAssetTransactions(holding?.market, isMarket ? null : holding?.symbol)
   const [expanded, setExpanded] = useState(false)
 
   const panelRef = useRef(null)
@@ -175,7 +175,7 @@ export default function AssetDrawer({ holding, onClose, onSell }) {
 
   const actionBtn = isMarket ? (
     <button
-      onClick={() => navigate(buyPath({ type: holding.assetType, symbol: holding.symbol, name: holding.name }))}
+      onClick={() => navigate(buyPath({ type: holding.assetType, symbol: holding.symbol, market: holding.market, name: holding.name }))}
       className="flex w-full items-center justify-center gap-2 rounded-md bg-foreground py-3 font-semibold text-background hover:opacity-90"
     >
       <Plus className="h-4 w-4" />
@@ -194,6 +194,7 @@ export default function AssetDrawer({ holding, onClose, onSell }) {
   // Grafik — mode değişince yeniden boyutlansın diye key veriyoruz
   const chart = (
     <PriceChart
+      market={holding.market}
       symbol={holding.symbol}
       assetType={holding.assetType}
       exchange={holding.exchange}

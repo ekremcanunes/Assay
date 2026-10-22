@@ -8,12 +8,32 @@ export const queryKeys = {
   marketOverview: ['market-overview'],
 }
 
-// Piyasa panosu — BIST 30 + endeks + döviz/altın (backend 10 dk cache'li)
+// Sunucu, cevaptaki verinin Redis'teki kalan ömrünü X-Cache-Expires-In header'ında gönderir.
+// React Query veriyi tam o süre taze sayar: Redis kaydı dolmadan boşa istek atılmaz, dolunca
+// ilk ihtiyaçta yenilenir. Süreler yalnızca backend'de (CacheTtl) tutulur, burada sayı yoktur.
+// Header yoksa (ör. fiyat alınamadı) tazelik bilinmez → veri bayat sayılır.
+const EXPIRES_HEADER = 'x-cache-expires-in'
+
+function serverCached(request) {
+  return {
+    queryFn: () =>
+      request().then((r) => {
+        const seconds = Number(r.headers[EXPIRES_HEADER])
+        return { data: r.data, expiresAt: Number.isFinite(seconds) ? Date.now() + seconds * 1000 : null }
+      }),
+    staleTime: (query) => {
+      const expiresAt = query.state.data?.expiresAt
+      return expiresAt ? Math.max(0, expiresAt - Date.now()) : 0
+    },
+    select: (result) => result.data,
+  }
+}
+
+// Piyasa panosu — BIST 30 + endeks + döviz/altın
 export function useMarketOverview() {
   return useQuery({
     queryKey: queryKeys.marketOverview,
-    queryFn: () => marketApi.overview().then((r) => r.data),
-    staleTime: 5 * 60_000,
+    ...serverCached(() => marketApi.overview()),
   })
 }
 
@@ -22,30 +42,30 @@ export function useMarketOverview() {
 export function useSymbolSearch(q) {
   return useQuery({
     queryKey: ['symbol-search', q],
-    queryFn: () => marketApi.search(q).then((r) => r.data),
+    ...serverCached(() => marketApi.search(q)),
     enabled: !!q && q.length >= 2,
-    staleTime: 60 * 60_000,
   })
 }
 
-// Grafik serisi — backend cache'li (gün içi 5 dk, günlük 1 saat)
-export function usePriceHistory(symbol, assetType, range) {
+// Kimlik (market, symbol): market query key'de de yer alır, yoksa LINK · BIST ve LINK · US aynı cache'i paylaşırdı.
+// market hisse için BIST/US, altın ve dövizde ''.
+
+// Grafik serisi
+export function usePriceHistory(market, symbol, assetType, range) {
   return useQuery({
-    queryKey: ['price-history', symbol, assetType, range],
-    queryFn: () => marketApi.history(symbol, assetType, range).then((r) => r.data),
+    queryKey: ['price-history', market, symbol, assetType, range],
+    ...serverCached(() => marketApi.history(market, symbol, assetType, range)),
     enabled: !!symbol,
-    staleTime: 5 * 60_000,
   })
 }
 
-// Tarihe göre fiyat — backend cache'li (geçmiş gün 30 gün, bugün 5 dk).
+// Tarihe göre fiyat — geçmiş günün kapanışı kalıcı, "bugün" anlık fiyat; tazeliği sunucu söyler.
 // Üçlü eksikse sorgu hiç çalışmaz.
-export function usePriceOnDate(symbol, assetType, date) {
+export function usePriceOnDate(market, symbol, assetType, date) {
   return useQuery({
-    queryKey: ['price-on-date', symbol, assetType, date],
-    queryFn: () => marketApi.priceOn(symbol, assetType, date).then((r) => r.data),
+    queryKey: ['price-on-date', market, symbol, assetType, date],
+    ...serverCached(() => marketApi.priceOn(market, symbol, assetType, date)),
     enabled: !!symbol && !!assetType && !!date,
-    staleTime: 60 * 60_000,
     retry: false,
   })
 }
@@ -54,22 +74,23 @@ export function usePriceOnDate(symbol, assetType, date) {
 export function useHoldings() {
   return useQuery({
     queryKey: queryKeys.holdings,
-    queryFn: () => assetApi.getAll().then((r) => r.data),
+    ...serverCached(() => assetApi.getAll()),
   })
 }
 
 export function useDashboard() {
   return useQuery({
     queryKey: queryKeys.dashboard,
-    queryFn: () => dashboardApi.get().then((r) => r.data),
+    ...serverCached(() => dashboardApi.get()),
   })
 }
 
-// Bir varlığın alım-satım (lot) geçmişi — drawer'da gösterilir
-export function useAssetTransactions(symbol) {
+// Bir varlığın alım-satım (lot) geçmişi — drawer'da gösterilir.
+// (symbol, market) ile filtrelenir: varlık tamamen satılıp silinse bile geçmişi bulunur, iki LINK karışmaz.
+export function useAssetTransactions(market, symbol) {
   return useQuery({
-    queryKey: [...queryKeys.transactions, symbol],
-    queryFn: () => transactionApi.getAll({ symbol }).then((r) => r.data.items ?? []),
+    queryKey: [...queryKeys.transactions, market, symbol],
+    queryFn: () => transactionApi.getAll({ symbol, market }).then((r) => r.data.items ?? []),
     enabled: !!symbol,
   })
 }

@@ -31,11 +31,12 @@ const SLUGS = { Stock: 'stock', Currency: 'currency', Gold: 'gold' }
 export const slugOf = (type) => SLUGS[type] ?? null
 export const typeOf = (slug) => CATEGORY_TYPES.find((t) => SLUGS[t] === slug) ?? null
 
-// Al sayfasına ön seçimle git: tür (+ sembol/ad). URL'de durur ki yenilemede kaybolmasın.
-export function buyPath({ type, symbol, name } = {}) {
+// Al sayfasına ön seçimle git: tür (+ sembol/market/ad). URL'de durur ki yenilemede kaybolmasın.
+export function buyPath({ type, symbol, market, name } = {}) {
   const p = new URLSearchParams()
   if (type) p.set('type', type)
   if (symbol) p.set('symbol', symbol)
+  if (market) p.set('market', market)
   if (name) p.set('name', name)
   const q = p.toString()
   return q ? `/assets/buy?${q}` : '/assets/buy'
@@ -43,7 +44,8 @@ export function buyPath({ type, symbol, name } = {}) {
 
 // Kart grafiği: kategorinin temsilci serisi (portföy değeri DEĞİL — kartta etiketle yazılır)
 export const CATEGORY_SERIES = {
-  Stock: { symbol: 'XU100.IS', assetType: 'Stock' },
-  Currency: { symbol: 'USD', assetType: 'Currency' },
-  Gold: { symbol: 'XAU', assetType: 'Gold' },
+  // BIST 100 endeksi: Yahoo yazımı (XU100.IS) backend'de üretilir
+  Stock: { symbol: 'XU100', market: 'BIST', assetType: 'Stock' },
+  Currency: { symbol: 'USD', market: '', assetType: 'Currency' },
+  Gold: { symbol: 'XAU', market: '', assetType: 'Gold' },
 }

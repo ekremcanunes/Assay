@@ -20,7 +20,7 @@ export default function AssetCategory() {
   const navigate = useNavigate()
   const { holdings, isLoading, error, total, totalPct, categories } = usePortfolioSummary()
   const s = CATEGORY_SERIES[type] ?? CATEGORY_SERIES.Stock
-  const { data: history } = usePriceHistory(type ? s.symbol : null, s.assetType, '1y')
+  const { data: history } = usePriceHistory(s.market, type ? s.symbol : null, s.assetType, '1y')
 
   if (!type) return <Navigate to="/assets" replace />
 

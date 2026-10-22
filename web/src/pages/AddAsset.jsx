@@ -21,6 +21,7 @@ import { AlertTriangle, CalendarDays, Search, X } from 'lucide-react'
 const assetTypes = ['Gold', 'Stock', 'Currency']
 const currencySymbols = ['USD', 'EUR', 'GBP']
 const currencies = ['TRY', 'USD']
+const stockMarkets = ['BIST', 'US']
 
 // Seçili/seçili değil hap düğmesi (tür, döviz, para birimi)
 const pill = (on) => cn('press h-9 shrink-0 rounded-full border px-3.5 text-ui',
@@ -30,13 +31,16 @@ export default function AddAsset() {
   const navigate = useNavigate()
   const { t, lang } = useLanguage()
   const [params, setParams] = useSearchParams()
-  // Ön seçim (?type=&symbol=&name=): bir varlığın içinden "Al" ile gelindiyse o varlık seçili açılır
+  // Ön seçim (?type=&symbol=&market=&name=): bir varlığın içinden "Al" ile gelindiyse o varlık seçili açılır.
+  // Hissenin kimliği (market, symbol): market'i geçersiz bir hisse ön seçilmez, kullanıcı aramadan seçer.
   const initType = assetTypes.includes(params.get('type')) ? params.get('type') : ''
+  const initMarket = initType === 'Stock' && stockMarkets.includes(params.get('market')) ? params.get('market') : ''
   const initSymbol = initType === 'Gold' ? 'XAU'
     : initType === 'Currency' ? (currencySymbols.includes(params.get('symbol')) ? params.get('symbol') : '')
-    : initType === 'Stock' ? (params.get('symbol') ?? '') : ''
+    : initType === 'Stock' && initMarket ? (params.get('symbol') ?? '') : ''
   const [assetType, setAssetType] = useState(initType)
   const [symbol, setSymbol] = useState(initSymbol)
+  const [market, setMarket] = useState(initMarket)
   const [selectedName, setSelectedName] = useState(() => (initType === 'Gold' ? t('assets.gold') : initType === 'Stock' && initSymbol ? (params.get('name') ?? '') : ''))
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
@@ -50,7 +54,7 @@ export default function AddAsset() {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const buyMutation = useBuyAsset()
 
-  const { data: reference, isFetching: refFetching, isError: refError } = usePriceOnDate(symbol, assetType, date)
+  const { data: reference, isFetching: refFetching, isError: refError } = usePriceOnDate(market, symbol, assetType, date)
 
   // Takvim URL'de (?date=pick): telefonun geri tuşu yalnızca takvimi kapatır, formu değil
   const calOpen = params.get('date') === 'pick'
@@ -60,7 +64,7 @@ export default function AddAsset() {
     window.history.state?.idx > 0 ? navigate(-1) : setParams((p) => { p.delete('date'); return p }, { replace: true })
 
   const today = todayString()
-  const { data: nowRef } = usePriceOnDate(date !== today ? symbol : null, assetType, today)
+  const { data: nowRef } = usePriceOnDate(market, date !== today ? symbol : null, assetType, today)
   const pickPrice = (v) => (currency === 'USD' ? v?.priceInUsd : v?.priceInTry)
   const thenPrice = reference?.available ? pickPrice(reference) : null
   const nowPrice = date === today ? thenPrice : nowRef?.available ? pickPrice(nowRef) : null
@@ -114,6 +118,7 @@ export default function AddAsset() {
     setQuery('')
     setResults([])
     setSymbol(val === 'Gold' ? 'XAU' : '')
+    setMarket('')
     setSelectedName(val === 'Gold' ? t('assets.gold') : '')
     // Altın ve döviz her zaman TL ile alınır → para birimi kilitli
     if (val === 'Gold' || val === 'Currency') setCurrency('TRY')
@@ -121,6 +126,7 @@ export default function AddAsset() {
 
   const handleSelectResult = (r) => {
     setSymbol(r.symbol)
+    setMarket(r.market)
     setSelectedName(r.name)
     setResults([])
     if (r.currency === 'USD' || r.currency === 'TRY') setCurrency(r.currency)
@@ -128,6 +134,7 @@ export default function AddAsset() {
 
   const handleClearSymbol = () => {
     setSymbol('')
+    setMarket('')
     setSelectedName('')
     setQuery('')
   }
@@ -142,10 +149,13 @@ export default function AddAsset() {
       await buyMutation.mutateAsync({
         assetType,
         symbol,
+        market,
         quantity: parseFloat(quantity),
         unitPrice: parseFloat(unitPrice),
         currency,
         date: toApiDate(date),
+        // auto: fiyat sistemden doldu ve dokunulmadı; manual: kullanıcı yazdı/değiştirdi
+        priceSource: priceSource === 'auto' ? 'Market' : 'Manual',
       })
       navigate(`/assets/${slugOf(assetType)}`)
     } catch (err) {
@@ -232,7 +242,7 @@ export default function AddAsset() {
                     )}
                     {!searching && results.map((r) => (
                       <button
-                        key={`${r.symbol}-${r.exchange}`}
+                        key={`${r.market}-${r.symbol}`}
                         type="button"
                         onClick={() => handleSelectResult(r)}
                         className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-secondary"
@@ -397,6 +407,7 @@ export default function AddAsset() {
 
       <PriceCalendar
         open={calOpen}
+        market={market}
         symbol={symbol}
         assetType={assetType}
         label={assetType === 'Gold' ? t('assets.goldGram') : symbol}

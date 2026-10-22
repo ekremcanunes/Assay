@@ -25,14 +25,14 @@ export default function PriceCalendar({ open, ...props }) {
   return open ? <CalendarSheet {...props} /> : null
 }
 
-function CalendarSheet({ symbol, assetType, label, value, onClose, onSelect }) {
+function CalendarSheet({ market = '', symbol, assetType, label, value, onClose, onSelect }) {
   const { t, lang } = useLanguage()
   const locale = lang === 'tr' ? 'tr-TR' : 'en-US'
   const today = useMemo(() => new Date(), [])
   const todayStr = toDateString(today)
   const yearAgo = toDateString(new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()))
 
-  const { data: history } = usePriceHistory(symbol, assetType, '1y')
+  const { data: history } = usePriceHistory(market, symbol, assetType, '1y')
   const closes = useMemo(() => closesByDay(history?.candles), [history])
   const hasSeries = closes.size > 0
   const hex = catOf(assetType).hex
@@ -61,7 +61,7 @@ function CalendarSheet({ symbol, assetType, label, value, onClose, onSelect }) {
 
   // 1 yıldan eski seçimde fiyat seriden gelmez; tek gün sorgusu (formun da kullandığı, cache'li)
   const older = picked < yearAgo
-  const { data: olderRef } = usePriceOnDate(older ? symbol : null, assetType, picked)
+  const { data: olderRef } = usePriceOnDate(market, older ? symbol : null, assetType, picked)
 
   const ccy = history?.currency ?? 'TRY'
   const money = (v) => (v == null ? '—' : new Intl.NumberFormat(locale, { style: 'currency', currency: ccy }).format(v))

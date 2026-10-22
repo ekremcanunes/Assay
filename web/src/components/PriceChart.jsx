@@ -25,11 +25,11 @@ const tradingViewUrl = (symbol, assetType, exchange) => {
   return null
 }
 
-export default function PriceChart({ symbol, assetType = 'Stock', exchange, height = 320 }) {
+export default function PriceChart({ market = '', symbol, assetType = 'Stock', exchange, height = 320 }) {
   const { t } = useLanguage()
   const [range, setRange] = useState('1mo')
   const containerRef = useRef(null)
-  const { data, isLoading, isError } = usePriceHistory(symbol, assetType, range)
+  const { data, isLoading, isError } = usePriceHistory(market, symbol, assetType, range)
 
   const candles = useMemo(() => data?.candles ?? [], [data])
   const tvUrl = tradingViewUrl(symbol, assetType, exchange)

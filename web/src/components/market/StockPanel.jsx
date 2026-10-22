@@ -55,7 +55,7 @@ export default function StockPanel({ stocks, bist30 }) {
 
   const open = (s) =>
     setDrawer({
-      symbol: s.symbol, name: s.name, market: true, assetType: 'Stock', exchange: 'BIST', nativeCurrency: 'TRY',
+      symbol: s.symbol, name: s.name, market: 'BIST', isMarketQuote: true, assetType: 'Stock', exchange: 'BIST', nativeCurrency: 'TRY',
       nativePrice: s.price, previousClose: s.previousClose, dayHigh: s.dayHigh, dayLow: s.dayLow,
       week52High: s.week52High, week52Low: s.week52Low, priceAvailable: true,
     })

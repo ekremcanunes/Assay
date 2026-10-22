@@ -11,7 +11,7 @@ export function CategoryCard({ summary, onOpen, className }) {
   const { t } = useLanguage()
   const type = summary.key
   const s = CATEGORY_SERIES[type]
-  const { data: history } = usePriceHistory(s.symbol, s.assetType, '1y')
+  const { data: history } = usePriceHistory(s.market, s.symbol, s.assetType, '1y')
   const name = t(`assets.${type.toLowerCase()}`)
 
   return (

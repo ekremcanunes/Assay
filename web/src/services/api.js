@@ -31,8 +31,9 @@ export const transactionApi = {
 export const marketApi = {
   search: (q) => api.get('/api/market/search', { params: { q } }),
   overview: () => api.get('/api/market/overview'),
-  history: (symbol, assetType, range) =>
-    api.get(`/api/market/history/${encodeURIComponent(symbol)}`, { params: { assetType, range } }),
-  priceOn: (symbol, assetType, date) =>
-    api.get(`/api/market/price-on/${encodeURIComponent(symbol)}`, { params: { assetType, date } }),
+  // market: hisse için BIST/US (kimliğin parçası), altın ve dövizde ''. Yahoo yazımını (.IS vb.) backend üretir.
+  history: (market, symbol, assetType, range) =>
+    api.get(`/api/market/history/${encodeURIComponent(symbol)}`, { params: { market, assetType, range } }),
+  priceOn: (market, symbol, assetType, date) =>
+    api.get(`/api/market/price-on/${encodeURIComponent(symbol)}`, { params: { market, assetType, date } }),
 }
