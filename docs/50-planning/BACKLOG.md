@@ -321,3 +321,68 @@ Uygulamadan önce DESIGN.md okunur.
 **Neden önemli.** Kişisel ve az trafikli projede pratik risk düşük; en olası sonuç Yahoo'nun engellemesi ya da Twelve Data'nın anahtarı kapatması (teknik kesinti). Herkese açık ya da ticari ürün olursa izinsiz veri kullanımı somut hukuki risk olur.
 
 **Öneri.** Herkese açık büyüme veya para kazanma kararından önce: (1) fiyatlar için lisanslı kaynak (ör. Twelve Data ücretli planı fiyat da veriyor), (2) Twelve Data redistribution hakkı, (3) BIST gecikmeli veri koşullarının kontrolü, (4) hukukçu görüşü.
+
+---
+
+## Girişte 2FA adımı, portfolio-service cevap vermezse atlanıyor (fail open)
+
+*Eklendi: 2026-10-23 · Bağlam: Faz 1 deploy'unda portfolio-service çökükken giriş denendi*
+
+**Sorun.** Şifre adımından sonra frontend 2FA'nın gerekip gerekmediğini `GET /api/auth/options` ile sorar ([Login.jsx:136-142](../../web/src/pages/Login.jsx#L136-L142)). İstek başarısız olursa `options = null` olur, kod bunu "2FA gerekmiyor" sayar ve `/overview`'a yönlendirir. Kullanıcı e-posta kodu girmeden panele girmiş görünür.
+
+**Şu anki etkisi.** Veri sızmaz: portfolio-service ve market-service aal2 olmayan her isteğe 403 `aal2_required` döner; servis ayağa kalkınca ilk API isteği kullanıcıyı `/login?aal2=1` kod adımına gönderir. Sorun, arayüzün yanlış izlenim vermesi ve güvenlik kontrolünün hata durumunda açık kalması.
+
+**Öneri.** Fail closed: `/api/auth/options` cevap vermezse yönlendirme yapılmaz; "Giriş şu an tamamlanamıyor, biraz sonra tekrar deneyin" hatası gösterilir. Login.jsx'te birkaç satır.
+
+---
+
+## İstek süreleri yüksek (500 ms – 1,7 sn)
+
+*Eklendi: 2026-10-23 · Bağlam: Faz 1 deploy sonrası WSL log incelemesi*
+
+**Gözlem.** portfolio-service istek logunda (`Elapsed`) çoğu istek 500–950 ms: `GET /api/assets` ~900 ms, `/api/market/search` ~920 ms, `/api/market/price-on` ~900 ms. Alım (`POST /api/assets/buy`) 1,5–1,7 sn. Karşılaştırılacak eski ölçüm yok.
+
+**Muhtemel sebep.** Her istek birden çok ağ turu atıyor:
+
+```
+portfolio-service → Kratos whoami → (Kratos → Neon)
+                  → Neon (veri, us-east-1)
+                  → market-service → Kratos whoami (tekrar) → Redis / Yahoo
+```
+
+Kullanıcı oturumu bir istekte iki kez (portfolio-service ve market-service) Kratos'a soruluyor. Neon `us-east-1` bölgesinde; her sorgu okyanus ötesine gidiyor. Faz 1 alıma bir çağrı ekledi: işlem kuru için `/price-on/USD`.
+
+**İlk adım: ölçmek.** Tahminle değil, ölçümle başlanır. Bir isteğin süresi parçalara ayrılır: whoami, veritabanı, market-service, Redis, Yahoo. Loglarda `@tr` (trace id) zaten var; parça süreleri aynı trace altında loglanabilir.
+
+**Olası iyileştirmeler (ölçüme göre).**
+
+| # | Önlem | Etki | İş |
+|---|---|---|---|
+| 1 | whoami sonucunu kısa süre (ör. 30 sn) önbellekle | İstek başına bir veya iki Kratos turu azalır | Küçük; oturum iptali gecikmeli yansır |
+| 2 | Neon bölgesini kullanıcıya yaklaştır (ör. `eu-central-1`) | Her sorgu daha kısa sürer | Orta; veritabanı taşıma |
+| 3 | İşlem kurunu alım cevabından sonra arka planda doldur | Alım süresi kısalır | Küçük; kur kısa süre boş kalır |
+
+**Öneri.** Önce ölçüm; iyileştirme ölçüme göre seçilir.
+
+---
+
+## `Transactions` tablosundaki kolonlar gözden geçirilmeli
+
+*Eklendi: 2026-10-23 · Bağlam: Faz 1 sonrası işlem tablosu kontrolü*
+
+**Sorun.** Tablo 19 kolona çıktı. Bir kısmı başka kolonlardan türetilebiliyor, bir kısmı hiçbir yerde kullanılmıyor. Kod taramasındaki ilk gözlemler:
+
+| Kolon | Gözlem |
+|---|---|
+| `Amount` | `Quantity × UnitPrice` ile aynı; türetilebilir |
+| `Category` | `AssetType`'ın metin hali (`"Stock"`). İşlemde ayrı bir `AssetType` yok; kimlik bu kolondan okunuyor |
+| `Description` | Otomatik üretilen metin (`"LINK alış: 100 x 45 TRY"`); diğer kolonlardan türetilebilir. Arama filtresi bunun üzerinde çalışıyor |
+| `Tags` | Model, DTO ve filtrede var; ekranda hiçbir yerde kullanılmıyor, yazan bir akış yok |
+| `UpdatedAt` | Yalnızca oluşturulurken atanıyor; işlem güncellenmediği için hep `CreatedAt` ile aynı |
+| `Market`, `UsdTryRate`, `PriceSource` | Faz 1'de eklendi; kararlar spec §4.12'de |
+
+**Neden önemli.** Türetilebilen kolon, kaynağıyla çelişebilir (ör. `Amount` ≠ `Quantity × UnitPrice`). Kullanılmayan kolon, okuyanı "bu ne için?" diye düşündürür.
+
+**Dikkat.** Kolon silmek geri alınması zor bir işlem: migration'da `Down` metodu kolonu geri getirir, ama içindeki veriyi getirmez. Önce her kolonun gerçekten kullanılmadığı doğrulanmalı; gerekirse silmeden önce veri yedeklenmeli.
+
+**Öneri.** Kolon kolon karar: tut / türet (DTO'da hesapla) / sil. `Tags` ve `UpdatedAt` en güçlü silme adayları.

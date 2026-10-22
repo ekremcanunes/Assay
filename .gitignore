@@ -28,3 +28,6 @@ Thumbs.db
 .ua/
 .understand-anything/
 .ua-dashboard.log
+
+# Postman koleksiyonu (yalnizca lokal, oturum cookie ortam dosyasina girer)
+docs/30-operations/postman/
