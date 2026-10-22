@@ -1,6 +1,11 @@
 # Enstrüman Kimliği — Spec
 
-*Tarih: 2026-10-21 · Dal: `test`*
+*Tarih: 2026-10-21 · Güncelleme: 2026-10-22 · Dal: `test`*
+
+**Fazlar:**
+- **Faz 1 — Kimlik `(Market, Symbol)`:** (1) Yahoo çeviri fonksiyonu, (2) fiyat endpoint'lerine market, (3) arama sonuçlarına market, (4) `Asset.Market` + migration, (5) mevcut kayıtların elle doldurulması, (6) web'de market taşınması, (7) tek fiyat kaynağı ve tek tazelik süresi (§4.11).
+- **Faz 2 — Enstrüman listesi veritabanında:** §4.3, §4.4, §4.5.
+- **Faz 3 — Alımda sunucu kilidi:** §4.6.
 
 ## 1. Sorun
 
@@ -157,13 +162,17 @@ Hisse isteğinde `market` yoksa endpoint 400 döner. `BistCatalog`, `IsBistAsync
 
 ### 4.8 Redis
 
+Anahtarlar tek bir yerde üretilir: `market-service/Services/CacheKeys.cs`. Kural: önek ve varlık tipi küçük harf; market ve sembol standart yazımda (büyük harf). Altın ve dövizde market boştur, anahtara girmez.
+
 | Anahtar | Değişiklik |
 |---|---|
-| `bist:stocks` | Kaldırılır |
-| `stock:{symbol}` | `stock:{market}:{symbol}` |
-| `history:stock:{symbol}:{range}` | `history:stock:{market}:{symbol}:{range}` |
-| `priceon:stock:{symbol}:{date}` | `priceon:stock:{market}:{symbol}:{date}` |
-| `market:overview`, altın ve döviz anahtarları | Değişmez |
+| `bist:stocks` | Faz 2'de kaldırılır |
+| `stock:{symbol}` | `stock:{MARKET}:{SYMBOL}` (ör. `stock:BIST:THYAO`) |
+| `history:stock:{symbol}:{range}` | `history:stock:{MARKET}:{SYMBOL}:{range}` |
+| `priceon:stock:{symbol}:{date}` | `priceon:stock:{MARKET}:{SYMBOL}:{date}`. "Bugün" için kayıt tutulmaz (§4.11). |
+| `market:overview` | Kaldırılır (§4.11) |
+| — | Yeni: `index:{yahooSymbol}`, `spark:{kaynakSembol}` |
+| `gold:XAU`, `currency:{code}` | Değişmez |
 
 Eski anahtarlar silinmez; TTL'leri dolunca kendiliğinden giderler (en uzunu 30 gün).
 
@@ -176,20 +185,52 @@ Eski anahtarlar silinmez; TTL'leri dolunca kendiliğinden giderler (en uzunu 30 
 - Fiyat eşleştirmesi ([AssetService.cs:153-172](../../../portfolio-service/Services/AssetService.cs#L153-L172)) `(Market, Symbol)` anahtarıyla yapılır.
 - `AssetHoldingDto` `Market` alanını da taşır.
 - Web: [AddAsset.jsx](../../../web/src/pages/AddAsset.jsx) seçilen sonucun `market` değerini saklar ve alım isteğiyle gönderir. Sembol taşıyan her ekran ve link `market`'i de taşır: `history` ve `price-on` çağrıları, [AssetDrawer.jsx:178](../../../web/src/components/AssetDrawer.jsx#L178) "tekrar al" yönlendirmesi.
-- Transaction tablosu değişmez; varlığa zaten `AssetId` ile bağlı.
+- ~~Transaction tablosu değişmez~~ (karar 2026-10-22): Transaction'a `Market`, `UsdTryRate` ve `PriceSource` eklenir. Sebep: varlık tamamen satılınca silinir ve `AssetId` null olur; lot geçmişi `(Symbol, Market)` ile bulunur. Ayrıntı §4.12.
 
 ### 4.10 Mevcut kayıtların doldurulması
 
 Hedef, **bugünkü fiyatlamanın birebir korunması**: sembol BIST listesindeyse `BIST`, değilse `US`. EFOR, LILAK ve LINK bugün BIST olarak fiyatlandıkları için `BIST` olarak kalır.
 
-Yöntem:
-1. EF migration `Market` kolonunu ekler; mevcut hisse satırları boş kalır.
-2. Kullanıcı portföyünü ilk açtığında, `Market` değeri boş olan hisseler için portfolio-service market-service'e sorar: önce `market=BIST`, 404 gelirse `market=US`. Bulunan değer kaydedilir.
-3. `BuyAsync` da kaydetmeden önce aynı sembolün `Market` değeri boş bir satırı varsa onu aynı yöntemle doldurur. Aksi halde portföyünü henüz açmamış bir kullanıcı aynı hisseyi tekrar aldığında ikinci bir satır oluşur.
+Yöntem (karar: 2026-10-22):
+1. EF migration `Market` kolonunu ekler. Migration, servis açılışında otomatik uygulanır (`db.Database.Migrate()`). Mevcut hisse satırları boş kalır.
+2. Deploy'dan hemen sonra kayıtları biz doldururuz. Uygulamada doldurma kodu yazılmaz.
+   - Prod'daki farklı hisse sembolleri bir sorguyla listelenir.
+   - Liste elle incelenir. BIST olanlar belirlenir.
+   - Tek seferlik `UPDATE` çalıştırılır: listedekiler `BIST`, kalan hisseler `US`. Aynı işlem hem `Assets` hem `Transactions` tablosunda yapılır (işlemlerde `Category = 'Stock'`).
+   - Kontrol: iki tabloda da `Market` değeri boş hisse kalmamalıdır.
+   - Eski işlemlerde `UsdTryRate` ve `PriceSource` boş kalır. Kur istenirse sonradan işlem tarihine göre doldurulabilir.
+3. Deploy ile doldurma arasında kısa bir süre mevcut hisseler fiyatsız görünür. Bu kabul edildi.
 
-İşlemin kullanıcı açılışında yapılmasının sebebi, servisler arası çağrının kullanıcı cookie'si gerektirmesi; servis açılışında arka planda çalışan bir iş bu çağrıyı yapamaz.
+Kolon ekleme (yapı) migration'da, doldurma (veri) elle yapılır. Sebep: yapı her ortamda aynıdır, veri ortama göre değişir.
 
-İki sorgu da 404 dönerse kayıt boş bırakılır, uyarı loglanır ve varlık bugünkü gibi fiyatsız gösterilir. Tüm kayıtlar dolduktan sonra bu kod ayrı bir değişiklikle kaldırılır.
+### 4.11 Tek fiyat kaynağı ve tek tazelik süresi (Faz 1, adım 7)
+
+Sorun: aynı hisse farklı sayfalarda farklı Redis kayıtlarından ve farklı sürelerle okunuyordu. Portföyde THYAO en fazla 6 dk, piyasa özetinde en fazla 15 dk eski olabiliyordu.
+
+Kurallar:
+- **Tek kaynak:** bir verinin tek bir Redis kaydı vardır. Piyasa özeti ve "bugün" fiyatı kendi kopyasını tutmaz; portföyle aynı `stock:`, `gold:`, `currency:` kayıtlarını okur.
+- **Tek süre tablosu:** süreler yalnızca `market-service/Services/CacheTtl.cs` içinde tanımlıdır (`Live`, `Daily`, `Permanent`, `Failure`, `Catalog`).
+- **Tek cache akışı:** "cache'e bak, yoksa çek, yaz" akışı yalnızca `CacheStore.GetOrSetAsync` içinde uygulanır.
+- **Tazelik sunucudan gelir:** her cevap `X-Cache-Expires-In` header'ını taşır (kalan saniye). portfolio-service bu header'ı tarayıcıya iletir. React Query `staleTime` değerini bu header'dan alır. Frontend'de süre rakamı yoktur.
+- **TL çevirisi:** hisse ve altın fiyatları tek bir cache'li kurla (`currency:USD`) TL'ye çevrilir.
+
+Ayrıntı: `docs/10-standards/DATA-FETCHING.md` §2.1.
+
+### 4.12 Faz 1 kararları (2026-10-22)
+
+| Konu | Karar |
+|---|---|
+| Sembol yazımı | Standart biçim `BRK.B`. `brk.b`, `BRK-B` ve `BRK.B` aynı kabul edilir (`YahooSymbol.Normalize`). Yahoo'ya giderken `BRK-B` olur. |
+| Market adı | Büyük-küçük harf farkı önemsizdir. Anahtara büyük harfle yazılır. |
+| Geçersiz market (`/history`, `/price-on`, `/price`) | 400 |
+| Geçersiz market veya fiyatı olmayan sembol (`/prices`) | O sembol atlanır, diğerleri döner. Sebep tek bir `Warning` satırıyla loglanır; sembol listesi loglanmaz. Cevabın biçimi değişmez. |
+| `Market` tipi | `string`. Altın ve dövizde `""` (null değil). |
+| Lot geçmişi | `Transactions.Market` eklenir; filtre `(Symbol, Market)`. `AssetId` yetmez: varlık tamamen satılınca silinir. |
+| `Transactions.UsdTryRate` | İşlem tarihindeki 1 USD'nin TL karşılığı; alımda ve satışta yazılır. Alınamazsa null, işlem engellenmez. |
+| `Transactions.PriceSource` | `Market` (otomatik doldu, değişmedi) / `Manual`. Alımda frontend gönderir (zorunlu); satışta her zaman `Manual`. Bilgi amaçlı. |
+| Alım doğrulaması | Yalnızca biçim: hisse için `BIST`/`US`, diğerlerinde boş. Enstrümanın varlığı Faz 3'te. |
+| Deploy | Faz 1'in tüm adımları tek deploy ile çıkar. |
+| Test | Testi kullanıcı yapar. |
 
 ## 5. Doğrulanacaklar
 
