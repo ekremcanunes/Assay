@@ -31,6 +31,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<CacheLifetime>();
 
 builder.Services.AddHttpClient<IMarketServiceClient, MarketServiceClient>(client =>
 {
@@ -81,6 +82,7 @@ if (app.Environment.IsDevelopment())
 app.UseSerilogRequestLogging();
 app.UseCors();
 app.UseMiddleware<KratosMiddleware>();
+app.UseMiddleware<CacheLifetimeMiddleware>();
 app.MapControllers();
 
 app.Run();

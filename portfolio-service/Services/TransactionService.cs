@@ -15,6 +15,8 @@ public class TransactionService(AppDbContext db) : ITransactionService
             query = query.Where(t => t.Type == filter.Type.Value);
         if (!string.IsNullOrWhiteSpace(filter.Symbol))
             query = query.Where(t => t.Symbol == filter.Symbol);
+        if (filter.Market != null)
+            query = query.Where(t => t.Market == filter.Market.Trim().ToUpperInvariant());
         if (!string.IsNullOrWhiteSpace(filter.Category))
             query = query.Where(t => t.Category == filter.Category);
         if (!string.IsNullOrWhiteSpace(filter.Tag))
@@ -71,6 +73,7 @@ public class TransactionService(AppDbContext db) : ITransactionService
         Description = t.Description,
         Date = t.Date,
         Symbol = t.Symbol,
+        Market = t.Market,
         Quantity = t.Quantity,
         UnitPrice = t.UnitPrice,
         RealizedProfitLoss = t.RealizedProfitLoss,

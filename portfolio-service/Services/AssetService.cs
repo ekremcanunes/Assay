@@ -5,22 +5,25 @@ using portfolio_service.Models;
 
 namespace portfolio_service.Services;
 
-public class AssetService(AppDbContext db, IMarketServiceClient marketClient) : IAssetService
+public class AssetService(AppDbContext db, IMarketServiceClient marketClient, ILogger<AssetService> logger) : IAssetService
 {
     public async Task<List<AssetHoldingDto>> GetHoldingsAsync(string userId)
     {
         var assets = await db.Assets.Where(a => a.UserId == userId).OrderBy(a => a.Symbol).ToListAsync();
-        var priceMap = await GetPriceMapAsync(assets.Select(a => a.Symbol));
+        var priceMap = await GetPriceMapAsync(assets);
         return assets.Select(a => MapToHolding(a, priceMap)).ToList();
     }
 
     public async Task<AssetHoldingDto> BuyAsync(BuyAssetDto dto, string userId)
     {
-        var symbol = dto.Symbol.Trim().ToUpperInvariant();
+        // market-service ile aynı standart yazım: "brk-b" → "BRK.B"
+        var symbol = dto.Symbol.Trim().ToUpperInvariant().Replace('-', '.');
+        var market = (dto.Market ?? string.Empty).Trim().ToUpperInvariant();
         var currency = dto.Currency.Trim().ToUpperInvariant();
         var date = NormalizeDate(dto.Date);
 
-        var asset = await db.Assets.FirstOrDefaultAsync(a => a.UserId == userId && a.Symbol == symbol);
+        // Kimlik (Market, Symbol): LINK · US alımı LINK · BIST satırına eklenmez
+        var asset = await db.Assets.FirstOrDefaultAsync(a => a.UserId == userId && a.Symbol == symbol && a.Market == market);
 
         if (asset is null)
         {
@@ -29,6 +32,7 @@ public class AssetService(AppDbContext db, IMarketServiceClient marketClient) : 
                 Id = Guid.NewGuid(),
                 UserId = userId,
                 Symbol = symbol,
+                Market = market,
                 AssetType = dto.AssetType,
                 Quantity = dto.Quantity,
                 Currency = currency,
@@ -58,8 +62,11 @@ public class AssetService(AppDbContext db, IMarketServiceClient marketClient) : 
             Currency = currency,
             Category = dto.AssetType.ToString(),
             Symbol = symbol,
+            Market = market,
             Quantity = dto.Quantity,
             UnitPrice = dto.UnitPrice,
+            UsdTryRate = await GetUsdTryRateAsync(date),
+            PriceSource = dto.PriceSource,
             Description = $"{symbol} alış: {dto.Quantity} x {dto.UnitPrice} {currency}",
             Date = date,
             AssetId = asset.Id
@@ -67,7 +74,7 @@ public class AssetService(AppDbContext db, IMarketServiceClient marketClient) : 
 
         await db.SaveChangesAsync();
 
-        var priceMap = await GetPriceMapAsync([symbol]);
+        var priceMap = await GetPriceMapAsync([asset]);
         return MapToHolding(asset, priceMap);
     }
 
@@ -93,8 +100,12 @@ public class AssetService(AppDbContext db, IMarketServiceClient marketClient) : 
             Currency = asset.Currency,
             Category = asset.AssetType.ToString(),
             Symbol = asset.Symbol,
+            Market = asset.Market,
             Quantity = dto.Quantity,
             UnitPrice = dto.UnitPrice,
+            UsdTryRate = await GetUsdTryRateAsync(date),
+            // Satış formu fiyatı boş başlatır (otomatik doldurma yok) → fiyat her zaman kullanıcıdan
+            PriceSource = PriceSource.Manual,
             RealizedProfitLoss = realized,
             Description = $"{asset.Symbol} satış: {dto.Quantity} x {dto.UnitPrice} {asset.Currency}",
             Date = date,
@@ -109,7 +120,7 @@ public class AssetService(AppDbContext db, IMarketServiceClient marketClient) : 
 
         if (asset.Quantity == 0) return MapToHolding(asset, new Dictionary<string, MarketPriceResponse>());
 
-        var priceMap = await GetPriceMapAsync([asset.Symbol]);
+        var priceMap = await GetPriceMapAsync([asset]);
         return MapToHolding(asset, priceMap);
     }
 
@@ -123,7 +134,7 @@ public class AssetService(AppDbContext db, IMarketServiceClient marketClient) : 
 
         await db.SaveChangesAsync();
 
-        var priceMap = await GetPriceMapAsync([asset.Symbol]);
+        var priceMap = await GetPriceMapAsync([asset]);
         return MapToHolding(asset, priceMap);
     }
 
@@ -150,14 +161,16 @@ public class AssetService(AppDbContext db, IMarketServiceClient marketClient) : 
         };
     }
 
-    private async Task<Dictionary<string, MarketPriceResponse>> GetPriceMapAsync(IEnumerable<string> symbols)
+    // Fiyatlar (Market, Symbol) kimliğiyle istenir ve eşlenir: LINK · BIST ve LINK · US ayrı fiyatlanır.
+    private async Task<Dictionary<string, MarketPriceResponse>> GetPriceMapAsync(IEnumerable<Asset> assets)
     {
-        var list = symbols.Distinct().ToList();
+        // Hisse "BIST:THYAO", altın/döviz "XAU". Market'i henüz boş hisse (eski kayıt) market-service'te atlanır → fiyatsız.
+        var list = assets.Select(a => a.Market.Length > 0 ? $"{a.Market}:{a.Symbol}" : a.Symbol).Distinct().ToList();
         if (list.Count == 0) return new();
         try
         {
             var prices = await marketClient.GetPricesAsync(list);
-            return prices.ToDictionary(p => p.Symbol, p => p);
+            return prices.ToDictionary(p => PriceKey(p.Market, p.Symbol), p => p);
         }
         catch
         {
@@ -166,9 +179,29 @@ public class AssetService(AppDbContext db, IMarketServiceClient marketClient) : 
         }
     }
 
+    private static string PriceKey(string market, string symbol) => $"{market}:{symbol}";
+
+    // İşlem tarihindeki 1 USD'nin TL karşılığı. Alınamazsa null; işlem engellenmez, sonradan doldurulabilir.
+    private async Task<decimal?> GetUsdTryRateAsync(DateTime date)
+    {
+        var day = DateOnly.FromDateTime(date).ToString("yyyy-MM-dd");
+        try
+        {
+            var rate = await marketClient.GetPriceOnAsync(string.Empty, "USD", "Currency", day);
+            if (rate.Available) return rate.PriceInTry;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "İşlem kuru alınamadı {Date}", day);
+            return null;
+        }
+        logger.LogWarning("İşlem kuru alınamadı {Date}", day);
+        return null;
+    }
+
     private static AssetHoldingDto MapToHolding(Asset a, Dictionary<string, MarketPriceResponse> priceMap)
     {
-        var price = priceMap.GetValueOrDefault(a.Symbol);
+        var price = priceMap.GetValueOrDefault(PriceKey(a.Market, a.Symbol));
         var priceInTry = price?.PriceInTry ?? 0m;
 
         // Güncel birim fiyatı varlığın alış para biriminde bul (P&L kıyaslaması için)
@@ -190,6 +223,7 @@ public class AssetService(AppDbContext db, IMarketServiceClient marketClient) : 
         {
             Id = a.Id,
             Symbol = a.Symbol,
+            Market = a.Market,
             AssetType = a.AssetType,
             Quantity = a.Quantity,
             Currency = a.Currency,

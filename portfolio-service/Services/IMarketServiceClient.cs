@@ -5,8 +5,8 @@ public interface IMarketServiceClient
     Task<List<MarketPriceResponse>> GetPricesAsync(IEnumerable<string> symbols);
     Task<List<SymbolSearchResponse>> SearchAsync(string query);
     Task<MarketOverviewResponse> GetOverviewAsync();
-    Task<PriceHistoryResponse> GetHistoryAsync(string symbol, string assetType, string range);
-    Task<PriceOnDateResponse> GetPriceOnAsync(string symbol, string assetType, string date);
+    Task<PriceHistoryResponse> GetHistoryAsync(string market, string symbol, string assetType, string range);
+    Task<PriceOnDateResponse> GetPriceOnAsync(string market, string symbol, string assetType, string date);
 }
 
 public class MarketQuoteResponse
@@ -54,6 +54,7 @@ public class MarketOverviewResponse
 public class SymbolSearchResponse
 {
     public string Symbol { get; set; } = string.Empty;
+    public string Market { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Exchange { get; set; } = string.Empty;
     public string Currency { get; set; } = string.Empty;
@@ -62,6 +63,7 @@ public class SymbolSearchResponse
 public class MarketPriceResponse
 {
     public string Symbol { get; set; } = string.Empty;
+    public string Market { get; set; } = string.Empty;
     public string AssetType { get; set; } = string.Empty;
     public decimal? PriceInUsd { get; set; }
     public decimal PriceInTry { get; set; }

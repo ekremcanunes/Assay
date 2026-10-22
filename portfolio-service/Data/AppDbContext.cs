@@ -16,7 +16,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(a => a.AvgCostBasis).HasPrecision(18, 8);
             entity.Property(a => a.AssetType).HasConversion<string>();
             entity.HasIndex(a => a.UserId);
-            entity.HasIndex(a => new { a.UserId, a.Symbol }).IsUnique();
+            entity.Property(a => a.Market).HasDefaultValue(string.Empty);
+            entity.HasIndex(a => new { a.UserId, a.Symbol, a.Market }).IsUnique();
             entity.HasMany(a => a.Transactions)
                 .WithOne(t => t.Asset)
                 .HasForeignKey(t => t.AssetId)
@@ -30,6 +31,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(t => t.UnitPrice).HasPrecision(18, 8);
             entity.Property(t => t.RealizedProfitLoss).HasPrecision(18, 2);
             entity.Property(t => t.Type).HasConversion<string>();
+            entity.Property(t => t.Market).HasDefaultValue(string.Empty);
+            entity.Property(t => t.UsdTryRate).HasPrecision(18, 8);
+            entity.Property(t => t.PriceSource).HasConversion<string>();
             entity.HasIndex(t => t.UserId);
             entity.HasIndex(t => t.Date);
             entity.HasIndex(t => t.Type);

@@ -44,6 +44,12 @@ namespace portfolio_service.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Market")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("");
+
                     b.Property<decimal>("Quantity")
                         .HasPrecision(18, 8)
                         .HasColumnType("numeric(18,8)");
@@ -60,7 +66,7 @@ namespace portfolio_service.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("UserId", "Symbol")
+                    b.HasIndex("UserId", "Symbol", "Market")
                         .IsUnique();
 
                     b.ToTable("Assets");
@@ -96,6 +102,15 @@ namespace portfolio_service.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<string>("Market")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("");
+
+                    b.Property<string>("PriceSource")
+                        .HasColumnType("text");
+
                     b.Property<decimal?>("Quantity")
                         .HasPrecision(18, 8)
                         .HasColumnType("numeric(18,8)");
@@ -121,6 +136,10 @@ namespace portfolio_service.Migrations
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("UsdTryRate")
+                        .HasPrecision(18, 8)
+                        .HasColumnType("numeric(18,8)");
 
                     b.Property<string>("UserId")
                         .IsRequired()

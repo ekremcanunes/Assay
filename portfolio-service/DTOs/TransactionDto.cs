@@ -13,6 +13,7 @@ public class TransactionDto
     public string? Description { get; set; }
     public DateTime Date { get; set; }
     public string? Symbol { get; set; }
+    public string Market { get; set; } = string.Empty;
     public decimal? Quantity { get; set; }
     public decimal? UnitPrice { get; set; }
     public decimal? RealizedProfitLoss { get; set; }

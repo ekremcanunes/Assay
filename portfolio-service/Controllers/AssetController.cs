@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using portfolio_service.DTOs;
+using portfolio_service.Models;
 using portfolio_service.Services;
 
 namespace portfolio_service.Controllers;
@@ -9,6 +10,8 @@ namespace portfolio_service.Controllers;
 public class AssetController(IAssetService assetService) : ControllerBase
 {
     private static readonly string[] AllowedCurrencies = ["TRY", "USD"];
+    // market-service YahooSymbol kurallarıyla aynı: hisse BIST/US ister, altın ve döviz market almaz
+    private static readonly string[] AllowedStockMarkets = ["BIST", "US"];
 
     private string UserId => HttpContext.Items["UserId"]?.ToString()!;
 
@@ -29,6 +32,12 @@ public class AssetController(IAssetService assetService) : ControllerBase
             return BadRequest(ValidationError("Unit price must be greater than zero"));
         if (!AllowedCurrencies.Contains(dto.Currency.Trim().ToUpperInvariant()))
             return BadRequest(ValidationError("Currency must be TRY or USD"));
+
+        var market = (dto.Market ?? string.Empty).Trim().ToUpperInvariant();
+        if (dto.AssetType == AssetType.Stock ? !AllowedStockMarkets.Contains(market) : market.Length > 0)
+            return BadRequest(ValidationError("Market must be BIST or US for stocks and empty otherwise"));
+        if (dto.PriceSource is null)
+            return BadRequest(ValidationError("PriceSource is required"));
 
         try
         {

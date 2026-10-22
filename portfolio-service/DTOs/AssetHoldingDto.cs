@@ -6,6 +6,7 @@ public class AssetHoldingDto
 {
     public Guid Id { get; set; }
     public string Symbol { get; set; } = string.Empty;
+    public string Market { get; set; } = string.Empty;
     public AssetType AssetType { get; set; }
     public decimal Quantity { get; set; }
     // Alış para birimi — AvgCostBasis ve UnrealizedProfitLoss bu birimdedir
