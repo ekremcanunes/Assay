@@ -35,9 +35,14 @@ public class MarketController : ControllerBase
     }
 
     [HttpGet("price/{symbol}")]
-    public async Task<ActionResult<MarketPrice>> GetPrice(string symbol)
+    public async Task<ActionResult<MarketPrice>> GetPrice(string symbol, [FromQuery] string? market = null)
     {
-        var price = await _marketService.GetPriceAsync(symbol);
+        if (string.IsNullOrWhiteSpace(symbol)) return BadRequest();
+        market = YahooSymbol.NormalizeMarket(market);
+        if (!YahooSymbol.IsValidMarketFor(MarketService.ResolveAssetType(YahooSymbol.Normalize(symbol)), market))
+            return BadRequest(new { error = "Unsupported market" });
+
+        var price = await _marketService.GetPriceAsync(market, symbol);
         if (price == null) return NotFound();
         return Ok(price);
     }
@@ -60,19 +65,22 @@ public class MarketController : ControllerBase
     // Grafik serisi. range beyaz listeye karşı doğrulanır (bkz. PriceHistoryService.Ranges).
     [HttpGet("history/{symbol}")]
     public async Task<ActionResult<PriceHistory>> History(string symbol,
-        [FromQuery] string assetType = "Stock", [FromQuery] string range = "1mo")
+        [FromQuery] string assetType = "Stock", [FromQuery] string range = "1mo", [FromQuery] string? market = null)
     {
         if (string.IsNullOrWhiteSpace(symbol)) return BadRequest();
         if (!PriceHistoryService.IsValidRange(range)) return BadRequest(new { error = "Unsupported range" });
 
-        return Ok(await _historyService.GetHistoryAsync(symbol.Trim(), assetType, range));
+        market = YahooSymbol.NormalizeMarket(market);
+        if (!YahooSymbol.IsValidMarketFor(assetType, market)) return BadRequest(new { error = "Unsupported market" });
+
+        return Ok(await _historyService.GetHistoryAsync(market, symbol, assetType, range));
     }
 
     // Tek günün fiyatı. date ham geçmez: katı yyyy-MM-dd parse edilir.
     // Veri yoksa 404 değil, Available=false döner — "veri yok" bir hata değil.
     [HttpGet("price-on/{symbol}")]
     public async Task<ActionResult<PriceOnDate>> PriceOn(string symbol,
-        [FromQuery] string assetType = "Stock", [FromQuery] string? date = null)
+        [FromQuery] string assetType = "Stock", [FromQuery] string? date = null, [FromQuery] string? market = null)
     {
         if (string.IsNullOrWhiteSpace(symbol)) return BadRequest();
 
@@ -85,6 +93,9 @@ public class MarketController : ControllerBase
         if (!PriceOnDateService.IsValidAssetType(assetType))
             return BadRequest(new { error = "Unsupported assetType" });
 
-        return Ok(await _priceOnDateService.GetPriceOnAsync(symbol.Trim(), assetType, parsed));
+        market = YahooSymbol.NormalizeMarket(market);
+        if (!YahooSymbol.IsValidMarketFor(assetType, market)) return BadRequest(new { error = "Unsupported market" });
+
+        return Ok(await _priceOnDateService.GetPriceOnAsync(market, symbol, assetType, parsed));
     }
 }

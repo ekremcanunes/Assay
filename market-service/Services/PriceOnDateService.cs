@@ -1,12 +1,10 @@
 using market_service.Models;
-using Microsoft.Extensions.Caching.Distributed;
-using System.Text.Json;
 
 namespace market_service.Services;
 
 public interface IPriceOnDateService
 {
-    Task<PriceOnDate> GetPriceOnAsync(string symbol, string assetType, DateOnly date);
+    Task<PriceOnDate> GetPriceOnAsync(string market, string symbol, string assetType, DateOnly date);
 }
 
 // "X sembolü Y tarihinde kaçtı?" — MarketService "şu an kaç?", PriceHistoryService
@@ -23,16 +21,14 @@ public class PriceOnDateService : IPriceOnDateService
 
     private readonly IYahooFinanceClient _yahoo;
     private readonly IFrankfurterClient _frankfurter;
-    private readonly IBistCatalog _bistCatalog;
     private readonly IMarketService _marketService;
-    private readonly IDistributedCache _cache;
+    private readonly CacheStore _cache;
 
     public PriceOnDateService(IYahooFinanceClient yahoo, IFrankfurterClient frankfurter,
-        IBistCatalog bistCatalog, IMarketService marketService, IDistributedCache cache)
+        IMarketService marketService, CacheStore cache)
     {
         _yahoo = yahoo;
         _frankfurter = frankfurter;
-        _bistCatalog = bistCatalog;
         _marketService = marketService;
         _cache = cache;
     }
@@ -42,50 +38,51 @@ public class PriceOnDateService : IPriceOnDateService
 
     public static bool IsValidAssetType(string assetType) => AssetTypes.Contains(assetType);
 
-    public async Task<PriceOnDate> GetPriceOnAsync(string symbol, string assetType, DateOnly date)
+    public async Task<PriceOnDate> GetPriceOnAsync(string market, string symbol, string assetType, DateOnly date)
     {
+        market = YahooSymbol.NormalizeMarket(market);
+        symbol = YahooSymbol.Normalize(symbol);
+
         var today = MarketClock.Today;
-        var isToday = date == today;
 
-        var cacheKey = $"priceon:{assetType}:{symbol}:{date:yyyy-MM-dd}".ToLowerInvariant();
-        var cached = await _cache.GetStringAsync(cacheKey);
-        if (cached != null)
-            return JsonSerializer.Deserialize<PriceOnDate>(cached) ?? new PriceOnDate();
-
-        var result = new PriceOnDate
+        // Kapanış henüz oluşmadı; anlık fiyat servisine delege edilir. Ayrı kayıt tutulmaz:
+        // "bugün" fiyatı portföydekiyle aynı anahtardan (stock:...) okunur, iki ekran aynı değeri gösterir.
+        if (date == today)
         {
-            Symbol = symbol,
-            AssetType = assetType,
-            RequestedDate = date,
-            Available = false,
-        };
-
-        if (isToday)
-        {
-            // Kapanış henüz oluşmadı; mevcut anlık fiyat servisine delege ediyoruz.
-            await FillLiveAsync(result, symbol, today);
+            var live = NewResult(symbol, assetType, date);
+            await FillLiveAsync(live, market, symbol, today);
+            return live;
         }
-        else if (assetType.Equals("Gold", StringComparison.OrdinalIgnoreCase))
-            await FillGoldAsync(result, date);
-        else if (assetType.Equals("Currency", StringComparison.OrdinalIgnoreCase))
-            await FillCurrencyAsync(result, symbol, date);
-        else
-            await FillStockAsync(result, symbol, date);
 
-        // Kapanmış bir günün kapanışı bir daha değişmez → uzun TTL.
-        // Başarısızlık kalıcı bir gerçek değil, geçici bir durum — uzun TTL verilmez.
-        var ttl = !result.Available ? TimeSpan.FromMinutes(5)
-            : isToday ? TimeSpan.FromMinutes(5)
-            : TimeSpan.FromDays(30);
-        await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(result),
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = ttl });
+        var result = await _cache.GetOrSetAsync(CacheKeys.PriceOn(assetType, market, symbol, date), async () =>
+        {
+            var r = NewResult(symbol, assetType, date);
+            if (assetType.Equals("Gold", StringComparison.OrdinalIgnoreCase))
+                await FillGoldAsync(r, date);
+            else if (assetType.Equals("Currency", StringComparison.OrdinalIgnoreCase))
+                await FillCurrencyAsync(r, symbol, date);
+            else
+                await FillStockAsync(r, market, symbol, date);
+            return r;
+        },
+        // Kapanmış bir günün kapanışı bir daha değişmez → kalıcı.
+        // Başarısızlık kalıcı bir gerçek değil, geçici bir durum — kısa süre.
+        r => r.Available ? CacheTtl.Permanent : CacheTtl.Failure);
 
-        return result;
+        return result!;
     }
 
-    private async Task FillLiveAsync(PriceOnDate r, string symbol, DateOnly today)
+    private static PriceOnDate NewResult(string symbol, string assetType, DateOnly date) => new()
     {
-        var price = await _marketService.GetPriceAsync(symbol);
+        Symbol = symbol,
+        AssetType = assetType,
+        RequestedDate = date,
+        Available = false,
+    };
+
+    private async Task FillLiveAsync(PriceOnDate r, string market, string symbol, DateOnly today)
+    {
+        var price = await _marketService.GetPriceAsync(market, symbol);
         if (price == null) return;
 
         r.PriceKind = "live";
@@ -99,13 +96,10 @@ public class PriceOnDateService : IPriceOnDateService
         r.Available = true;
     }
 
-    private async Task FillStockAsync(PriceOnDate r, string symbol, DateOnly date)
+    private async Task FillStockAsync(PriceOnDate r, string market, string symbol, DateOnly date)
     {
-        var isBist = await _bistCatalog.IsBistAsync(symbol);
-        var yahooSymbol = isBist ? $"{symbol}.IS" : symbol;
-
         var (closes, currency) = await _yahoo.GetDailyClosesAsync(
-            yahooSymbol, date.AddDays(-LookbackDays), date);
+            YahooSymbol.ToYahoo(market, symbol), date.AddDays(-LookbackDays), date);
 
         var hit = PickAtOrBefore(closes, date);
         if (hit == null) return;

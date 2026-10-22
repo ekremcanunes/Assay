@@ -1,9 +1,17 @@
+using System.Text.Json.Serialization;
+
 namespace market_service.Models;
 
 public class SymbolSearchResult
 {
     public string Symbol { get; set; } = string.Empty;
+    // Kimliğin parçası: BIST veya US. Exchange (NASDAQ/NYSE/BIST) yalnızca gösterim içindir.
+    public string Market { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Exchange { get; set; } = string.Empty;
     public string Currency { get; set; } = string.Empty;
+
+    // Twelve Data symbol_search tipi ("Common Stock", "ETF"...). Yalnızca filtre için; cevaba girmez.
+    [JsonIgnore]
+    public string InstrumentType { get; set; } = string.Empty;
 }

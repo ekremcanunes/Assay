@@ -28,6 +28,7 @@ public class TwelveDataClient(HttpClient httpClient, IConfiguration configuratio
                 results.Add(new SymbolSearchResult
                 {
                     Symbol = item.GetProperty("symbol").GetString() ?? string.Empty,
+                    Market = "BIST",
                     Name = item.GetProperty("name").GetString() ?? string.Empty,
                     Exchange = "BIST",
                     Currency = item.TryGetProperty("currency", out var c) ? c.GetString() ?? "TRY" : "TRY"
@@ -64,7 +65,8 @@ public class TwelveDataClient(HttpClient httpClient, IConfiguration configuratio
                     Symbol = item.TryGetProperty("symbol", out var s) ? s.GetString() ?? string.Empty : string.Empty,
                     Name = item.TryGetProperty("instrument_name", out var n) ? n.GetString() ?? string.Empty : string.Empty,
                     Exchange = item.TryGetProperty("exchange", out var e) ? e.GetString() ?? string.Empty : string.Empty,
-                    Currency = item.TryGetProperty("currency", out var c) ? c.GetString() ?? string.Empty : string.Empty
+                    Currency = item.TryGetProperty("currency", out var c) ? c.GetString() ?? string.Empty : string.Empty,
+                    InstrumentType = item.TryGetProperty("instrument_type", out var t) ? t.GetString() ?? string.Empty : string.Empty
                 });
             }
             return results;

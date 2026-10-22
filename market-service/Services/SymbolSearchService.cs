@@ -19,6 +19,10 @@ public class SymbolSearchService : ISymbolSearchService
         ["THYAO"] = "Türk Hava Yolları",
     };
 
+    // Global aramadan yalnızca ABD borsaları kabul edilir; BIST'in tek kaynağı BIST listesidir.
+    private static readonly HashSet<string> UsExchanges = new(StringComparer.OrdinalIgnoreCase) { "NASDAQ", "NYSE" };
+    private static readonly HashSet<string> SupportedTypes = new(StringComparer.OrdinalIgnoreCase) { "Common Stock", "ETF" };
+
     private readonly ITwelveDataClient _twelveDataClient;
     private readonly IBistCatalog _bistCatalog;
 
@@ -33,20 +37,32 @@ public class SymbolSearchService : ISymbolSearchService
         var q = Normalize(query);
         var bist = await _bistCatalog.GetAllAsync();
 
-        // BIST: sembol, isim veya Türkçe takma ad üzerinde diakritik-duyarsız eşleşme
-        var merged = bist
-            .Where(s => Normalize(s.Symbol).Contains(q)
-                        || Normalize(s.Name).Contains(q)
-                        || (TurkishAliases.TryGetValue(s.Symbol, out var alias) && Normalize(alias).Contains(q)))
-            .Take(MaxResults)
-            .ToList();
+        // Tekrar eleme kimliğe göre: LINK · BIST ve LINK · US iki ayrı sonuçtur.
+        var merged = new List<SymbolSearchResult>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        // Global arama (US/diğer borsalar) — BIST'te olmayan sonuçları tekrarsız ekle
-        var seen = new HashSet<string>(merged.Select(m => m.Symbol), StringComparer.OrdinalIgnoreCase);
+        void TryAdd(SymbolSearchResult r)
+        {
+            if (merged.Count < MaxResults && seen.Add($"{r.Market}:{r.Symbol}")) merged.Add(r);
+        }
+
+        // BIST: sembol, isim veya Türkçe takma ad üzerinde diakritik-duyarsız eşleşme
+        foreach (var s in bist.Where(s => YahooSymbol.IsSupportedSymbol("BIST", s.Symbol)
+                    && (Normalize(s.Symbol).Contains(q)
+                        || Normalize(s.Name).Contains(q)
+                        || (TurkishAliases.TryGetValue(s.Symbol, out var alias) && Normalize(alias).Contains(q)))))
+            TryAdd(s);
+
+        // Global arama: yalnızca NASDAQ/NYSE, normal hisse veya ETF, desteklenen sembol biçimi → US
         foreach (var g in await _twelveDataClient.SearchSymbolsAsync(query))
         {
-            if (merged.Count >= MaxResults) break;
-            if (seen.Add(g.Symbol)) merged.Add(g);
+            if (!UsExchanges.Contains(g.Exchange)) continue;
+            if (!SupportedTypes.Contains(g.InstrumentType)) continue;
+            if (!YahooSymbol.IsSupportedSymbol("US", g.Symbol)) continue;
+
+            g.Symbol = YahooSymbol.Normalize(g.Symbol);
+            g.Market = "US";
+            TryAdd(g);
         }
 
         return merged;

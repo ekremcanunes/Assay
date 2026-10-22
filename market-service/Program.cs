@@ -42,6 +42,8 @@ builder.Services.AddHttpClient<ITwelveDataClient, TwelveDataClient>();
 builder.Services.AddHttpClient<IYahooFinanceClient, YahooFinanceClient>();
 builder.Services.AddHttpClient("Kratos");
 
+builder.Services.AddScoped<CacheLifetime>();
+builder.Services.AddScoped<CacheStore>();
 builder.Services.AddScoped<IBistCatalog, BistCatalog>();
 builder.Services.AddScoped<IMarketService, MarketService>();
 builder.Services.AddScoped<ISymbolSearchService, SymbolSearchService>();
@@ -68,6 +70,7 @@ if (app.Environment.IsDevelopment())
 app.UseSerilogRequestLogging();
 app.UseCors();
 app.UseMiddleware<KratosMiddleware>();
+app.UseMiddleware<CacheLifetimeMiddleware>();
 app.MapControllers();
 
 app.Run();

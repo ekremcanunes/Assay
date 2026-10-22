@@ -1,15 +1,13 @@
-using System.Text.Json;
 using market_service.Models;
-using Microsoft.Extensions.Caching.Distributed;
 
 namespace market_service.Services;
 
 public interface IPriceHistoryService
 {
-    Task<PriceHistory> GetHistoryAsync(string symbol, string assetType, string range);
+    Task<PriceHistory> GetHistoryAsync(string market, string symbol, string assetType, string range);
 }
 
-// Grafik için OHLC serisi. Kaynak Yahoo; sembol çözümlemesi MarketService ile aynı mantık.
+// Grafik için OHLC serisi. Kaynak Yahoo; Yahoo sembolü YahooSymbol.ToYahoo ile üretilir.
 public class PriceHistoryService : IPriceHistoryService
 {
     private const decimal GramsPerOunce = 31.1034768m;
@@ -28,52 +26,47 @@ public class PriceHistoryService : IPriceHistoryService
 
     private readonly IYahooFinanceClient _yahoo;
     private readonly IFrankfurterClient _frankfurter;
-    private readonly IBistCatalog _bistCatalog;
-    private readonly IDistributedCache _cache;
+    private readonly CacheStore _cache;
 
     public PriceHistoryService(IYahooFinanceClient yahoo, IFrankfurterClient frankfurter,
-        IBistCatalog bistCatalog, IDistributedCache cache)
+        CacheStore cache)
     {
         _yahoo = yahoo;
         _frankfurter = frankfurter;
-        _bistCatalog = bistCatalog;
         _cache = cache;
     }
 
     public static bool IsValidRange(string range) => Ranges.ContainsKey(range);
 
-    public async Task<PriceHistory> GetHistoryAsync(string symbol, string assetType, string range)
+    public async Task<PriceHistory> GetHistoryAsync(string market, string symbol, string assetType, string range)
     {
+        market = YahooSymbol.NormalizeMarket(market);
+        symbol = YahooSymbol.Normalize(symbol);
+
         if (!Ranges.TryGetValue(range, out var spec))
             return new PriceHistory { Symbol = symbol, Range = range };
 
-        var cacheKey = $"history:{assetType}:{symbol}:{range}".ToLowerInvariant();
-        var cached = await _cache.GetStringAsync(cacheKey);
-        if (cached != null)
-            return JsonSerializer.Deserialize<PriceHistory>(cached) ?? new PriceHistory();
+        // Gün içi seriler (5m, 30m) canlı sınıfta, günlük/haftalık seriler günlük sınıfta.
+        var ttl = spec.Interval.EndsWith('m') ? CacheTtl.Live : CacheTtl.Daily;
 
-        var history = assetType.Equals("Gold", StringComparison.OrdinalIgnoreCase)
-            ? await GoldHistoryAsync(spec)
-            : assetType.Equals("Currency", StringComparison.OrdinalIgnoreCase)
-                ? await CurrencyHistoryAsync(symbol, spec)
-                : await StockHistoryAsync(symbol, spec);
+        var history = await _cache.GetOrSetAsync(CacheKeys.History(assetType, market, symbol, range), async () =>
+        {
+            var h = assetType.Equals("Gold", StringComparison.OrdinalIgnoreCase)
+                ? await GoldHistoryAsync(spec)
+                : assetType.Equals("Currency", StringComparison.OrdinalIgnoreCase)
+                    ? await CurrencyHistoryAsync(symbol, spec)
+                    : await StockHistoryAsync(market, symbol, spec);
+            h.Symbol = symbol;
+            h.Range = range;
+            return h;
+        }, _ => ttl);
 
-        history.Symbol = symbol;
-        history.Range = range;
-
-        // Gün içi seriler hızlı bayatlar, günlük seriler bayatlamaz.
-        var ttl = spec.Interval.EndsWith('m') ? TimeSpan.FromMinutes(5) : TimeSpan.FromHours(1);
-        await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(history),
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = ttl });
-
-        return history;
+        return history!;
     }
 
-    private async Task<PriceHistory> StockHistoryAsync(string symbol, (string Range, string Interval) spec)
+    private async Task<PriceHistory> StockHistoryAsync(string market, string symbol, (string Range, string Interval) spec)
     {
-        var isBist = await _bistCatalog.IsBistAsync(symbol);
-        var yahooSymbol = isBist ? $"{symbol}.IS" : symbol;
-        var (candles, currency) = await _yahoo.GetCandlesAsync(yahooSymbol, spec.Range, spec.Interval);
+        var (candles, currency) = await _yahoo.GetCandlesAsync(YahooSymbol.ToYahoo(market, symbol), spec.Range, spec.Interval);
         return new PriceHistory { Candles = candles, Currency = currency };
     }
 
