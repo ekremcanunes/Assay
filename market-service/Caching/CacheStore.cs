@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace market_service.Services;
+namespace market_service.Caching;
 
 // "Cache'e bak, yoksa çek, yaz" akışının tek uygulaması. Kayıt bitiş anıyla birlikte saklanır,
 // çünkü IDistributedCache bir kaydın kalan süresini veremez.

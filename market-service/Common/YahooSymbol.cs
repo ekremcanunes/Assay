@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace market_service.Services;
+namespace market_service.Common;
 
 // Hisse kimliği (Market, Symbol) → Yahoo sembolü. Yahoo'ya giden ek/yazım farkları
 // yalnızca burada üretilir; başka yerde ".IS" eklenmez, borsa tahmin edilmez.

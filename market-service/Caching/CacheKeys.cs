@@ -1,4 +1,4 @@
-namespace market_service.Services;
+namespace market_service.Caching;
 
 // Redis anahtarlarının tek kaynağı. Kural: önek ve varlık tipi küçük harf; market ve sembol
 // standart yazımda (YahooSymbol.Normalize / NormalizeMarket). Altın ve dövizde market boştur, anahtara girmez.

@@ -1,11 +1,9 @@
+using market_service.Caching;
+using market_service.Clients;
+using market_service.Common;
 using market_service.Models;
 
 namespace market_service.Services;
-
-public interface IPriceHistoryService
-{
-    Task<PriceHistory> GetHistoryAsync(string market, string symbol, string assetType, string range);
-}
 
 // Grafik için OHLC serisi. Kaynak Yahoo; Yahoo sembolü YahooSymbol.ToYahoo ile üretilir.
 public class PriceHistoryService : IPriceHistoryService

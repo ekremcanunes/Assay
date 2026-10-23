@@ -1,4 +1,4 @@
-namespace market_service.Services;
+namespace market_service.Caching;
 
 // Veri sınıfına göre tek süre tablosu. Aynı sınıftaki veri hangi sayfada gösterilirse gösterilsin
 // aynı tazelikte olur. Frontend süre tutmaz; kalan ömrü X-Cache-Expires-In header'ından okur.

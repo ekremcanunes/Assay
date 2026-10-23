@@ -162,7 +162,7 @@ Hisse isteğinde `market` yoksa endpoint 400 döner. `BistCatalog`, `IsBistAsync
 
 ### 4.8 Redis
 
-Anahtarlar tek bir yerde üretilir: `market-service/Services/CacheKeys.cs`. Kural: önek ve varlık tipi küçük harf; market ve sembol standart yazımda (büyük harf). Altın ve dövizde market boştur, anahtara girmez.
+Anahtarlar tek bir yerde üretilir: `market-service/Caching/CacheKeys.cs`. Kural: önek ve varlık tipi küçük harf; market ve sembol standart yazımda (büyük harf). Altın ve dövizde market boştur, anahtara girmez.
 
 | Anahtar | Değişiklik |
 |---|---|
@@ -209,7 +209,7 @@ Sorun: aynı hisse farklı sayfalarda farklı Redis kayıtlarından ve farklı s
 
 Kurallar:
 - **Tek kaynak:** bir verinin tek bir Redis kaydı vardır. Piyasa özeti ve "bugün" fiyatı kendi kopyasını tutmaz; portföyle aynı `stock:`, `gold:`, `currency:` kayıtlarını okur.
-- **Tek süre tablosu:** süreler yalnızca `market-service/Services/CacheTtl.cs` içinde tanımlıdır (`Live`, `Daily`, `Permanent`, `Failure`, `Catalog`).
+- **Tek süre tablosu:** süreler yalnızca `market-service/Caching/CacheTtl.cs` içinde tanımlıdır (`Live`, `Daily`, `Permanent`, `Failure`, `Catalog`).
 - **Tek cache akışı:** "cache'e bak, yoksa çek, yaz" akışı yalnızca `CacheStore.GetOrSetAsync` içinde uygulanır.
 - **Tazelik sunucudan gelir:** her cevap `X-Cache-Expires-In` header'ını taşır (kalan saniye). portfolio-service bu header'ı tarayıcıya iletir. React Query `staleTime` değerini bu header'dan alır. Frontend'de süre rakamı yoktur.
 - **TL çevirisi:** hisse ve altın fiyatları tek bir cache'li kurla (`currency:USD`) TL'ye çevrilir.

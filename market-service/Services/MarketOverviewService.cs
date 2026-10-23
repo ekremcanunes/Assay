@@ -1,11 +1,8 @@
+using market_service.Caching;
+using market_service.Clients;
 using market_service.Models;
 
 namespace market_service.Services;
-
-public interface IMarketOverviewService
-{
-    Task<MarketOverview> GetOverviewAsync();
-}
 
 // Piyasa özeti kendi fiyat kopyasını tutmaz. Hisse, altın ve döviz fiyatları MarketService'ten,
 // portföyle aynı anahtarlardan okunur → iki ekran aynı fiyatı gösterir.

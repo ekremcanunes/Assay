@@ -1,6 +1,6 @@
 using market_service.Models;
 
-namespace market_service.Services;
+namespace market_service.Clients;
 
 public interface ITwelveDataClient
 {

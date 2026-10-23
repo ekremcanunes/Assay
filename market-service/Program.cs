@@ -1,3 +1,5 @@
+using market_service.Caching;
+using market_service.Clients;
 using market_service.Middleware;
 using market_service.Services;
 using Serilog;

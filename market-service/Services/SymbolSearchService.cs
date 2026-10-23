@@ -1,13 +1,10 @@
 using System.Globalization;
 using System.Text;
+using market_service.Clients;
+using market_service.Common;
 using market_service.Models;
 
 namespace market_service.Services;
-
-public interface ISymbolSearchService
-{
-    Task<List<SymbolSearchResult>> SearchAsync(string query);
-}
 
 public class SymbolSearchService : ISymbolSearchService
 {

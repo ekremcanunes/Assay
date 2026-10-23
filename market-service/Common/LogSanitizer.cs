@@ -1,4 +1,4 @@
-namespace market_service.Services;
+namespace market_service.Common;
 
 // Log satırına yazılan her kullanıcı girdisi (sembol, arama sorgusu vb.) buradan
 // geçmeli. Temizlenmeden loglanan girdi CR/LF içerirse saldırgan sahte log

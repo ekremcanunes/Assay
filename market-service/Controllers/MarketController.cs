@@ -1,3 +1,4 @@
+using market_service.Common;
 using market_service.Models;
 using market_service.Services;
 using Microsoft.AspNetCore.Mvc;

@@ -1,3 +1,6 @@
+using market_service.Caching;
+using market_service.Clients;
+using market_service.Common;
 using market_service.Models;
 
 namespace market_service.Services;

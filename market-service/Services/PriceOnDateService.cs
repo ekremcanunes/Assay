@@ -1,11 +1,9 @@
+using market_service.Caching;
+using market_service.Clients;
+using market_service.Common;
 using market_service.Models;
 
 namespace market_service.Services;
-
-public interface IPriceOnDateService
-{
-    Task<PriceOnDate> GetPriceOnAsync(string market, string symbol, string assetType, DateOnly date);
-}
 
 // "X sembolü Y tarihinde kaçtı?" — MarketService "şu an kaç?", PriceHistoryService
 // "serinin şekli ne?" sorularını cevaplar. Bu üçüncü soru.

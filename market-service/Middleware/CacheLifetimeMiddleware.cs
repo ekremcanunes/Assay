@@ -1,4 +1,4 @@
-using market_service.Services;
+using market_service.Caching;
 
 namespace market_service.Middleware;
 

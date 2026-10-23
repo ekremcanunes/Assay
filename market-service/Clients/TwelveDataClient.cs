@@ -1,7 +1,8 @@
 using System.Text.Json;
+using market_service.Common;
 using market_service.Models;
 
-namespace market_service.Services;
+namespace market_service.Clients;
 
 public class TwelveDataClient(HttpClient httpClient, IConfiguration configuration,
     ILogger<TwelveDataClient> logger) : ITwelveDataClient

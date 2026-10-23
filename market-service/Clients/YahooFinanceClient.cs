@@ -1,40 +1,8 @@
 using System.Text.Json;
+using market_service.Common;
 using market_service.Models;
 
-namespace market_service.Services;
-
-// Yahoo Finance chart meta'sından çekilen ham quote (native para biriminde)
-public record YahooQuote(
-    decimal Price,
-    decimal? PreviousClose,
-    decimal? DayHigh,
-    decimal? DayLow,
-    decimal? Week52High,
-    decimal? Week52Low,
-    long? Volume,
-    string Currency,
-    string Exchange);
-
-// Tarihli günlük kapanış. Bilerek Candle DEĞİL: Candle bugün yalnızca grafik
-// zincirinde kullanılıyor (GetCandlesAsync → PriceHistoryService → PriceChart).
-public record DailyClose(DateOnly Date, decimal Close);
-
-public interface IYahooFinanceClient
-{
-    Task<YahooQuote?> GetQuoteAsync(string yahooSymbol);
-
-    // Kapanış serisi (sparkline). Quote ile aynı endpoint, yalnızca range farklı.
-    Task<List<decimal>> GetCloseSeriesAsync(string yahooSymbol, string range);
-
-    // OHLC + hacim serisi (grafik). Aynı endpoint; interval aralığa göre seçilir.
-    Task<(List<Candle> Candles, string Currency)> GetCandlesAsync(string yahooSymbol, string range, string interval);
-
-    // Belirli bir tarih penceresindeki günlük kapanışlar. GetCloseSeriesAsync'in
-    // tarihli/pencereli kuzeni; range= bugüne göreli olduğu için eski tarihler
-    // için period1/period2 kullanılır.
-    Task<(List<DailyClose> Closes, string Currency)> GetDailyClosesAsync(
-        string yahooSymbol, DateOnly from, DateOnly to);
-}
+namespace market_service.Clients;
 
 public class YahooFinanceClient(HttpClient httpClient, ILogger<YahooFinanceClient> logger) : IYahooFinanceClient
 {

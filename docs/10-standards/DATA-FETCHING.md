@@ -47,7 +47,7 @@ flowchart TD
 
 ### 2.1 Tazelik kuralı: süreyi sunucu belirler
 
-Fiyat içeren sorgularda frontend süre tutmaz. Süre yalnızca backend'de, [`market-service/Services/CacheTtl.cs`](../../market-service/Services/CacheTtl.cs) içinde tanımlıdır.
+Fiyat içeren sorgularda frontend süre tutmaz. Süre yalnızca backend'de, [`market-service/Caching/CacheTtl.cs`](../../market-service/Caching/CacheTtl.cs) içinde tanımlıdır.
 
 | Sınıf | Süre | Veri |
 |---|---|---|

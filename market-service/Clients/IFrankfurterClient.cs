@@ -1,4 +1,4 @@
-namespace market_service.Services;
+namespace market_service.Clients;
 
 public interface IFrankfurterClient
 {

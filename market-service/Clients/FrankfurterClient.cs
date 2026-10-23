@@ -1,6 +1,7 @@
 using System.Text.Json;
+using market_service.Common;
 
-namespace market_service.Services;
+namespace market_service.Clients;
 
 public class FrankfurterClient : IFrankfurterClient
 {

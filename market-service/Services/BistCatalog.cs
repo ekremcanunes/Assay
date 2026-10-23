@@ -1,11 +1,8 @@
+using market_service.Caching;
+using market_service.Clients;
 using market_service.Models;
 
 namespace market_service.Services;
-
-public interface IBistCatalog
-{
-    Task<List<SymbolSearchResult>> GetAllAsync();
-}
 
 // BIST hisse evrenini Twelve Data /stocks'tan çekip Redis'te tutar (CacheTtl.Catalog).
 // Arama ve piyasa özeti (hisse isimleri) bunu kullanır. Fiyatlama kullanmaz; market artık istekle gelir.

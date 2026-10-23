@@ -1,4 +1,4 @@
-namespace market_service.Services;
+namespace market_service.Caching;
 
 // İstek boyunca okunan/yazılan cache kayıtlarının en erken bitişini tutar (scoped).
 // CacheLifetimeMiddleware bunu X-Cache-Expires-In header'ına yazar.

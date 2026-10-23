@@ -1,4 +1,4 @@
-namespace market_service.Services;
+namespace market_service.Common;
 
 // Piyasanın "bugün"ü — BIST İstanbul'da işlem görür, İstanbul UTC+3'te sabit
 // (Türkiye 2016'dan beri yaz saati uygulamıyor). Sunucu UTC çalışır; "bugün"ü
