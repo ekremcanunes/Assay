@@ -1,7 +1,8 @@
 using System.Net.Http.Json;
 using portfolio_service.Middleware;
+using portfolio_service.Services;
 
-namespace portfolio_service.Services;
+namespace portfolio_service.Clients;
 
 public class MarketServiceClient(HttpClient httpClient, IHttpContextAccessor httpContextAccessor,
     CacheLifetime cacheLifetime) : IMarketServiceClient

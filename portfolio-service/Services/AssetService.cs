@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using portfolio_service.Clients;
 using portfolio_service.Data;
 using portfolio_service.DTOs;
 using portfolio_service.Models;

@@ -141,7 +141,7 @@ Senkron bittikten sonra market-service listeyi belleğine yeniden yükler (§4.5
    | 404 | 400 "Bu enstrüman desteklenmiyor" |
    | Ulaşılamıyor / 5xx | 503 "Şu an doğrulanamıyor, biraz sonra tekrar deneyin" — **fail closed** |
 
-   İstek, mevcut servisler arası çağrılar gibi kullanıcının cookie'siyle gider ([MarketServiceClient.cs](../../../portfolio-service/Services/MarketServiceClient.cs)).
+   İstek, mevcut servisler arası çağrılar gibi kullanıcının cookie'siyle gider ([MarketServiceClient.cs](../../../portfolio-service/Clients/MarketServiceClient.cs)).
 3. **Çeviri:** Yahoo çeviri fonksiyonu (§4.2) tanımadığı bir değerle karşılaşırsa hata verir.
 
 Altın ve döviz alımı değişmez.

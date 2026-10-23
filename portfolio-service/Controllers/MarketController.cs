@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using portfolio_service.Services;
+using portfolio_service.Clients;
 
 namespace portfolio_service.Controllers;
 

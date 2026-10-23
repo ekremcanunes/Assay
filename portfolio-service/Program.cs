@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using portfolio_service.Clients;
 using portfolio_service.Data;
 using portfolio_service.Middleware;
 using portfolio_service.Services;
