@@ -76,6 +76,15 @@ public class InstrumentSyncer(ITwelveDataClient twelveData, MarketDbContext db, 
             outcomes.Add($"{source}: ok({items.Count})");
         }
 
+        // Hiçbir kaynak başarılı değilse (Twelve Data kapalı, limit, geçersiz anahtar) senkron tamamlanmış sayılmaz:
+        // son senkron zamanı yazılmaz, bir sonraki açılışta ya da planlı zamanda yeniden denenir.
+        if (succeeded.Count == 0)
+        {
+            logger.LogWarning("Instrument sync: no source succeeded; nothing written, will retry. Sources: {Outcomes}",
+                string.Join("; ", outcomes));
+            return;
+        }
+
         // 3) Başarılı kaynakları (Market, Symbol) anahtarıyla birleştir
         var merged = new Dictionary<(string Market, string Symbol), Candidate>();
         var conflicts = new HashSet<(string Market, string Symbol)>();

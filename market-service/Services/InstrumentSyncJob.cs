@@ -11,6 +11,8 @@ namespace market_service.Services;
 public class InstrumentSyncJob(IServiceScopeFactory scopeFactory, IConfiguration configuration,
     ILogger<InstrumentSyncJob> logger) : BackgroundService
 {
+    private static readonly TimeSpan MaxDelayStep = TimeSpan.FromDays(1);
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         CronExpression cron;
@@ -36,7 +38,9 @@ public class InstrumentSyncJob(IServiceScopeFactory scopeFactory, IConfiguration
 
             try
             {
-                await Task.Delay(next.Value - now, stoppingToken);
+                // Task.Delay ~49 günden uzun süreyi kabul etmez; uzun cron aralıklarında host çökmesin diye parça parça beklenir.
+                for (var remaining = next.Value - now; remaining > TimeSpan.Zero; remaining = next.Value - DateTime.UtcNow)
+                    await Task.Delay(remaining < MaxDelayStep ? remaining : MaxDelayStep, stoppingToken);
             }
             catch (OperationCanceledException)
             {

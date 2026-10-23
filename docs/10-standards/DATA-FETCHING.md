@@ -55,7 +55,6 @@ Fiyat içeren sorgularda frontend süre tutmaz. Süre yalnızca backend'de, [`ma
 | `Daily` | 1 saat | Günlük grafik, sparkline serileri |
 | `Permanent` | 30 gün | Geçmiş günün kapanışı |
 | `Failure` | 5 dk | Başarısız tarihli fiyat cevabı |
-| `Catalog` | 24 saat | BIST hisse listesi |
 
 Akış:
 

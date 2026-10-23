@@ -114,7 +114,7 @@ Senkron market-service içinde çalışır. Zamanlama ile iş ayrı sınıflard�
 
 **Açılış:**
 1. Önce aktif liste veritabanından belleğe yüklenir; arama hemen çalışır. Twelve Data'ya bağlı değildir.
-2. Senkron açılışta yalnızca bir planlı çalışma kaçırıldıysa çalışır: son başarılı senkrondan sonraki planlı zaman geçmişse ya da tablo boşsa. Son senkron zamanı ayrı, tek satırlık bir kayıtta tutulur. `updated_at` bu iş için kullanılamaz: değişiklik olmayan günlerde ilerlemez.
+2. Senkron açılışta yalnızca bir planlı çalışma kaçırıldıysa çalışır: son başarılı senkrondan sonraki planlı zaman geçmişse ya da tablo boşsa. Son senkron zamanı ayrı, tek satırlık bir kayıtta tutulur; hiçbir kaynak başarılı olmazsa senkron tamamlanmış sayılmaz ve zaman yazılmaz (karar 2026-10-23, kod incelemesi). `updated_at` bu iş için kullanılamaz: değişiklik olmayan günlerde ilerlemez.
 
 Senkron Twelve Data'ya 5 istek atar:
 - `/stocks?exchange=BIST`
@@ -230,7 +230,7 @@ Sorun: aynı hisse farklı sayfalarda farklı Redis kayıtlarından ve farklı s
 
 Kurallar:
 - **Tek kaynak:** bir verinin tek bir Redis kaydı vardır. Piyasa özeti ve "bugün" fiyatı kendi kopyasını tutmaz; portföyle aynı `stock:`, `gold:`, `currency:` kayıtlarını okur.
-- **Tek süre tablosu:** süreler yalnızca `market-service/Caching/CacheTtl.cs` içinde tanımlıdır (`Live`, `Daily`, `Permanent`, `Failure`, `Catalog`).
+- **Tek süre tablosu:** süreler yalnızca `market-service/Caching/CacheTtl.cs` içinde tanımlıdır (`Live`, `Daily`, `Permanent`, `Failure`).
 - **Tek cache akışı:** "cache'e bak, yoksa çek, yaz" akışı yalnızca `CacheStore.GetOrSetAsync` içinde uygulanır.
 - **Tazelik sunucudan gelir:** her cevap `X-Cache-Expires-In` header'ını taşır (kalan saniye). portfolio-service bu header'ı tarayıcıya iletir. React Query `staleTime` değerini bu header'dan alır. Frontend'de süre rakamı yoktur.
 - **TL çevirisi:** hisse ve altın fiyatları tek bir cache'li kurla (`currency:USD`) TL'ye çevrilir.
