@@ -1,6 +1,6 @@
 # Enstrüman Kimliği — Spec
 
-*Tarih: 2026-10-21 · Güncelleme: 2026-10-22 · Dal: `test`*
+*Tarih: 2026-10-21 · Güncelleme: 2026-10-23 · Dal: `test`*
 
 **Fazlar:**
 - **Faz 1 — Kimlik `(Market, Symbol)`:** (1) Yahoo çeviri fonksiyonu, (2) fiyat endpoint'lerine market, (3) arama sonuçlarına market, (4) `Asset.Market` + migration, (5) mevcut kayıtların elle doldurulması, (6) web'de market taşınması, (7) tek fiyat kaynağı ve tek tazelik süresi (§4.11).
@@ -98,27 +98,48 @@ market-service ilk kez bir veritabanına bağlanır: mevcut Neon projesinde, por
 | `name` | `Apple Inc.` | |
 | `currency` | `USD` | |
 | `type` | `stock` / `etf` | |
+| `category` | `Common Stock` / `REIT` / `American Depositary Receipt` / `Depositary Receipt` / `ETF` | Twelve Data türü, olduğu gibi (karar 2026-10-23). ETF listelerinde tür alanı olmadığından `ETF` yazılır. İleride ekranda "GYO", "ADR" gibi etiket için |
 | `is_active` | `true` | Listeden düşünce `false` olur; satır silinmez |
 | `updated_at` | | |
 
-Boyut: yaklaşık 17.000 satır, indekslerle birlikte birkaç MB. Neon için önemsiz.
+Boyut: yaklaşık 17.000 satır, indekslerle birlikte birkaç MB. Neon için önemsiz. Kendi anahtarımızla ham sayılar (2026-10-23): BIST 655, NASDAQ hisse 4.531, NYSE hisse 3.077, NASDAQ ETF 6.607, NYSE ETF 3.098 — toplam 17.968. Biçim filtresi ve NASDAQ/NYSE tekilleştirmesinden sonra daha az satır kalır.
+
+Tek tablo (karar 2026-10-23). Piyasaya ya da tipe göre ayrı tablolar toplam satırı azaltmaz; aramayı, tekilliği ve Faz 3 kilidini iki kaynağa böler. Konsolda piyasa bazlı bakmak gerekirse view tanımlanır.
 
 ### 4.4 Günlük senkron
 
-Bir `BackgroundService` servis açılışında ve her gün 06:00'da (Türkiye saati) çalışır. Twelve Data'ya 5 istek atar:
+Senkron market-service içinde çalışır. Zamanlama ile iş ayrı sınıflardır: `BackgroundService` yalnızca zamanı bekleyip senkron sınıfını çağırır; çekme, filtreleme, yazma ve belleği yenileme senkron sınıfındadır. Böylece aynı iş açılışta ve ileride ayrı bir komutla (`sync-once`) da çağrılabilir.
+
+**Zamanlama:** cron ifadesiyle, konfigürasyondan okunur (varsayılan `0 6 * * *`, Türkiye saati).
+
+**Açılış:**
+1. Önce aktif liste veritabanından belleğe yüklenir; arama hemen çalışır. Twelve Data'ya bağlı değildir.
+2. Senkron açılışta yalnızca bir planlı çalışma kaçırıldıysa çalışır: son başarılı senkrondan sonraki planlı zaman geçmişse ya da tablo boşsa. Son senkron zamanı ayrı, tek satırlık bir kayıtta tutulur. `updated_at` bu iş için kullanılamaz: değişiklik olmayan günlerde ilerlemez.
+
+Senkron Twelve Data'ya 5 istek atar:
 - `/stocks?exchange=BIST`
 - `/stocks?exchange=NASDAQ` ve `/stocks?exchange=NYSE`
 - `/etfs?exchange=NASDAQ` ve `/etfs?exchange=NYSE`
 
 Kurallar:
 1. Biçim filtresinden (§4.2) geçmeyen semboller atılır.
+   - **Tür filtresi (karar 2026-10-23):** `/stocks` cevabında yalnızca `type` değeri `Common Stock`, `REIT`, `American Depositary Receipt`, `Depositary Receipt` olanlar alınır; tabloya `type = stock`, Twelve Data türü `category` kolonuna yazılır. Varant, imtiyazlı, unit, ETN, LP, Trust atılır. Sebep: NASDAQ'ta bunların sembolleri (`ABCDW`, `ABCDP`, `ABCDU`) biçim filtresinden geçiyor. `/etfs` cevabında `type` alanı yoktur; tümü `type = etf`. Filtre bizim tarafta uygulanır; istek sayısı 5 kalır.
 2. Bir istek hata verir ya da boş dönerse **o kaynağın satırlarına dokunulmaz**.
-3. Gelen kayıt sayısı o kaynağın tablodaki aktif kayıt sayısının %80'inden azsa o kaynak atlanır ve uyarı loglanır. Bu, eksik gelen bir cevabın binlerce hisseyi pasife çekmesini engeller.
+3. Gelen kayıt sayısı (filtrelerden sonra) o kaynağın tablodaki aktif kayıt sayısının %80'inden azsa o kaynak atlanır ve uyarı loglanır. Bu, eksik gelen bir cevabın binlerce hisseyi pasife çekmesini engeller. Bir satırın kaynağı `exchange` + `type` ile belirlenir.
 4. Yalnızca değişen satırlar yazılır. Değişmeyen satıra dokunulmaz; böylece Neon'da her gün 17.000 satırlık gereksiz yazma oluşmaz.
-5. Listede olup artık gelmeyen kayıt `is_active = false` yapılır. Listeye geri dönerse tekrar `true` olur.
-6. Aynı sembol hem NASDAQ hem NYSE listesinden gelirse tek satır olarak tutulur (`US` + sembol).
+5. Listede olup artık gelmeyen kayıt `is_active = false` yapılır. Listeye geri dönerse tekrar `true` olur. Yalnızca o gün başarılı olan kaynakların satırları pasife çekilebilir.
+6. Aynı sembol hem NASDAQ hem NYSE listesinden gelirse tek satır olarak tutulur (`US` + sembol). Aynı liste içinde tekrar eden sembol de tek kayda indirilir (gözlem 2026-10-23: NASDAQ hisse 1, NASDAQ ETF 30 tekrar; hepsi aynı isimli).
+7. **Hisse–ETF çakışması (karar 2026-10-23):** Aynı US sembolü hem hisse hem ETF listesinden gelirse sembol hiç alınmaz ve `Warning` loglanır. Hangisinin doğru olduğu bilinmiyor; yanlış enstrümanı sunmaktansa sunmamak tercih edilir. Gözlem: `GRIN` (Grindrod Shipping hissesi / VictoryShares ETF).
+8. **Dünden bugüne kaybolanlar loglanır (karar 2026-10-23):** Bu bilgi prod'da görünmeli, bu yüzden `Warning` seviyesinde (prod seviyesi `Warning`, LOGGING.md §3).
+   - Pasife çekilen semboller: senkron başına kaynak bazında tek satır, sayı + sembol listesinin tamamı (%80 kuralı nedeniyle bir kaynakta en fazla %20).
+   - %80 kuralıyla atlanan kaynak: gelen/aktif sayılar + bugün gelmeyen sembollerin ilk 50'si ve toplam sayısı (binlerce olabilir).
+   - Çakışma yüzünden alınmayan semboller: kural 7'deki satır.
 
 Senkron bittikten sonra market-service listeyi belleğine yeniden yükler (§4.5).
+
+**Bilinen sınırlama — tek kopya varsayımı:** market-service tek kopya (tek container) çalışır varsayılır. Kopya sayısı 1'den fazla olursa (ör. Kubernetes replica) iki şey eklenmelidir:
+- Senkronu tek kopyanın çalıştırması: PostgreSQL advisory lock (Neon pooler ile `pg_try_advisory_xact_lock`) ya da senkronun Kubernetes CronJob'a taşınması (aynı image, `sync-once`).
+- Diğer kopyaların listenin değiştiğini öğrenmesi: ör. senkron sonrası Redis'e yazılan bir sürüm anahtarı, kopyaların bunu periyodik okuyup değişince veritabanından yeniden yüklemesi. PostgreSQL LISTEN/NOTIFY kullanılmaz: sürekli açık bağlantı Neon compute'unun uykuya geçmesini engeller.
 
 ### 4.5 Arama
 
@@ -234,10 +255,9 @@ Ayrıntı: `docs/10-standards/DATA-FETCHING.md` §2.1.
 
 ## 5. Doğrulanacaklar
 
-Twelve Data denemeleri herkese açık `demo` anahtarıyla yapıldı. Uygulamadan önce kontrol edilecekler:
-- Kendi anahtarımızla `/stocks` ve `/etfs` aynı listeleri dönüyor mu, kaç kredi harcıyor?
+- ~~Kendi anahtarımızla `/stocks` ve `/etfs` aynı listeleri dönüyor mu, kaç kredi harcıyor?~~ (2026-10-23) Listeler tam geliyor (§4.3). Plan: Basic — dakikada 8, günde 800 kredi. Dokümana göre `/stocks` ve `/etfs` istek başına 1 kredi; bir senkron en fazla 5 kredi. Gözlemde `/etfs` sayaca yansımadı, `/api_usage` ise yansıdı; fark açıklanamadı, planlama dokümana göre yapıldı.
 - Neon planımızın depolama ve compute limitleri (beklenen kullanım çok düşük: birkaç MB depolama, günde bir kısa senkron).
 
 ## 6. Uygulayana bırakılanlar
 
-Tablo, sınıf ve endpoint isimleri; senkron saatinin konfigürasyondan okunup okunmayacağı; log mesajlarının metni; bellek listesinin veri yapısı.
+Tablo, sınıf ve endpoint isimleri; log mesajlarının metni; bellek listesinin veri yapısı.
