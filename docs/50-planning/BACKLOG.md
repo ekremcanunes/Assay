@@ -266,3 +266,58 @@ Portföy kartında değer ve yüzde kullanıcının, hemen altındaki grafik end
 **Neden önemli.** Teşhis için log seviyesi açıldığında sır loga düşebilir (LOGGING.md §4 hassas veri yasağı).
 
 **Öneri.** Anahtarı `Authorization: apikey <anahtar>` header'ıyla gönder (Twelve Data destekliyor); URL'de sır kalmaz.
+
+---
+
+## Veri kaynağı ve "yatırım tavsiyesi değildir" satırı
+
+*Eklendi: 2026-10-23 · Bağlam: veri lisansları konuşması*
+
+**Sorun.** Landing footer'ında yalnız `FİYATLAR GECİKMELİ OLABİLİR · YATIRIM TAVSİYESİ DEĞİLDİR` var (`web/src/pages/Landing.jsx:573`); veri kaynakları yazmıyor. Giriş yapılan panelde (fiyatların asıl görüldüğü yer) hiçbir uyarı yok.
+
+**Neden önemli.** Kaynağı belirtmek dürüst bilgilendirme ve veri sağlayıcılarının atıf beklentisine uyum; "yatırım tavsiyesi değildir" ifadesi kullanıcıyı yanlış beklentiden korur.
+
+**Öneri (kullanıcıyla konuşuldu).** Metin: *"Veriler: Yahoo Finance, Twelve Data, Frankfurter. Fiyatlar gecikmeli olabilir. Yatırım tavsiyesi değildir."* (Frankfurter döviz kurlarının kaynağı.)
+1. Landing: mevcut footer satırı bu metinle değişir, stil aynı kalır (mono, `text-micro`, soluk, büyük harf).
+2. Panel (`web/src/components/Layout.jsx`): `<main>` içinde sayfa içeriğinin altına aynı stilde tek satır; mobil alt menünün altında kalmaz. Metin `LanguageContext` ile TR + EN.
+
+Uygulamadan önce DESIGN.md okunur.
+
+---
+
+## Herkese açık kayıt: KVKK yükümlülükleri
+
+*Eklendi: 2026-10-23 · Bağlam: projenin AWS'de herkese açık olması sorusu*
+
+**Sorun.** Kayıt herkese açık; e-posta ve portföy verisi işleniyor. Aydınlatma metni, gizlilik politikası ve hesap silme yok; veriler yurt dışında duruyor (Neon, AWS, e-posta için Resend).
+
+**Neden önemli.** Başkalarının kişisel verisini işleyen site KVKK kapsamına girer. Yalnızca bir metin eklemek yetmez; yükümlülükler verinin fiilen nasıl işlendiğine bakar. Hukuki görüş değildir; kesinleştirmek için hukukçu ya da hazır KVKK şablonu.
+
+**Yapılacaklar (öncelik sırasıyla).**
+
+| # | Yükümlülük | Durum / iş |
+|---|---|---|
+| 1 | **Aydınlatma metni + gizlilik politikası** (hangi veri, amaç, süre, kimlerle paylaşılıyor, haklar) | Yok. Sayfa eklenir, kayıt ekranından link verilir. |
+| 2 | **Yurt dışına aktarım** (KVKK md. 9, 2024 değişikliği: yeterlilik kararı ya da standart sözleşme gibi uygun güvenceler) | Neon, AWS, Resend yurt dışında. En kritik madde; metinle çözülmez. Hukukçu ile netleştirilmeli. |
+| 3 | **İlgili kişi hakları** (md. 11: verisini görme, silme) | Hesap silme yok. Kratos kimliği + portföy verisi + işlemler birlikte silinmeli. |
+| 4 | **Açık rıza** | Hizmetin çalışması için gereken veride büyük ihtimalle gerekmez (sözleşmenin ifası). Pazarlama e-postası gibi ek kullanım eklenirse gerekir. |
+| 5 | **Veri güvenliği + ihlal bildirimi** | Kratos, 2FA, şifreleme var. İhlalde Kurul'a bildirim süreci yazılı olmalı. |
+| 6 | **VERBİS kaydı** | Küçük ölçekte muhtemelen muaf; kontrol edilir. |
+
+**Kısa vadeli alternatif.** Yükümlülükler tamamlanana kadar kaydı kapatmak ya da davetle sınırlamak; site "kişisel proje" olarak kalır.
+
+---
+
+## Veri lisansları (herkese açık / ticari kullanımdan önce)
+
+*Eklendi: 2026-10-23 · Bağlam: enstrüman listesini veritabanında tutmanın yasallığı sorusu*
+
+**Durum.** Kaynakların lisans durumu:
+- **Twelve Data (enstrüman listesi), ücretsiz plan.** Şartlar (twelvedata.com/terms): saklama yalnız iç kullanım için (§2.2a). Son kullanıcıya göstermek "redistribution / external display" sayılır ve plan ya da ek izin ister (§2.2b, §2.2e). Ücretsiz katmanda ticari kullanım yasak (§2.3l). Abonelik bitince veriler 30 gün içinde silinir (§16.2a).
+- **Yahoo Finance (fiyatlar).** Kullanılan `query1.finance.yahoo.com/v8/finance/chart` resmi API değil; anahtar ve sözleşme yok. Yahoo her an değiştirip engelleyebilir; bulut IP'leri daha sık engellenir. İzinsiz ticari kullanım risklidir.
+- **Frankfurter (döviz).** Açık kaynak, ECB referans kurları; risk düşük.
+- **BIST verisi.** Üçüncü kişilere dağıtımı (özellikle anlık) Borsa İstanbul lisansına tabi.
+
+**Neden önemli.** Kişisel ve az trafikli projede pratik risk düşük; en olası sonuç Yahoo'nun engellemesi ya da Twelve Data'nın anahtarı kapatması (teknik kesinti). Herkese açık ya da ticari ürün olursa izinsiz veri kullanımı somut hukuki risk olur.
+
+**Öneri.** Herkese açık büyüme veya para kazanma kararından önce: (1) fiyatlar için lisanslı kaynak (ör. Twelve Data ücretli planı fiyat da veriyor), (2) Twelve Data redistribution hakkı, (3) BIST gecikmeli veri koşullarının kontrolü, (4) hukukçu görüşü.
