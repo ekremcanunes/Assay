@@ -24,18 +24,18 @@ public class MarketOverviewService : IMarketOverviewService
 
     private readonly IYahooFinanceClient _yahoo;
     private readonly IFrankfurterClient _frankfurter;
-    private readonly IBistCatalog _bistCatalog;
+    private readonly InstrumentCatalog _catalog;
     private readonly IMarketService _marketService;
     private readonly CacheStore _cache;
     private readonly ILogger<MarketOverviewService> _logger;
 
     public MarketOverviewService(IYahooFinanceClient yahoo, IFrankfurterClient frankfurter,
-        IBistCatalog bistCatalog, IMarketService marketService, CacheStore cache,
+        InstrumentCatalog catalog, IMarketService marketService, CacheStore cache,
         ILogger<MarketOverviewService> logger)
     {
         _yahoo = yahoo;
         _frankfurter = frankfurter;
-        _bistCatalog = bistCatalog;
+        _catalog = catalog;
         _marketService = marketService;
         _cache = cache;
         _logger = logger;
@@ -43,10 +43,6 @@ public class MarketOverviewService : IMarketOverviewService
 
     public async Task<MarketOverview> GetOverviewAsync()
     {
-        var nameMap = (await _bistCatalog.GetAllAsync())
-            .GroupBy(s => s.Symbol, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(g => g.Key, g => g.First().Name, StringComparer.OrdinalIgnoreCase);
-
         // Endeksler — sparkline'lı (yalnızca 2 sembol, ek maliyet önemsiz)
         var indexTasks = new[]
         {
@@ -55,7 +51,7 @@ public class MarketOverviewService : IMarketOverviewService
         };
 
         // BIST 30 hisseleri — portföyle aynı stock:BIST:{symbol} anahtarı
-        var stockTasks = Bist30.Select(t => StockQuoteAsync(t, nameMap.GetValueOrDefault(t, t)));
+        var stockTasks = Bist30.Select(t => StockQuoteAsync(t, _catalog.FindName("BIST", t) ?? t));
 
         var strip = await BuildStripAsync();
         var indices = (await Task.WhenAll(indexTasks)).Where(q => q != null).Select(q => q!).ToList();

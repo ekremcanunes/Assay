@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace market_service.Models;
 
 public class SymbolSearchResult
@@ -10,8 +8,4 @@ public class SymbolSearchResult
     public string Name { get; set; } = string.Empty;
     public string Exchange { get; set; } = string.Empty;
     public string Currency { get; set; } = string.Empty;
-
-    // Twelve Data symbol_search tipi ("Common Stock", "ETF"...). Yalnızca filtre için; cevaba girmez.
-    [JsonIgnore]
-    public string InstrumentType { get; set; } = string.Empty;
 }

@@ -1,12 +1,12 @@
 using System.Globalization;
 using System.Text;
-using market_service.Clients;
 using market_service.Common;
 using market_service.Models;
 
 namespace market_service.Services;
 
-public class SymbolSearchService : ISymbolSearchService
+// Arama bellekteki enstrüman listesinde yapılır (spec §4.5); Twelve Data'ya ve veritabanına gidilmez.
+public class SymbolSearchService(InstrumentCatalog catalog) : ISymbolSearchService
 {
     private const int MaxResults = 15;
 
@@ -16,53 +16,42 @@ public class SymbolSearchService : ISymbolSearchService
         ["THYAO"] = "Türk Hava Yolları",
     };
 
-    // Global aramadan yalnızca ABD borsaları kabul edilir; BIST'in tek kaynağı BIST listesidir.
-    private static readonly HashSet<string> UsExchanges = new(StringComparer.OrdinalIgnoreCase) { "NASDAQ", "NYSE" };
-    private static readonly HashSet<string> SupportedTypes = new(StringComparer.OrdinalIgnoreCase) { "Common Stock", "ETF" };
-
-    private readonly ITwelveDataClient _twelveDataClient;
-    private readonly IBistCatalog _bistCatalog;
-
-    public SymbolSearchService(ITwelveDataClient twelveDataClient, IBistCatalog bistCatalog)
+    public Task<List<SymbolSearchResult>> SearchAsync(string query)
     {
-        _twelveDataClient = twelveDataClient;
-        _bistCatalog = bistCatalog;
+        // Sembol standart yazımla karşılaştırılır (brk-b → BRK.B); isim ve takma ad diakritik-duyarsız.
+        var symbolQuery = YahooSymbol.Normalize(query);
+        var textQuery = Normalize(query);
+
+        // Sıra: 0 = sembol tam eşit, 1 = sembol sorguyla başlıyor, 2 = isim veya takma ad sorguyu içeriyor.
+        // Grup içinde hisse ETF'ten önce, kısa sembol önce: "apple" → Apple Inc. kaldıraçlı ETF'lerden önce gelir.
+        var results = catalog.All
+            .Select(i => (Instrument: i, Rank: Rank(i, symbolQuery, textQuery)))
+            .Where(x => x.Rank >= 0)
+            .OrderBy(x => x.Rank)
+            .ThenBy(x => x.Instrument.Type == "stock" ? 0 : 1)
+            .ThenBy(x => x.Instrument.Symbol.Length)
+            .ThenBy(x => x.Instrument.Symbol, StringComparer.Ordinal)
+            .Take(MaxResults)
+            .Select(x => new SymbolSearchResult
+            {
+                Symbol = x.Instrument.Symbol,
+                Market = x.Instrument.Market,
+                Name = x.Instrument.Name,
+                Exchange = x.Instrument.Exchange,
+                Currency = x.Instrument.Currency,
+            })
+            .ToList();
+
+        return Task.FromResult(results);
     }
 
-    public async Task<List<SymbolSearchResult>> SearchAsync(string query)
+    private static int Rank(Instrument i, string symbolQuery, string textQuery)
     {
-        var q = Normalize(query);
-        var bist = await _bistCatalog.GetAllAsync();
-
-        // Tekrar eleme kimliğe göre: LINK · BIST ve LINK · US iki ayrı sonuçtur.
-        var merged = new List<SymbolSearchResult>();
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        void TryAdd(SymbolSearchResult r)
-        {
-            if (merged.Count < MaxResults && seen.Add($"{r.Market}:{r.Symbol}")) merged.Add(r);
-        }
-
-        // BIST: sembol, isim veya Türkçe takma ad üzerinde diakritik-duyarsız eşleşme
-        foreach (var s in bist.Where(s => YahooSymbol.IsSupportedSymbol("BIST", s.Symbol)
-                    && (Normalize(s.Symbol).Contains(q)
-                        || Normalize(s.Name).Contains(q)
-                        || (TurkishAliases.TryGetValue(s.Symbol, out var alias) && Normalize(alias).Contains(q)))))
-            TryAdd(s);
-
-        // Global arama: yalnızca NASDAQ/NYSE, normal hisse veya ETF, desteklenen sembol biçimi → US
-        foreach (var g in await _twelveDataClient.SearchSymbolsAsync(query))
-        {
-            if (!UsExchanges.Contains(g.Exchange)) continue;
-            if (!SupportedTypes.Contains(g.InstrumentType)) continue;
-            if (!YahooSymbol.IsSupportedSymbol("US", g.Symbol)) continue;
-
-            g.Symbol = YahooSymbol.Normalize(g.Symbol);
-            g.Market = "US";
-            TryAdd(g);
-        }
-
-        return merged;
+        if (i.Symbol == symbolQuery) return 0;
+        if (i.Symbol.StartsWith(symbolQuery, StringComparison.Ordinal)) return 1;
+        if (Normalize(i.Name).Contains(textQuery)) return 2;
+        if (TurkishAliases.TryGetValue(i.Symbol, out var alias) && Normalize(alias).Contains(textQuery)) return 2;
+        return -1;
     }
 
     // Diakritik-duyarsız normalize: NFD ile ayrıştır, birleşik işaretleri at, küçük harfe çevir.
