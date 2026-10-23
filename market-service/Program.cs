@@ -52,6 +52,8 @@ builder.Services.AddHttpClient("Kratos");
 builder.Services.AddScoped<CacheLifetime>();
 builder.Services.AddScoped<CacheStore>();
 builder.Services.AddSingleton<InstrumentCatalog>();
+builder.Services.AddScoped<InstrumentSyncer>();
+builder.Services.AddHostedService<InstrumentSyncJob>();
 builder.Services.AddScoped<IBistCatalog, BistCatalog>();
 builder.Services.AddScoped<IMarketService, MarketService>();
 builder.Services.AddScoped<ISymbolSearchService, SymbolSearchService>();

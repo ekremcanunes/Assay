@@ -9,4 +9,8 @@ public static class MarketClock
     private static readonly TimeSpan IstanbulOffset = TimeSpan.FromHours(3);
 
     public static DateOnly Today => DateOnly.FromDateTime(DateTime.UtcNow.Add(IstanbulOffset));
+
+    // Zamanlanmış işler (cron) için aynı sabit ofset; container'daki tz veritabanına bağlı kalmaz.
+    public static readonly TimeZoneInfo Istanbul =
+        TimeZoneInfo.CreateCustomTimeZone("Istanbul+03", IstanbulOffset, "Istanbul", "Istanbul");
 }
