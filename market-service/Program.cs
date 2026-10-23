@@ -51,6 +51,7 @@ builder.Services.AddHttpClient("Kratos");
 
 builder.Services.AddScoped<CacheLifetime>();
 builder.Services.AddScoped<CacheStore>();
+builder.Services.AddSingleton<InstrumentCatalog>();
 builder.Services.AddScoped<IBistCatalog, BistCatalog>();
 builder.Services.AddScoped<IMarketService, MarketService>();
 builder.Services.AddScoped<ISymbolSearchService, SymbolSearchService>();
@@ -72,6 +73,9 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<MarketDbContext>();
     db.Database.Migrate();
+
+    // Arama ilk istekten itibaren çalışsın: liste Twelve Data'ya değil veritabanına bağlı (spec §4.4 Açılış).
+    await app.Services.GetRequiredService<InstrumentCatalog>().ReloadAsync(db, CancellationToken.None);
 }
 
 if (app.Environment.IsDevelopment())
