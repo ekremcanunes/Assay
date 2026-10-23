@@ -1,7 +1,9 @@
 using market_service.Caching;
 using market_service.Clients;
+using market_service.Data;
 using market_service.Middleware;
 using market_service.Services;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Formatting.Compact;
 
@@ -39,6 +41,9 @@ builder.Services.AddStackExchangeRedisCache(options =>
         ?? builder.Configuration.GetConnectionString("Redis");
 });
 
+builder.Services.AddDbContext<MarketDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("MarketDb")));
+
 builder.Services.AddHttpClient<IFrankfurterClient, FrankfurterClient>();
 builder.Services.AddHttpClient<ITwelveDataClient, TwelveDataClient>();
 builder.Services.AddHttpClient<IYahooFinanceClient, YahooFinanceClient>();
@@ -62,6 +67,12 @@ if (builder.Environment.IsDevelopment())
 }
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<MarketDbContext>();
+    db.Database.Migrate();
+}
 
 if (app.Environment.IsDevelopment())
 {

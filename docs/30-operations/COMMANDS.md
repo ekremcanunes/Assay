@@ -119,14 +119,19 @@ curl -b "ory_session=<token>" "http://localhost:5002/api/market/prices?symbols=U
 ## EF Core Migration
 
 ```bash
+# dotnet-ef aracı kurulu değilse (bir kez)
+dotnet tool install --global dotnet-ef --version 9.*
+
 # Migration oluştur (Windows'ta çalıştır)
-cd portfolio-service
+cd portfolio-service             # veya: cd market-service (enstrüman listesi, ayrı veritabanı)
 dotnet ef migrations add <MigrationAdi>
 
 dotnet ef migrations remove      # migration geri al
 dotnet ef database update        # migration uygula
 dotnet ef migrations list        # migration listesi
 ```
+
+İki servis de açılışta bekleyen migration'ları kendisi uygular (`db.Database.Migrate()`); `database update` yalnızca elle denemek içindir.
 
 ## Linux / WSL2
 

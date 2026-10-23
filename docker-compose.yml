@@ -70,6 +70,8 @@ services:
       - Serilog__MinimumLevel__Default=${LOG_LEVEL:-Information}
       - Serilog__MinimumLevel__Override__Microsoft=${LOG_LEVEL_FRAMEWORK:-Warning}
       - Serilog__MinimumLevel__Override__System=${LOG_LEVEL_FRAMEWORK:-Warning}
+      - Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore=${LOG_LEVEL_EFCORE:-Warning}
+      - ConnectionStrings__MarketDb=${MARKET_DB_CONNECTION_STRING}
       - TwelveData__ApiKey=${TWELVEDATA_API_KEY}
       - REDIS_CONNECTION=redis:6379
       - Kratos__BaseUrl=http://kratos:4433

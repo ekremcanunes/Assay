@@ -47,7 +47,7 @@ Deploy gerektirmez — `.env` dosyasındaki üç ayrı kadran ile. Her biri fark
 |----------|--------|------------|-----------------|
 | `LOG_LEVEL` | Uygulamanın kendi logları (`Default`) | `Information` | Prod'da `Warning`; kendi kodunun akışını izlerken `Debug` |
 | `LOG_LEVEL_FRAMEWORK` | `Microsoft`, `System` | `Warning` | ASP.NET pipeline / HttpClient teşhisi |
-| `LOG_LEVEL_EFCORE` | `Microsoft.EntityFrameworkCore` (portfolio-service) | `Warning` | Üretilen SQL'i görmek gerektiğinde |
+| `LOG_LEVEL_EFCORE` | `Microsoft.EntityFrameworkCore` (portfolio-service, market-service) | `Warning` | Üretilen SQL'i görmek gerektiğinde |
 
 Karşılığı ortam değişkenleri (`docker-compose.yml`'de bağlıdır, AWS'de aynı isimlerle set edilir):
 
@@ -70,7 +70,7 @@ Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore=Warning
 `appsettings.json` içinde framework ad alanları `Warning`'e sabitlenmiştir:
 
 - `Microsoft`, `System` — her iki serviste
-- `Microsoft.EntityFrameworkCore` — portfolio-service'te (her SQL sorgusunu `Information` seviyesinde loglar, hacmin başlıca kaynağıdır)
+- `Microsoft.EntityFrameworkCore` — portfolio-service ve market-service'te (her SQL sorgusunu `Information` seviyesinde loglar, hacmin başlıca kaynağıdır)
 
 Yeni bir gürültülü kütüphane fark edilirse çözüm seviyeyi global düşürmek değil, o ad alanı için `Override` eklemektir.
 
