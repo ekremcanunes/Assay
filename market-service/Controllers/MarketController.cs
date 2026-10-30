@@ -14,16 +14,18 @@ public class MarketController : ControllerBase
     private readonly IMarketOverviewService _overviewService;
     private readonly IPriceHistoryService _historyService;
     private readonly IPriceOnDateService _priceOnDateService;
+    private readonly InstrumentCatalog _catalog;
 
     public MarketController(IMarketService marketService, ISymbolSearchService searchService,
         IMarketOverviewService overviewService, IPriceHistoryService historyService,
-        IPriceOnDateService priceOnDateService)
+        IPriceOnDateService priceOnDateService, InstrumentCatalog catalog)
     {
         _marketService = marketService;
         _searchService = searchService;
         _overviewService = overviewService;
         _historyService = historyService;
         _priceOnDateService = priceOnDateService;
+        _catalog = catalog;
     }
 
     [HttpGet("prices")]
@@ -55,6 +57,29 @@ public class MarketController : ControllerBase
             return Ok(new List<SymbolSearchResult>());
         var results = await _searchService.SearchAsync(q.Trim());
         return Ok(results);
+    }
+
+    // Alım kilidi (spec §4.6): hisse aktif listede mi ve fiyatı geliyor mu. portfolio-service alımdan önce sorar.
+    // Fiyat yoksa 404 değil 503: Yahoo istemcisi "sembol yok" ile "Yahoo'ya ulaşılamadı"yı ayırmıyor,
+    // kesintide kullanıcıya "desteklenmiyor" denmesin (karar 2026-10-31).
+    [HttpGet("instrument")]
+    public async Task<ActionResult<SymbolSearchResult>> Instrument([FromQuery] string? market, [FromQuery] string? symbol)
+    {
+        if (string.IsNullOrWhiteSpace(symbol)) return BadRequest();
+        market = YahooSymbol.NormalizeMarket(market);
+        if (!YahooSymbol.IsSupportedMarket(market)) return BadRequest(new { error = "Unsupported market" });
+
+        var instrument = _catalog.Find(market, YahooSymbol.Normalize(symbol));
+        if (instrument is null) return NotFound();
+
+        if (await _marketService.GetPriceAsync(instrument.Market, instrument.Symbol) is null)
+            return StatusCode(StatusCodes.Status503ServiceUnavailable);
+
+        return Ok(new SymbolSearchResult
+        {
+            Symbol = instrument.Symbol, Market = instrument.Market, Name = instrument.Name,
+            Exchange = instrument.Exchange, Currency = instrument.Currency,
+        });
     }
 
     [HttpGet("overview")]
