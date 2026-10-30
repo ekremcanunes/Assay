@@ -378,3 +378,24 @@ Kullanıcı oturumu bir istekte iki kez (portfolio-service ve market-service) Kr
 **Dikkat.** Kolon silmek geri alınması zor bir işlem: migration'da `Down` metodu kolonu geri getirir, ama içindeki veriyi getirmez. Önce her kolonun gerçekten kullanılmadığı doğrulanmalı; gerekirse silmeden önce veri yedeklenmeli.
 
 **Öneri.** Kolon kolon karar: tut / türet (DTO'da hesapla) / sil. `Tags` ve `UpdatedAt` en güçlü silme adayları.
+
+---
+
+## WSL'de Docker imaj ve volume birikimi
+
+*Eklendi: 2026-10-31 · Bağlam: `docker images` / `docker volume ls` incelemesi (WSL runner, `~/actions-runner/_work/Assay/Assay`)*
+
+**Sorun.** Diskte kullanılmayan Docker kalıntıları birikiyor:
+- **İmajlar:** `assay-market-service:latest`, `assay-portfolio-service:latest`, `assay-web:latest` (~780 MB) kullanımda değil (`docker images`'ta `U` işareti yok). Deploy workflow'u `local/assay/*:dev` adlarını kullanıyor; bunlar büyük ihtimalle elle yapılan eski `docker compose build`'lerden kalma. `postgres:16-alpine` da veritabanı Neon'a taşınmadan önceki dönemden kalmış olabilir.
+- **Volume'lar:** `docker volume ls` çok sayıda isimsiz (anonim) volume gösteriyor. Kaynağı: `redis:alpine` imajı `VOLUME /data` tanımlıyor; compose dosyasında isimli volume olmadığı için Redis container'ı her yeniden oluştuğunda (deploy, `down` + `up`) yeni bir anonim volume açılıyor, eskisi sahipsiz kalıyor.
+
+**Neden önemli.** WSL'in sanal diski (`ext4.vhdx`) kendiliğinden küçülmez; biriken imaj ve volume'lar Windows diskini de doldurur. Birikim her deploy'da sürüyor.
+
+**Dikkat.** CI araç imajları (`trivy`, `hadolint`, `actionlint`, `gitleaks`) `U` göstermez ama gereklidir: pipeline onları `docker run --rm` ile çalıştırıyor, silinirse her çalıştırmada yeniden indirilir. Kalıcı verinin tamamı Neon'da; Redis yalnızca önbellek, sahipsiz Redis volume'larını silmek veri kaybettirmez.
+
+**Seçenekler.**
+1. **Tek seferlik elle temizlik:** `docker volume ls -f dangling=true` ile kontrol → `docker volume prune` (yalnız sahipsiz anonim volume'lar; `-a` kullanılmaz). Kullanılmayan imajlar adıyla `docker rmi`.
+2. **Birikimi kaynağında kesmek:** Redis'e compose'da isimli volume vermek (ör. `redis-data:/data`) ya da önbellek olduğu için kalıcılığı kapatmak. Böylece her deploy yeni volume açmaz.
+3. **Otomatik temizlik:** Deploy workflow'unun sonuna `docker image prune -f` (yalnız etiketsiz/dangling imajlar) eklemek.
+
+**Öneri.** Önce 1 (bir kez, kontrol ederek), ardından 2 — birikimin sebebi bu. 3 yalnız etiketsiz imajlar için güvenli; volume'lar için otomatik prune önerilmez.
