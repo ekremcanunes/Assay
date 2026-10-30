@@ -87,11 +87,11 @@ public class InstrumentSyncer(ITwelveDataClient twelveData, MarketDbContext db, 
 
         // 3) Başarılı kaynakları (Market, Symbol) anahtarıyla birleştir
         var merged = new Dictionary<(string Market, string Symbol), Candidate>();
-        var conflicts = new HashSet<(string Market, string Symbol)>();
+        var conflicts = new Dictionary<(string Market, string Symbol), Candidate>();
         foreach (var item in succeeded.SelectMany(s => s.Items))
         {
             var key = (item.Source.Market, item.Symbol);
-            if (conflicts.Contains(key)) continue;
+            if (conflicts.ContainsKey(key)) continue;
             if (!merged.TryGetValue(key, out var first))
             {
                 merged[key] = item;
@@ -100,13 +100,18 @@ public class InstrumentSyncer(ITwelveDataClient twelveData, MarketDbContext db, 
             {
                 // Hisse–ETF çakışması: hangisinin doğru olduğu bilinmiyor, sembol hiç sunulmaz (kural 7)
                 merged.Remove(key);
-                conflicts.Add(key);
+                conflicts[key] = first;
                 logger.LogWarning("Instrument sync: {Market}:{Symbol} is listed both as stock and ETF; excluded",
                     key.Market, key.Symbol);
             }
         }
 
         var okSources = succeeded.Select(s => (s.Source.Exchange, s.Source.Type)).ToHashSet();
+        // Çakışmanın kalktığına ancak pazarın tüm kaynakları bugün geldiyse güvenilir
+        var completeMarkets = Sources.GroupBy(s => s.Market)
+            .Where(g => g.All(s => okSources.Contains((s.Exchange, s.Type))))
+            .Select(g => g.Key)
+            .ToHashSet();
         var now = DateTime.UtcNow;
 
         // 5) Başarılı bir kaynağa ait olup bugün gelmeyen aktif satırlar pasife çekilir.
@@ -134,6 +139,9 @@ public class InstrumentSyncer(ITwelveDataClient twelveData, MarketDbContext db, 
             // Satır bugün atlanan/başarısız bir kaynağa aitse dokunulmaz (kural 2)
             if (row.IsActive && !okSources.Contains((row.Exchange, row.Type))) continue;
 
+            // Çakışmalı satır, eksik kaynaklı bir günde tek listede göründü diye açılmaz
+            if (row.IsConflict && !completeMarkets.Contains(row.Market)) continue;
+
             if (row.Exchange == c.Source.Exchange && row.Name == c.Name && row.Currency == c.Currency
                 && row.Type == c.Source.Type && row.Category == c.Category && row.IsActive)
                 continue;
@@ -144,8 +152,30 @@ public class InstrumentSyncer(ITwelveDataClient twelveData, MarketDbContext db, 
             row.Type = c.Source.Type;
             row.Category = c.Category;
             row.IsActive = true;
+            row.IsConflict = false;
             row.UpdatedAt = now;
             updated++;
+        }
+
+        // Çakışan sembol pasif ve işaretli yazılır; sonraki senkronlar çakışmayı böylece hatırlar
+        foreach (var (key, c) in conflicts)
+        {
+            if (!byKey.TryGetValue(key, out var row))
+            {
+                db.Instruments.Add(new Instrument
+                {
+                    Market = c.Source.Market, Symbol = c.Symbol, Exchange = c.Source.Exchange, Name = c.Name,
+                    Currency = c.Currency, Type = c.Source.Type, Category = c.Category, IsActive = false,
+                    IsConflict = true, UpdatedAt = now,
+                });
+                continue;
+            }
+
+            if (row.IsConflict && !row.IsActive) continue;
+
+            row.IsActive = false;
+            row.IsConflict = true;
+            row.UpdatedAt = now;
         }
 
         foreach (var row in deactivate)

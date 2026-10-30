@@ -18,6 +18,8 @@ public class Instrument
     public string Category { get; set; } = string.Empty;
     // Listeden düşünce false olur; satır silinmez
     public bool IsActive { get; set; }
+    // Hisse–ETF çakışması görüldü; pazarın tüm kaynakları aynı gün gelip çakışma kalkana kadar satır aktif olmaz
+    public bool IsConflict { get; set; }
     // Satırın içeriğinin en son değiştiği an (UTC). Son senkron zamanı değildir (bkz. InstrumentSyncState).
     public DateTime UpdatedAt { get; set; }
 }
