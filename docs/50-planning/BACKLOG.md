@@ -88,13 +88,13 @@ Sonraya bırakılan işler. Her madde: sorun, neden önemli, seçenekler, öneri
 
 ---
 
-## Inter kalınlığı gerçek iPhone'da doğrulanmalı
+## Font kalınlığı gerçek iPhone'da doğrulanmalı
 
-*Eklendi: 2026-10-17 · Bağlam: mobil dönüşüm Faz 1 (Task 5)*
+*Eklendi: 2026-10-17 · Güncelleme: 2026-10-31 (font Inter → IBM Plex Sans) · Bağlam: mobil dönüşüm Faz 1 (Task 5)*
 
-**Sorun.** Playwright'ın Windows WebKit'i değişken fontun kalınlık eksenini uygulamıyor (Arial/Georgia kalın, Inter 700 ince). Kod doğru: `@fontsource-variable/inter`, `font-weight: 100 900`.
+**Sorun.** Playwright'ın Windows WebKit'i değişken fontun kalınlık eksenini uygulamıyor (Arial/Georgia kalın, değişken font 700 ince). Kod doğru: `@fontsource-variable/ibm-plex-sans`, `font-weight: 100 700`. Gözlem Inter zamanında yapıldı; Plex de değişken font olduğu için aynı soru geçerli.
 
-**Öneri.** AWS deploy'undan sonra gerçek iPhone Safari'de başlıkların kalın göründüğü kontrol edilir. İnce görünürse statik ağırlık dosyaları (`@fontsource/inter` 400/600/700) yedek olarak eklenir.
+**Öneri.** AWS deploy'undan sonra gerçek iPhone Safari'de başlıkların kalın göründüğü kontrol edilir. İnce görünürse statik ağırlık dosyaları (`@fontsource/ibm-plex-sans` 400/600/700) yedek olarak eklenir.
 
 ---
 
@@ -399,3 +399,47 @@ Kullanıcı oturumu bir istekte iki kez (portfolio-service ve market-service) Kr
 3. **Otomatik temizlik:** Deploy workflow'unun sonuna `docker image prune -f` (yalnız etiketsiz/dangling imajlar) eklemek.
 
 **Öneri.** Önce 1 (bir kez, kontrol ederek), ardından 2 — birikimin sebebi bu. 3 yalnız etiketsiz imajlar için güvenli; volume'lar için otomatik prune önerilmez.
+
+---
+
+## API hata cevaplarının şekli servisler arasında farklı
+
+*Eklendi: 2026-10-31 · Bağlam: hata mesajlarının dil standardı (backend hep İngilizce; kullanıcı metni web'de `code` ile TR/EN çevrilir — `web/src/lib/apiError.js`)*
+
+**Sorun.** Dil birleştirildi, şekil birleştirilmedi:
+
+| Servis | Şekil |
+|---|---|
+| portfolio-service, asset uç noktaları | `{ "error": { "code", "message", "params"? } }` |
+| portfolio-service, `AuthOptionsController` | `{ "error": "auth_misconfigured", "message" }` |
+| market-service | `{ "error": "Unsupported market" }` (yalnız metin, kod yok) |
+
+**Neden önemli.** İstemci her uç nokta için farklı okuma yazmak zorunda kalır; web'in ortak yardımcısı yalnız ilk şekli anlıyor. market-service cevaplarını kullanıcı görmüyor (yalnız portfolio-service okuyor), bu yüzden acil değil.
+
+**Öneri.** Tek şekil: `{ "error": { "code", "message", "params"? } }`, `code` BÜYÜK_HARF_ALT_ÇİZGİ, `message` İngilizce ve yalnız teşhis için. Kural `docs/10-standards/` altına kısa bir "API hata cevabı" standardı olarak yazılır; ardından iki aykırı yer bu şekle getirilir.
+
+---
+
+## Hisse alımında para birimi enstrümanınkiyle karşılaştırılmıyor
+
+*Eklendi: 2026-10-31 · Bağlam: enstrüman kimliği Faz 3 (alım kilidi) incelemesi*
+
+**Sorun.** Alımda kullanıcı TRY ya da USD seçiyor; enstrümanın kendi para birimine (`/instrument` cevabındaki `currency`: BIST=TRY, US=USD) bakılmıyor. Örneğin AAPL TRY ile kaydedilebiliyor. Web, aramadan seçilen hissenin para birimini forma dolduruyor ama kullanıcı değiştirebiliyor; sunucu kontrol etmiyor.
+
+**Neden önemli.** Bilinçli bir tercih olabilir (kullanıcı TRY maliyetini takip etmek istiyor), ama spec'te karar yok. Yanlışlıkla seçilen para birimi K/Z hesabını yanıltır.
+
+**Seçenekler.** 1) Serbest bırak, spec'e "bilinçli" diye yaz. 2) Alım kilidi para birimini de dayatsın: hisse yalnız kendi para birimiyle alınır.
+
+**Öneri.** Önce kararı ver (kullanıcı ihtiyacı); 2 seçilirse kilit zaten `/instrument` cevabını aldığı için kontrol tek satır.
+
+---
+
+## Yahoo istemcisi "sembol yok" ile "Yahoo'ya ulaşılamadı"yı ayırmıyor
+
+*Eklendi: 2026-10-31 · Bağlam: enstrüman kimliği Faz 3, `/instrument` uç noktası*
+
+**Sorun.** `YahooFinanceClient.GetQuoteAsync` hem sembol bulunamadığında hem istek hata verdiğinde (limit, zaman aşımı, ağ) `null` döner; hata yakalanıp yutuluyor. Bu yüzden `/instrument` fiyat `null` olduğunda hangisi olduğunu bilemiyor ve iki durumda da 503 dönüyor (karar 2026-10-31, spec §4.6).
+
+**Neden önemli.** Listede olup Yahoo'da hiç bulunmayan bir sembol kullanıcıya sürekli "şu an doğrulanamıyor, sonra dene" gösterir; doğrusu "desteklenmiyor"dur. Nadir, ama yanıltıcı.
+
+**Öneri.** İstemci iki durumu ayırsın (ör. sonuç türü: bulundu / bulunamadı / hata). Sonra `/instrument`: bulunamadı → 404, hata → 503.

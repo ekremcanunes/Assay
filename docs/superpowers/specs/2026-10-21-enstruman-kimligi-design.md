@@ -163,6 +163,10 @@ Senkron bittikten sonra market-service listeyi belleğine yeniden yükler (§4.5
    | 404 | 400 "Bu enstrüman desteklenmiyor" |
    | Ulaşılamıyor / 5xx | 503 "Şu an doğrulanamıyor, biraz sonra tekrar deneyin" — **fail closed** |
 
+   **Uygulama kararları (2026-10-31):**
+   - market-service, enstrüman listede olup fiyatı alınamazsa 404 değil **503** döner. Sebep: Yahoo istemcisi "sembol yok" ile "Yahoo'ya ulaşılamadı"yı ayırmıyor; kesintide kullanıcıya "desteklenmiyor" denmesin. Ayrım BACKLOG'da.
+   - Kontrol `AssetController.Buy`'da, `BuyAsync`'ten önce yapılır. portfolio-service hata kodu döner: 400 `INSTRUMENT_NOT_SUPPORTED`, 503 `INSTRUMENT_CHECK_UNAVAILABLE`. Web kodu TR/EN çevirir.
+
    İstek, mevcut servisler arası çağrılar gibi kullanıcının cookie'siyle gider ([MarketServiceClient.cs](../../../portfolio-service/Clients/MarketServiceClient.cs)).
 3. **Çeviri:** Yahoo çeviri fonksiyonu (§4.2) tanımadığı bir değerle karşılaşırsa hata verir.
 
