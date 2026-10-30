@@ -235,15 +235,7 @@ Portföy kartında değer ve yüzde kullanıcının, hemen altındaki grafik end
 
 *Eklendi: 2026-10-23 · Bağlam: enstrüman kimliği Faz 2 kod incelemesi (`test`, `835852b`). Spec: `docs/superpowers/specs/2026-10-21-enstruman-kimligi-design.md` §4.4*
 
-### 1. Hisse–ETF çakışması bir gün sızabiliyor — **Faz 3'ten önce**
-
-**Sorun.** Çakışma (aynı ABD sembolü hem hisse hem ETF listesinde, ör. `GRIN`) yalnızca o gün başarılı olan kaynaklar arasında yakalanıyor (`InstrumentSyncer`). Çakışan sembol tabloya hiç yazılmadığı için çakışmanın kaydı da yok. ETF kaynağı bir gün başarısız/atlanırsa sembol o gün hisse olarak eklenir ve aramada görünür; ertesi gün iki kaynak da gelince pasife çekilir (Warning ile).
-
-**Neden önemli.** O gün alan kullanıcı yanlış enstrümanın fiyatını görür (Yahoo'da `GRIN` artık ETF) — spec kural 7'nin ("yanlış enstrümanı sunmaktansa sunmamak") tam tersi. Faz 3'te alım kilidi bu listeye bakacağı için önemi artar.
-
-**Öneri.** Çakışmayı kalıcı tut: çakışan sembol tabloya `IsActive = false` ve bir işaretle (ör. `Category = 'Conflict'` ya da ayrı kolon) yazılır; senkron, işaretli sembolü iki taraf da başarılı olup çakışma kalkana kadar eklemez.
-
-### 2. Bellek yenileme hatası yanlış raporlanıyor
+### 1. Bellek yenileme hatası yanlış raporlanıyor
 
 **Sorun.** Senkron `SaveChangesAsync` ile yazdıktan hemen sonra `InstrumentCatalog.ReloadAsync` hata verirse (Neon bağlantısı iki sorgu arasında koparsa) log "Instrument sync failed" der; ama veri ve son senkron zamanı zaten yazılmıştır. Bellek bir sonraki senkrona ya da yeniden başlatmaya kadar eski listeyle kalır, açılış kontrolü bunu kaçırılmış saymaz.
 
@@ -251,7 +243,7 @@ Portföy kartında değer ve yüzde kullanıcının, hemen altındaki grafik end
 
 **Öneri.** Belleği veritabanından yeniden okumak yerine senkronun elindeki birleşik listeden kur; ya da reload'u ayrı `try/catch` ile sarıp "yazıldı, bellek yenilenemedi" diye ayrı logla ve kısa süre sonra yeniden dene.
 
-### 3. Arama her istekte isimleri yeniden normalize ediyor
+### 2. Arama her istekte isimleri yeniden normalize ediyor
 
 **Sorun.** `SymbolSearchService` her aramada ~16.600 kaydın ismini diakritik-duyarsız biçime çeviriyor (her biri yeni string). Ölçülmedi; tahminen birkaç milisaniye.
 
@@ -259,7 +251,7 @@ Portföy kartında değer ve yüzde kullanıcının, hemen altındaki grafik end
 
 **Öneri.** Normalize edilmiş isim (ve takma ad) `ReloadAsync` sırasında `InstrumentCatalog` snapshot'ında bir kez hesaplanır; arama hazır değeri kullanır.
 
-### 4. Twelve Data API anahtarı URL'de
+### 3. Twelve Data API anahtarı URL'de
 
 **Sorun.** `TwelveDataClient` anahtarı query string'de gönderiyor (`?apikey=`). Kodumuz URL'yi loglamıyor; ama `LOG_LEVEL_FRAMEWORK=Information` açılırsa `System.Net.Http.HttpClient` logları istek adresini yazabilir (.NET 9'un sorgu dizisini maskeleyip maskelemediği doğrulanmadı). Faz 2'den önce de böyleydi.
 
