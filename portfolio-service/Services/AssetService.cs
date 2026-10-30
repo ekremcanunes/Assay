@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using portfolio_service.Clients;
 using portfolio_service.Data;
@@ -45,7 +46,9 @@ public class AssetService(AppDbContext db, IMarketServiceClient marketClient, IL
         else
         {
             if (asset.Currency != currency)
-                throw new InvalidOperationException($"Bu varlık {asset.Currency} ile alınmış; {currency} ile karıştırılamaz.");
+                throw new AssetRuleException("CURRENCY_MISMATCH",
+                    $"Asset was bought in {asset.Currency}; cannot add in {currency}",
+                    new Dictionary<string, string> { ["held"] = asset.Currency, ["requested"] = currency });
 
             // Ağırlıklı ortalama maliyet
             var oldCost = asset.AvgCostBasis ?? dto.UnitPrice;
@@ -85,7 +88,9 @@ public class AssetService(AppDbContext db, IMarketServiceClient marketClient, IL
         if (asset is null) return null;
 
         if (dto.Quantity > asset.Quantity)
-            throw new InvalidOperationException($"Elinizde {asset.Quantity} adet var; {dto.Quantity} satılamaz.");
+            throw new AssetRuleException("INSUFFICIENT_QUANTITY",
+                $"Holding has {asset.Quantity}; cannot sell {dto.Quantity}",
+                new Dictionary<string, string> { ["held"] = asset.Quantity.ToString("0.########", CultureInfo.InvariantCulture) });
 
         var date = NormalizeDate(dto.Date);
         decimal? realized = asset.AvgCostBasis.HasValue

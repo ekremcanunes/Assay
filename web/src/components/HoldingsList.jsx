@@ -10,6 +10,7 @@ import { PrimaryAction } from '@/components/Page'
 import { buyPath } from '@/lib/portfolioCategories'
 import { Section } from '@/components/Section'
 import { catOf } from '@/lib/assetColors'
+import { apiErrorMessage } from '@/lib/apiError'
 import { Plus, Pencil, Trash2, X, Check, ArrowDownRight, AlertTriangle } from 'lucide-react'
 
 const formatMoney = (v, currency = 'TRY') =>
@@ -68,7 +69,7 @@ export default function HoldingsList({ holdings, type, isLoading, queryError }) 
       }
       setEditing(null)
     } catch (err) {
-      setError(err.response?.data?.error?.message ?? err.message)
+      setError(apiErrorMessage(err, t))
     }
   }
 
@@ -79,7 +80,7 @@ export default function HoldingsList({ holdings, type, isLoading, queryError }) 
     try {
       await deleteMutation.mutateAsync(id)
     } catch (err) {
-      setError(err.response?.data?.error?.message ?? err.message)
+      setError(apiErrorMessage(err, t))
     }
   }
 

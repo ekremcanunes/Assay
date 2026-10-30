@@ -5,8 +5,8 @@ namespace portfolio_service.Services;
 public class AuthOptions
 {
     public const string MisconfiguredMessage =
-        "2FA zorunlu ama e-posta kanali kapali. " +
-        "EMAIL_OTP_ENABLED degerini acin ya da AUTH_REQUIRED_AAL=aal1 yapin.";
+        "2FA is required but the email channel is disabled. " +
+        "Enable EMAIL_OTP_ENABLED or set AUTH_REQUIRED_AAL=aal1.";
 
     public string RequiredAal { get; set; } = "highest_available";
     public bool EmailOtpEnabled { get; set; } = true;

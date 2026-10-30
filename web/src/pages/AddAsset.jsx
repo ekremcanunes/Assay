@@ -16,6 +16,7 @@ import { slugOf } from '@/lib/portfolioCategories'
 import { catOf } from '@/lib/assetColors'
 import { formatPct } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { apiErrorMessage } from '@/lib/apiError'
 import { AlertTriangle, CalendarDays, Search, X } from 'lucide-react'
 
 const assetTypes = ['Gold', 'Stock', 'Currency']
@@ -26,12 +27,6 @@ const stockMarkets = ['BIST', 'US']
 // Seçili/seçili değil hap düğmesi (tür, döviz, para birimi)
 const pill = (on) => cn('press h-9 shrink-0 rounded-full border px-3.5 text-ui',
   on ? 'border-foreground bg-foreground text-background' : 'border-border bg-card text-foreground hover:border-foreground')
-
-// Sunucunun alım kilidi hata kodları (portfolio-service AssetController) → çeviri anahtarı
-const BUY_ERROR_KEYS = {
-  INSTRUMENT_NOT_SUPPORTED: 'assets.instrumentNotSupported',
-  INSTRUMENT_CHECK_UNAVAILABLE: 'assets.instrumentCheckUnavailable',
-}
 
 export default function AddAsset() {
   const navigate = useNavigate()
@@ -165,8 +160,7 @@ export default function AddAsset() {
       })
       navigate(`/assets/${slugOf(assetType)}`)
     } catch (err) {
-      const key = BUY_ERROR_KEYS[err.response?.data?.error?.code]
-      setError(key ? t(key) : (err.response?.data?.error?.message ?? err.message))
+      setError(apiErrorMessage(err, t))
     }
   }
 

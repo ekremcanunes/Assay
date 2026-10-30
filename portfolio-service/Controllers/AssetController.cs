@@ -69,9 +69,9 @@ public class AssetController(IAssetService assetService, IMarketServiceClient ma
             var result = await assetService.BuyAsync(dto, UserId);
             return Ok(result);
         }
-        catch (InvalidOperationException ex)
+        catch (AssetRuleException ex)
         {
-            return BadRequest(ValidationError(ex.Message));
+            return BadRequest(Error(ex.Code, ex.Message, ex.Params));
         }
     }
 
@@ -88,9 +88,9 @@ public class AssetController(IAssetService assetService, IMarketServiceClient ma
             var result = await assetService.SellAsync(id, dto, UserId);
             return result is null ? NotFound() : Ok(result);
         }
-        catch (InvalidOperationException ex)
+        catch (AssetRuleException ex)
         {
-            return BadRequest(ValidationError(ex.Message));
+            return BadRequest(Error(ex.Code, ex.Message, ex.Params));
         }
     }
 
@@ -115,7 +115,9 @@ public class AssetController(IAssetService assetService, IMarketServiceClient ma
 
     private static object ValidationError(string message) => Error("VALIDATION_ERROR", message);
 
-    // Web kodu çevirir (TR/EN); message yalnızca teşhis için.
-    private static object Error(string code, string message) =>
-        new { error = new { code, message } };
+    // Web kodu çevirir (TR/EN), params mesajdaki yer tutucuları doldurur; message yalnızca teşhis için (İngilizce).
+    private static object Error(string code, string message, IReadOnlyDictionary<string, string>? parameters = null) =>
+        parameters is null
+            ? new { error = new { code, message } }
+            : new { error = new { code, message, @params = parameters } };
 }
