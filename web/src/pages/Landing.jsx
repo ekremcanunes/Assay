@@ -131,7 +131,7 @@ function TechDetail({ tech }) {
         <span className="label text-muted-foreground">İlgili dosyalar</span>
         <div className="flex flex-wrap gap-2">
           {files.map((f) => (
-            <code key={f} className="rounded-sm bg-secondary px-2 py-0.5 font-mono text-micro text-foreground">{f}</code>
+            <code key={f} className="rounded-sm bg-secondary px-2 py-0.5 font-code text-micro text-foreground">{f}</code>
           ))}
         </div>
         <span className="font-mono text-micro text-muted-foreground">Ayrıntılı not: {doc}</span>
@@ -365,7 +365,7 @@ export default function Landing() {
                 </span>
                 <span className="font-mono text-micro text-background/60">6 servis</span>
               </div>
-              <pre className="overflow-x-auto font-mono text-micro leading-[1.7] text-background/80">
+              <pre className="overflow-x-auto font-code text-micro leading-[1.7] text-background/80">
 {`# tek komutla ayağa kalkar: docker compose up --build -d
 services:
   web:                nginx              ports: ["80:80"]
@@ -550,7 +550,7 @@ services:
               Bitmiş bir ürün değil, süren bir defter.
             </h2>
             <p className="mt-4 max-w-[56ch] text-body text-white/85">
-              Kod açık, kararlar dokümanda. Neyi neden yaptığım <code className="font-mono">docs/</code> altında
+              Kod açık, kararlar dokümanda. Neyi neden yaptığım <code className="font-code">docs/</code> altında
               standartlar ve öğrenme notları olarak duruyor.
             </p>
             <div className="mt-7 flex flex-col items-start gap-4 sm:flex-row sm:items-center">

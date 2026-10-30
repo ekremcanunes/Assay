@@ -53,16 +53,18 @@
   --radius-lg: 0.75rem;    /* 12 — kart, panel */
 
   /*
-    Tek aile: Inter. Hiyerarşi aileden değil ölçek + ağırlıktan gelir.
-    --font-display ayrı bir aile değil; ad korunuyor ki çağrı yerleri kırılmasın.
+    Tek aile: IBM Plex Sans. Hiyerarşi aileden değil ölçek + ağırlıktan gelir.
+    --font-display ve --font-mono ayrı aile değil; adları korunuyor ki çağrı yerleri kırılmasın.
+    --font-code yalnızca gerçek kod (pre, dosya adı) için: orantılı fontta girinti kayar.
   */
-  --font-sans: "Inter Variable", system-ui, -apple-system, sans-serif;
-  --font-display: "Inter Variable", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+  --font-sans: "IBM Plex Sans Variable", system-ui, -apple-system, sans-serif;
+  --font-display: "IBM Plex Sans Variable", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Sans Variable", system-ui, -apple-system, sans-serif;
+  --font-code: "IBM Plex Mono", ui-monospace, monospace;
 
   /*
     Tip ölçeği — 6 basamak. Ad-hoc boyut yazılmaz.
-    Büyük basamaklarda negatif tracking zorunlu: Inter 700 tracking'siz
+    Büyük basamaklarda negatif tracking zorunlu: 700 ağırlık tracking'siz
     fazla geniş okunur, sıkıştırma sisteme mühendislik hissini veren şey.
   */
   --text-micro: 0.6875rem;                /* 11 — etiket / mikro metin */
@@ -147,7 +149,7 @@ body {
 
 /*
   Mikro etiket: eyebrow, tablo başlığı, kart etiketi, bölüm ayracı.
-  Tek aile kuralı gereği mono değil Inter 600; ayrımı tracking yapıyor.
+  Tek aile kuralı gereği mono değil 600 ağırlık; ayrımı tracking yapıyor.
 */
 .label {
   font-family: var(--font-sans);
@@ -158,12 +160,15 @@ body {
   text-transform: uppercase;
 }
 
-/* Rakamlar: mono + tabular hizalama. Sütunlar hizada kalır. */
+/* Rakamlar: tek aile + tabular hizalama. Sütunlar hizada kalır. */
 .tabular {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
+
+/* font-mono artık ayrı aile değil; mono'nun eşit genişlikli rakamlarını tabular-nums sürdürür */
+.font-mono { font-variant-numeric: tabular-nums; }
 
 /* ---------- Voltaj imzaları — aksan yalnızca burada görünür ---------- */
 

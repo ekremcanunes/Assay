@@ -128,7 +128,7 @@ function Body({ tech }) {
         <span className="label text-muted-foreground">İlgili dosyalar</span>
         <div className="flex flex-wrap gap-1.5">
           {files.map((f) => (
-            <code key={f} className="rounded-sm bg-secondary px-2 py-0.5 font-mono text-micro text-foreground">{f}</code>
+            <code key={f} className="rounded-sm bg-secondary px-2 py-0.5 font-code text-micro text-foreground">{f}</code>
           ))}
         </div>
         <span className="font-mono text-micro text-muted-foreground">Ayrıntılı not: {doc}</span>

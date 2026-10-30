@@ -9,7 +9,7 @@ export function CodeBlock({ code, title, note }) {
           {title}
         </div>
       )}
-      <pre className="overflow-x-auto rounded-lg bg-foreground p-5 font-mono text-micro leading-[1.7] text-background/85">
+      <pre className="overflow-x-auto rounded-lg bg-foreground p-5 font-code text-micro leading-[1.7] text-background/85">
         {code}
       </pre>
       {note && <p className="mt-2 font-mono text-micro text-muted-foreground">{note}</p>}

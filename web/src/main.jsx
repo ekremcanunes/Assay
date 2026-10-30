@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client'
-import '@fontsource-variable/inter'
-import '@fontsource-variable/jetbrains-mono'
+import '@fontsource-variable/ibm-plex-sans'
+import '@fontsource/ibm-plex-mono/400.css'
 import './index.css'
 import App from './App.jsx'
 import { APP_NAME } from './lib/app'

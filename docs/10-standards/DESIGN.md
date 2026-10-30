@@ -15,7 +15,7 @@ Tek sistem, üç yüzey: **landing** (`/landing`), **auth** (`/login`, `/registe
 - **Voltaj rengi az yerde, keskin.** Doz kuralı §4'te — ihlal edilirse sistem ucuzlar.
 - **Tek font ailesi.** Hiyerarşi aileden değil, ölçek + ağırlık + tracking'den gelir.
 - **Gölge yok.** Derinlik hairline kenarlıklardan ve yüzey tonundan gelir.
-- **Rakamlar birinci sınıf.** Mono + tabular, sütunlar hizalı.
+- **Rakamlar birinci sınıf.** Aynı aile + tabular rakam, sütunlar hizalı. Mono yalnızca gerçek kodda.
 - **Semantik vurgudan ayrı.** Kâr/zarar, kategori, uyarı ve marka birbirinin yerine geçmez.
 
 ---
@@ -72,10 +72,10 @@ Varlık türünü **ayırt etmek** için. Rozet, halka dilimi, KPI şeridi.
 
 | Rol | Font | Sınıf |
 |-----|------|-------|
-| Her şey | **Inter Variable** | `font-sans` (varsayılan), `font-display` (aynı aile, ad korundu) |
-| Rakam / kod | **JetBrains Mono Variable** | `font-mono`, `.tabular` |
+| Her şey (rakam dahil) | **IBM Plex Sans Variable** | `font-sans` (varsayılan); `font-display` ve `font-mono` aynı aile, adlar korundu |
+| Yalnızca gerçek kod (`pre`, dosya adı) | **IBM Plex Mono** 400 | `font-code` |
 
-Self-host (`@fontsource-variable`), CDN yok. Tüm sayısal değerlere `.tabular`.
+Self-host (`@fontsource-variable/ibm-plex-sans`, `@fontsource/ibm-plex-mono`), CDN yok. Tüm sayısal değerlere `.tabular` (`tabular-nums`); `font-mono` da `tabular-nums` verir.
 
 ### 3.1 Tip ölçeği — 8 basamak
 
@@ -92,9 +92,9 @@ Self-host (`@fontsource-variable`), CDN yok. Tüm sayısal değerlere `.tabular`
 | `text-display` | 44 | 700 | −0.038em | **yalnızca landing** bölüm başlığı, stat sayısı |
 | `text-hero` | 60 | 700 | −0.042em | **yalnızca landing** h1 |
 
-**Negatif tracking zorunlu.** Inter 700 tracking'siz fazla geniş okunur; sıkıştırma sisteme mühendislik hissini veren şeydir.
+**Negatif tracking zorunlu.** 700 ağırlık tracking'siz fazla geniş okunur; sıkıştırma sisteme mühendislik hissini veren şeydir.
 
-**`.label`** — Inter 600 + uppercase + `0.12em` tracking, 11px. Eyebrow, tablo başlığı, kart etiketi, sidebar bölüm ayracı: hepsi bu tek sınıf. Elle `text-[11px] uppercase tracking-[0.12em]` yazılmaz.
+**`.label`** — 600 + uppercase + `0.12em` tracking, 11px. Eyebrow, tablo başlığı, kart etiketi, sidebar bölüm ayracı: hepsi bu tek sınıf. Elle `text-[11px] uppercase tracking-[0.12em]` yazılmaz.
 
 **Ölçek dışı izinli iki istisna** (başka yerde kullanılmaz):
 
@@ -221,7 +221,8 @@ Bunlar renk ya da font değil, **anlam** taşır. Palet değişirse bile geçerl
 - ❌ Ad-hoc renk (`gray-950`, `#111`) — sadece token.
 - ❌ Ad-hoc boyut (`text-[13.5px]`) veya Tailwind varsayılanı (`text-xs`, `text-sm`, `text-lg`) — sadece §3.1 ölçeği.
 - ❌ Elle `text-[11px] uppercase tracking-…` — `.label`.
-- ❌ Rakamı normal fontla — `.tabular`.
+- ❌ Rakamı `tabular-nums`'suz — `.tabular`.
+- ❌ Etiket, rakam veya cümlede mono — mono (`font-code`) yalnızca gerçek kodda.
 - ❌ Voltaj rengini büyük metinde, dolu butonda, uyarıda, kategoride veya kâr/zararda kullanmak — §4.
 - ❌ Sayfada birden fazla dolu voltaj bandı.
 - ❌ Gölge eklemek (`shadow-*`) — ayrım kenarlıkla kurulur.
