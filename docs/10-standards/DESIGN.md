@@ -182,6 +182,7 @@ CSS [`index.css`](../../web/src/index.css)'te:
 - İçerik bloğu [`Section`](../../web/src/components/Section.jsx); yanında `StatCard` ve `DeltaChip` (yalnızca K/Z).
 - Sidebar: beyaz panel, sağda hairline, aktif öğe `.nav-active`. **Koyu şasi yok — tek katman.**
 - Modal: ortak [`ui/modal.jsx`](../../web/src/components/ui/modal.jsx), `window.confirm` yerine de bu.
+- Tam ekran yükleniyor: [`PageLoader`](../../web/src/components/PageLoader.jsx) — yazısız halka, metin yalnız ekran okuyucuya (`sr-only`). Ekran font inmeden çizildiği için görünür metin yedek fontla görünürdü.
 
 ### 5.6 Geçişler
 
@@ -223,6 +224,7 @@ Bunlar renk ya da font değil, **anlam** taşır. Palet değişirse bile geçerl
 - ❌ Elle `text-[11px] uppercase tracking-…` — `.label`.
 - ❌ Rakamı `tabular-nums`'suz — `.tabular`.
 - ❌ Etiket, rakam veya cümlede mono — mono (`font-code`) yalnızca gerçek kodda.
+- ❌ Elle "Yükleniyor…" ekranı — `PageLoader`.
 - ❌ Voltaj rengini büyük metinde, dolu butonda, uyarıda, kategoride veya kâr/zararda kullanmak — §4.
 - ❌ Sayfada birden fazla dolu voltaj bandı.
 - ❌ Gölge eklemek (`shadow-*`) — ayrım kenarlıkla kurulur.

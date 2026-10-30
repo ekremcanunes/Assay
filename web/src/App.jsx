@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './contexts/AuthContext'
 import { LanguageProvider } from './contexts/LanguageContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import PageLoader from './components/PageLoader'
 import Layout from './components/Layout'
 import Overview from './pages/Overview'
 import Market from './pages/Market'
@@ -22,13 +23,7 @@ import Settings from './pages/Settings'
 
 function RootGate() {
   const { session, loading } = useAuth()
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background font-mono text-micro text-muted-foreground">
-        Loading...
-      </div>
-    )
-  }
+  if (loading) return <PageLoader />
   return session ? <Navigate to="/overview" replace /> : <Landing />
 }
 

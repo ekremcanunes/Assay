@@ -8,6 +8,7 @@ import { csrfOf, browserFlowUrl, getFlow, submitFlow, classifyFlowError } from '
 import assayMark from '../assets/assay-mark.svg'
 import AuthVisual from '../components/AuthVisual'
 import CodeStep from '../components/CodeStep'
+import PageLoader from '../components/PageLoader'
 
 /*
   Şifremi unuttum (Kratos recovery, code yöntemi): e-posta → kod → Kratos /settings?flow= ile yeni şifre sayfasına yollar.
@@ -123,13 +124,7 @@ export default function Recovery() {
     await sendCode(address)
   }
 
-  if (!flow) {
-    return (
-      <div className="paper flex min-h-screen items-center justify-center bg-background font-mono text-micro text-muted-foreground">
-        {t('auth.redirecting')}
-      </div>
-    )
-  }
+  if (!flow) return <PageLoader label={t('auth.redirecting')} className="paper" />
 
   return (
     <div className={authPageCls}>

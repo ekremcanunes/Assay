@@ -12,6 +12,7 @@ import assayMark from '../assets/assay-mark.svg'
 import AuthVisual from '../components/AuthVisual'
 import PasswordToggle from '../components/PasswordToggle'
 import CodeStep from '../components/CodeStep'
+import PageLoader from '../components/PageLoader'
 
 // Kullanılamayan akışta baştan başla: Kratos yeni ?flow= ile /login'e geri yollar.
 const restartLogin = () => window.location.replace(browserFlowUrl('login'))
@@ -193,11 +194,7 @@ export default function Login() {
   }
 
   if (!flow && step === 'password') {
-    return (
-      <div className="paper flex min-h-screen items-center justify-center bg-background font-mono text-micro text-muted-foreground">
-        {t('auth.redirecting')}
-      </div>
-    )
+    return <PageLoader label={t('auth.redirecting')} className="paper" />
   }
 
   return (
