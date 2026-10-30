@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using portfolio_service.Middleware;
 using portfolio_service.Services;
@@ -23,6 +24,21 @@ public class MarketServiceClient(HttpClient httpClient, IHttpContextAccessor htt
     public async Task<PriceOnDateResponse> GetPriceOnAsync(string market, string symbol, string assetType, string date) =>
         await GetAsync<PriceOnDateResponse>($"/api/market/price-on/{Uri.EscapeDataString(symbol)}"
             + $"?market={Uri.EscapeDataString(market)}&assetType={Uri.EscapeDataString(assetType)}&date={Uri.EscapeDataString(date)}") ?? new();
+
+    // Alım kilidi (spec §4.6). 404 → null: enstrüman desteklenmiyor. 503 ve diğer hatalar, ulaşılamama
+    // fırlatılır; çağıran bunları "doğrulanamadı" sayar ve alımı reddeder (fail closed).
+    public async Task<SymbolSearchResponse?> GetInstrumentAsync(string market, string symbol)
+    {
+        try
+        {
+            return await GetAsync<SymbolSearchResponse>(
+                $"/api/market/instrument?market={Uri.EscapeDataString(market)}&symbol={Uri.EscapeDataString(symbol)}");
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
 
     // Tüm market-service çağrılarının tek yolu: kullanıcının cookie'si iletilir,
     // cevaptaki kalan cache ömrü (X-Cache-Expires-In) bu isteğin CacheLifetime'ına eklenir.

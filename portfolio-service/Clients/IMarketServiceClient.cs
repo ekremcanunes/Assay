@@ -7,4 +7,5 @@ public interface IMarketServiceClient
     Task<MarketOverviewResponse> GetOverviewAsync();
     Task<PriceHistoryResponse> GetHistoryAsync(string market, string symbol, string assetType, string range);
     Task<PriceOnDateResponse> GetPriceOnAsync(string market, string symbol, string assetType, string date);
+    Task<SymbolSearchResponse?> GetInstrumentAsync(string market, string symbol);
 }

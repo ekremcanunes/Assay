@@ -27,6 +27,12 @@ const stockMarkets = ['BIST', 'US']
 const pill = (on) => cn('press h-9 shrink-0 rounded-full border px-3.5 text-ui',
   on ? 'border-foreground bg-foreground text-background' : 'border-border bg-card text-foreground hover:border-foreground')
 
+// Sunucunun alım kilidi hata kodları (portfolio-service AssetController) → çeviri anahtarı
+const BUY_ERROR_KEYS = {
+  INSTRUMENT_NOT_SUPPORTED: 'assets.instrumentNotSupported',
+  INSTRUMENT_CHECK_UNAVAILABLE: 'assets.instrumentCheckUnavailable',
+}
+
 export default function AddAsset() {
   const navigate = useNavigate()
   const { t, lang } = useLanguage()
@@ -159,7 +165,8 @@ export default function AddAsset() {
       })
       navigate(`/assets/${slugOf(assetType)}`)
     } catch (err) {
-      setError(err.response?.data?.error?.message ?? err.message)
+      const key = BUY_ERROR_KEYS[err.response?.data?.error?.code]
+      setError(key ? t(key) : (err.response?.data?.error?.message ?? err.message))
     }
   }
 
