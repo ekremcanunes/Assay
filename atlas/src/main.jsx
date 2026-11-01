@@ -8,11 +8,12 @@ import './styles.css'
 import Home from './pages/Home'
 import Flow from './pages/Flow'
 import NotFound from './pages/NotFound'
+import Glossary from './pages/Glossary'
 
 const router = createBrowserRouter([
   { path: '/', element: <Home /> },
   { path: '/flow/:id', element: <Flow /> },
-  { path: '/terms', element: <Home /> },
+  { path: '/terms', element: <Glossary /> },
   { path: '*', element: <NotFound /> },
 ])
 
