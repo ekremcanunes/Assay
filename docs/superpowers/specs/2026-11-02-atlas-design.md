@@ -85,7 +85,7 @@ Kaynak malzeme: repo dosyaları, `docs/` (özellikle `40-learning/`), landing te
 | Sunucu ucu | Giriş, erişim talebi ve onay uçları Vercel Functions olarak `atlas/api/` altında. *(Benim kararım.)* |
 | Tema | Yalnız koyu tema. *(Benim kararım: onaylanan sahne koyu üzerine kurulu.)* |
 | Dil | Yalnız Türkçe. *(Benim kararım.)* |
-| Ekran | Masaüstü öncelikli. Mobilde diyagram yatay kaydırılır, adım paneli altta tam genişlik. *(Benim kararım.)* |
+| Ekran | Mobil birinci sınıf (sahibi telefondan da girer). `md` (768px) altında sahne **dikey zincire** döner: kutular alt alta, paket aşağı akar; adım paneli altta tam genişlik, üç sütun alt alta; adımlar arası parmakla kaydırma (swipe). Yatay taşma yok; dokunma alanı ≥ 44px. 360 / 390px genişlikte kontrol edilir. |
 
 ---
 
