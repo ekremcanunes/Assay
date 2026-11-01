@@ -8,19 +8,23 @@ Değerlerin kaynağı [`web/src/index.css`](../../web/src/index.css)'tir. Doküm
 
 ## İndeks
 
-| Önek | Konu | Bölüm |
-|------|------|-------|
-| `IL` | İlke | §1 |
-| `RN` | Renk | §2 |
-| `TM` | Tema | §3 |
-| `TP` | Tipografi | §4 |
-| `KS` | Köşe | §5 |
-| `GL` | Gölge | §6 |
-| `AK` | Aksan (kobalt) | §7 |
-| `BL` | Bileşen | §8 |
-| `HR` | Hareket | §9 |
-| `MB` | Mobil | §10 |
-| `VR` | Veri dürüstlüğü | §11 |
+Bir değişikliği denetlerken tüm dosyayı okuma. Diff'teki işarete göre yalnız ilgili bölümü oku.
+
+| Önek | Konu | Bölüm | Tetikleyen (diff'te görünürse) |
+|------|------|-------|--------------------------------|
+| `IL` | İlke | §1 | yeni renk ailesi, yeni font |
+| `RN` | Renk | §2 | `bg-*`, `text-<renk>`, `border-<renk>`, hex, `hsl(`, grafik rengi |
+| `TM` | Tema | §3 | `dark:`, `useTheme`, `localStorage.theme`, sayfa kökü zemini |
+| `TP` | Tipografi | §4 | `text-<boyut>`, `font-*`, `tracking-*`, `.label`, `.tabular` |
+| `KS` | Köşe | §5 | `rounded-*` |
+| `GL` | Gölge | §6 | `shadow-*` |
+| `AK` | Aksan (kobalt) | §7 | `primary` |
+| `BL` | Bileşen | §8 | `components/ui/*`, `Page`, `Modal`, `Section`, `<input`, `<button`, `<img`, `window.confirm` |
+| `HR` | Hareket | §9 | `transition`, `animate-`, `@keyframes`, `viewTransition` |
+| `MB` | Mobil | §10 | `md:`, `fixed`, `createPortal`, `h-*`, `min-h-*`, `px-*` |
+| `VR` | Veri dürüstlüğü | §11 | yeni veri alanı, grafik, demo veya canlandırma |
+
+"Açık konular" bölümünü her denetimde oku. Oradaki konular ihlal sayılmaz.
 
 ## Terimler
 
@@ -142,10 +146,10 @@ Koyu tema `body` zemini: sağ üstte `#3B82F6` `%12`, sol altta `#10B981` `%8` r
 
 | Sınıf | px | Ağırlık | Kullanım |
 |-------|----|---------|----------|
-| `text-micro` | 11 | 400–600 | çip, rozet, mikro metin |
-| `text-ui` | 13 | 400–600 | varsayılan: UI, tablo hücresi, buton |
-| `text-body` | 15 | 400–600 | gövde, form alanı, liste satırı adı |
-| `text-figure` | 18 | 600–700 | kart değeri, modal başlığı |
+| `text-micro` | 11 | 400, 500, 600, 700 | çip, rozet, mikro metin |
+| `text-ui` | 13 | 400, 500, 600, 700 | varsayılan: UI, tablo hücresi, buton |
+| `text-body` | 15 | 400, 500, 600, 700 | gövde, form alanı, liste satırı adı |
+| `text-figure` | 18 | 600, 700 | kart değeri, modal başlığı |
 | `text-head` | 24 | 700 | bölüm başlığı, mobil sayfa başlığı, varlık sembolü |
 | `text-title` | 32 | 700 | md+ sayfa başlığı, ana KPI |
 | `text-display` | 44 | 700 | yalnız landing bölüm başlığı |
@@ -300,6 +304,7 @@ Koyu tema `body` zemini: sağ üstte `#3B82F6` `%12`, sol altta `#10B981` `%8` r
 Kod tek bir değere bağlı değil. Karar verilince kurala dönüşür.
 
 - Kart iç boşluğu: kodda `p-4`, `p-5`, `p-4 md:p-5` karışık.
+- Ağırlık role bağlı değil. §4 tablosu izinli değerleri verir, hangi rolde hangisi yazmaz.
 - `rounded-[10px]` için token yok; her yerde elle yazılıyor.
 - `font-mono` ve `font-display` Plus Jakarta Sans'a bağlı. Ad yanıltıcı; [`authStyles.js`](../../web/src/lib/authStyles.js) alanda `font-mono` kullanıyor.
 - `rounded-lg` (12px) ile `rounded-xl` (12px) aynı değeri veriyor.
