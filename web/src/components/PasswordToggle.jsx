@@ -8,7 +8,7 @@ export default function PasswordToggle({ shown, onToggle }) {
       type="button"
       onClick={onToggle}
       aria-label={shown ? t('auth.hidePassword') : t('auth.showPassword')}
-      className="absolute right-1 top-1/2 h-11 -translate-y-1/2 px-2.5 text-ui text-muted-foreground underline underline-offset-4 hover:text-foreground"
+      className="absolute right-1 top-1/2 h-11 -translate-y-1/2 px-2.5 text-ui font-medium text-muted-foreground hover:text-foreground"
     >
       {shown ? t('auth.hide') : t('auth.show')}
     </button>

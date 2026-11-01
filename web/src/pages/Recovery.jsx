@@ -5,7 +5,7 @@ import { isValidEmail, kratosErrorText } from '../lib/authErrors'
 import { authLabelCls, authInputCls, authSubmitCls, authPageCls, authCardCls, authDockCls } from '../lib/authStyles'
 import { APP_NAME } from '../lib/app'
 import { csrfOf, browserFlowUrl, getFlow, submitFlow, classifyFlowError } from '../lib/kratosFlow'
-import assayMark from '../assets/assay-mark.svg'
+import { AssayMark } from '@/components/AssayMark'
 import AuthVisual from '../components/AuthVisual'
 import CodeStep from '../components/CodeStep'
 import PageLoader from '../components/PageLoader'
@@ -132,13 +132,13 @@ export default function Recovery() {
         {step === 'email' ? (
           <div key="email" className="flex flex-1 flex-col">
             <Link to="/landing" aria-label={`${APP_NAME} tanıtım sayfası`} className="inline-block self-start rounded-sm hover:opacity-70">
-              <img src={assayMark} alt="" className="h-[30px] w-[30px]" />
+              <AssayMark className="h-[30px] w-[30px]" />
             </Link>
             <h1 className="mt-6 text-head font-bold text-foreground md:mt-4">{t('auth.recoveryTitle')}</h1>
             <p className="mt-1 text-ui text-muted-foreground">{t('auth.recoverySubtitle')}</p>
 
             {error && (
-              <div className="mt-4 rounded-md border border-destructive/40 bg-destructive/8 px-3 py-2 text-micro text-destructive" role="alert">
+              <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-ui text-destructive" role="alert">
                 {error}
               </div>
             )}

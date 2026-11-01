@@ -1,27 +1,15 @@
 import { useState, useMemo } from 'react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useSymbolSearch } from '@/hooks/queries'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import AssetDrawer from '@/components/AssetDrawer'
-import { Section } from '@/components/Section'
+import { AreaSpark } from '@/components/AreaSpark'
 import { RangeBar } from '@/components/Sparkline'
 import { catOf } from '@/lib/assetColors'
 import { pulse as computePulse } from '@/lib/marketPulse'
 import { cn } from '@/lib/utils'
 import { Search, X } from 'lucide-react'
-
-const num = (v) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v ?? 0)
-const pct = (v) => (v != null ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}%` : '—')
-const pctCls = (v) => (v == null ? 'text-muted-foreground' : v >= 0 ? 'text-up' : 'text-down')
-
-// Adet hacmi — Yahoo lot sayısı döndürür, TL değil.
-const compact = (v) =>
-  v == null ? '—' : new Intl.NumberFormat('tr-TR', { notation: 'compact', maximumFractionDigits: 1 }).format(v)
-
-// Değerin 52 haftalık banttaki konumu (%)
-const bandPos = (q) =>
-  q.week52Low != null && q.week52High != null && q.week52High > q.week52Low
-    ? ((q.price - q.week52Low) / (q.week52High - q.week52Low)) * 100
-    : null
+import { num, pct, pctCls, compact, bandPos } from './marketFormat'
 
 const SORTS = [
   { key: 'gainers', label: 'market.sortGainers', fn: (a, b) => (b.changePercent ?? -Infinity) - (a.changePercent ?? -Infinity) },
@@ -31,14 +19,24 @@ const SORTS = [
 
 const moodCls = { strongUp: 'text-up', up: 'text-up', flat: 'text-muted-foreground', down: 'text-down', strongDown: 'text-down' }
 
-// Borsa detay içeriği: nabız (yorum + sayılar + öne çıkanlar) + arama + sıralama + BIST 30 listesi
-export default function StockPanel({ stocks, bist30 }) {
+// Kayan detay paneli (AssetDrawer) piyasa modu için veri şekli
+const toQuote = (s) => ({
+  symbol: s.symbol, name: s.name, market: 'BIST', isMarketQuote: true, assetType: 'Stock', exchange: 'BIST', nativeCurrency: 'TRY',
+  nativePrice: s.price, previousClose: s.previousClose, dayHigh: s.dayHigh, dayLow: s.dayLow,
+  week52High: s.week52High, week52Low: s.week52Low, volume: s.volume, priceAvailable: true,
+})
+
+// Borsa bölümü: nabız kartı (BIST 100, yorum, dağılım, öne çıkanlar) + BIST 30 tablosu.
+// lg+ ekranda satıra tıklamak sağdaki sabit paneli seçer (onSelect); daha darda kayan panel açılır.
+export default function StockPanel({ stocks, bist30, bist100, selected, onSelect }) {
   const { t } = useLanguage()
+  const wide = useMediaQuery('(min-width: 64rem)')
   const [drawer, setDrawer] = useState(null)
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState('gainers')
 
   const p = useMemo(() => computePulse(stocks), [stocks])
+  const volumeLeader = useMemo(() => stocks.reduce((b, s) => ((s.volume ?? -1) > (b?.volume ?? -1) ? s : b), null), [stocks])
 
   // BIST 30 içinde arama tamamen client-side: 30 satır, ağ turu gereksiz.
   const q = query.trim().toLocaleUpperCase('tr')
@@ -53,99 +51,165 @@ export default function StockPanel({ stocks, bist30 }) {
   const wantsWideSearch = q.length >= 2 && filtered.length === 0
   const { data: wideResults = [], isFetching: wideSearching } = useSymbolSearch(wantsWideSearch ? query.trim() : null)
 
-  const open = (s) =>
-    setDrawer({
-      symbol: s.symbol, name: s.name, market: 'BIST', isMarketQuote: true, assetType: 'Stock', exchange: 'BIST', nativeCurrency: 'TRY',
-      nativePrice: s.price, previousClose: s.previousClose, dayHigh: s.dayHigh, dayLow: s.dayLow,
-      week52High: s.week52High, week52Low: s.week52Low, priceAvailable: true,
-    })
+  const open = (s) => (wide && onSelect ? onSelect(s.symbol) : setDrawer(toQuote(s)))
+  const isSel = (s) => wide && selected === s.symbol
+
+  const highlights = [
+    [p.top, 'market.topGainer'],
+    [p.bottom, 'market.topLoser'],
+    [volumeLeader, 'market.volumeLeader'],
+  ].filter(([s]) => s)
 
   return (
     <div className="space-y-4">
-      {/* Nabız: yorum + sayılar + öne çıkanlar (spec §4.1) */}
-      <section className="rounded-lg border border-border bg-card p-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
-          <span className="label whitespace-nowrap text-muted-foreground">{t('market.today')}</span>
+      {/* Nabız kartı */}
+      <section className="rounded-xl border border-border bg-card p-4 shadow-card md:p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="label flex items-center gap-1.5 text-muted-foreground">
+              {t('market.pulse')}
+              <i className={cn('h-1.5 w-1.5 rounded-full', (bist100?.changePercent ?? 0) >= 0 ? 'bg-up' : 'bg-down')} aria-hidden="true" />
+            </div>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="tabular text-title font-bold text-foreground">{bist100 ? num(bist100.price) : '—'}</span>
+              <span className="text-ui font-medium text-muted-foreground">BIST 100</span>
+            </div>
+          </div>
+          <span className={cn('tabular shrink-0 rounded-lg px-2.5 py-1 text-ui font-semibold',
+            bist100?.changePercent == null ? 'chip-neutral' : bist100.changePercent >= 0 ? 'chip-up' : 'chip-down')}>
+            {pct(bist100?.changePercent)}
+          </span>
+        </div>
+
+        {bist100?.spark?.length > 1 && (
+          <div className="mt-4">
+            <div className="label mb-1.5 text-muted-foreground">{t('market.seriesStocks')}</div>
+            <AreaSpark values={bist100.spark} color={catOf('Stock').color} className="h-20 w-full md:h-24" />
+          </div>
+        )}
+
+        <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-t border-border pt-4">
+          <p className="text-ui text-foreground">
+            {t('market.moodLead')}{' '}
+            <b className={cn('font-semibold', p.mood ? moodCls[p.mood] : 'text-muted-foreground')}>
+              {p.mood ? t(`market.mood.${p.mood}`) : '—'}
+            </b>
+          </p>
           {bist30 && (
             <span className="whitespace-nowrap text-micro text-muted-foreground">
               {t('market.bist30Index')}{' '}
-              <span className="tabular text-foreground">{num(bist30.price)}</span>
+              <span className="tabular font-semibold text-foreground">{num(bist30.price)}</span>
               {' · '}
-              <span className={`tabular ${pctCls(bist30.changePercent)}`}>{pct(bist30.changePercent)}</span>
+              <span className={`tabular font-semibold ${pctCls(bist30.changePercent)}`}>{pct(bist30.changePercent)}</span>
             </span>
           )}
         </div>
-        <p className="mt-2 text-body text-foreground">
-          {t('market.moodLead')}{' '}
-          <b className={cn('font-semibold', p.mood ? moodCls[p.mood] : 'text-muted-foreground')}>
-            {p.mood ? t(`market.mood.${p.mood}`) : '—'}
-          </b>
-        </p>
-        <div className="mt-3 flex gap-6">
-          {[['up', 'text-up', 'market.rose'], ['flat', 'text-muted-foreground', 'market.unchanged'], ['down', 'text-down', 'market.fell']].map(([k, cls, label]) => (
-            <div key={k} className="flex flex-col">
-              <span className={`tabular text-head font-semibold leading-none ${cls}`}>{p.total ? p[k] : '—'}</span>
-              <span className="mt-1 text-micro text-muted-foreground">{t(label)}</span>
-            </div>
+
+        {/* Yükselen / değişmeyen / düşen: dağılım çubuğu + sayılar */}
+        {p.total > 0 && (
+          <div className="mt-3 flex h-2 gap-0.5 overflow-hidden rounded-full bg-secondary">
+            {[['up', 'bg-up'], ['flat', 'bg-input'], ['down', 'bg-down']].map(([k, bg]) =>
+              p[k] > 0 && <span key={k} className={bg} style={{ width: `${(p[k] / p.total) * 100}%` }} />)}
+          </div>
+        )}
+        <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1">
+          {[['up', 'bg-up', 'market.rose'], ['flat', 'bg-input', 'market.unchanged'], ['down', 'bg-down', 'market.fell']].map(([k, dot, label]) => (
+            <span key={k} className="inline-flex items-center gap-1.5 text-micro text-muted-foreground">
+              <i className={`h-2 w-2 rounded-full ${dot}`} />
+              <span className="tabular font-semibold text-foreground">{p.total ? p[k] : '—'}</span> {t(label)}
+            </span>
           ))}
         </div>
-        {(p.top || p.bottom) && (
-          <div className="mt-3 divide-y divide-border border-t border-border">
-            {[[p.top, 'market.topGainer'], [p.bottom, 'market.topLoser']].filter(([s]) => s).map(([s, label]) => (
-              <button key={label} onClick={() => open(s)} className="press flex min-h-[44px] w-full items-center justify-between gap-2 text-left text-ui hover:bg-secondary/60">
-                <span className="text-muted-foreground">{t(label)} · <b className="font-semibold text-foreground">{s.symbol}</b></span>
-                <span className={`tabular ${pctCls(s.changePercent)}`}>{pct(s.changePercent)}</span>
-              </button>
-            ))}
+
+        {/* Öne çıkan hisseler — hepsi mevcut BIST 30 verisinden */}
+        {highlights.length > 0 && (
+          <div className="mt-5 border-t border-border pt-4">
+            <div className="label mb-2.5 text-muted-foreground">{t('market.highlights')}</div>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {highlights.map(([s, label]) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => open(s)}
+                  className={cn(
+                    'press flex min-w-0 items-center gap-3 rounded-xl border bg-card p-3 text-left hover:border-input',
+                    isSel(s) ? 'border-primary/50 bg-primary/5' : 'border-border'
+                  )}
+                >
+                  <SymbolBadge symbol={s.symbol} size="h-9 w-9" />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-ui font-bold text-foreground">{s.symbol}</span>
+                    </span>
+                    <span className="block truncate text-micro text-muted-foreground">{t(label)}</span>
+                  </span>
+                  <span className="shrink-0 text-right">
+                    <span className="tabular block text-ui font-semibold text-foreground">{num(s.price)}</span>
+                    {label === 'market.volumeLeader'
+                      ? <span className="tabular block text-micro text-muted-foreground">{compact(s.volume)}</span>
+                      : <span className={`tabular block text-micro font-semibold ${pctCls(s.changePercent)}`}>{pct(s.changePercent)}</span>}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </section>
 
-      {/* Arama + sıralama çipleri */}
-      <div className="space-y-2">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('market.searchPlaceholder')}
-            aria-label={t('market.searchPlaceholder')}
-            className="h-11 w-full rounded-lg border border-border bg-card pl-9 pr-9 text-ui text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none md:w-72"
-          />
-          {query && (
-            <button onClick={() => setQuery('')} aria-label={t('common.clear')} className="absolute right-1 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center text-muted-foreground hover:text-foreground">
-              <X className="h-4 w-4" />
-            </button>
-          )}
+      {/* BIST 30 */}
+      <section className="overflow-hidden rounded-xl border border-border bg-card shadow-card">
+        <div className="flex flex-wrap items-center gap-3 px-4 pb-3 pt-4">
+          <h3 className="font-display text-body font-semibold text-foreground">BIST 30</h3>
+          <span className="tabular chip-neutral rounded-sm px-1.5 py-0.5 text-micro font-medium">{sorted.length} / {stocks.length}</span>
+          <div className="flex w-full flex-wrap items-center gap-2 md:ml-auto md:w-auto">
+            {/* Sıralama — segment */}
+            <div role="radiogroup" className="flex max-w-full gap-0.5 overflow-x-auto rounded-[10px] bg-secondary p-1">
+              {SORTS.map((s) => (
+                <button
+                  key={s.key}
+                  role="radio"
+                  aria-checked={sort === s.key}
+                  onClick={() => setSort(s.key)}
+                  className={cn('h-8 shrink-0 whitespace-nowrap rounded-lg border px-3 text-micro',
+                    sort === s.key ? 'border-border bg-card font-bold text-foreground shadow-card' : 'border-transparent font-medium text-muted-foreground hover:text-foreground')}
+                >
+                  {t(s.label)}
+                </button>
+              ))}
+            </div>
+            <div className="relative w-full md:w-56">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t('market.searchPlaceholder')}
+                aria-label={t('market.searchPlaceholder')}
+                className="h-10 w-full rounded-[10px] border border-border bg-card pl-9 pr-9 text-ui text-foreground placeholder:text-muted-foreground hover:border-input focus:border-primary focus:outline-none"
+              />
+              {query && (
+                <button onClick={() => setQuery('')} aria-label={t('common.clear')} className="absolute right-0.5 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-lg text-muted-foreground hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
         </div>
-        <div className="flex gap-1.5 overflow-x-auto">
-          {SORTS.map((s) => (
-            <button
-              key={s.key}
-              onClick={() => setSort(s.key)}
-              aria-pressed={sort === s.key}
-              className={cn('press h-9 shrink-0 rounded-full border px-3 text-ui',
-                sort === s.key ? 'border-foreground bg-foreground text-background' : 'border-border bg-card text-foreground hover:border-foreground')}
-            >
-              {t(s.label)}
-            </button>
-          ))}
-        </div>
-      </div>
 
-      <Section title="BIST 30" meta={`${sorted.length} / ${stocks.length}`}>
         {/* Mobil: satır listesi */}
-        <ul className="divide-y divide-border md:hidden">
+        <ul className="divide-y divide-border border-t border-border md:hidden">
           {sorted.map((s) => (
             <li key={s.symbol}>
-              <button onClick={() => open(s)} className="press flex min-h-[56px] w-full items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-secondary/60">
-                <span className="min-w-0">
-                  <span className="block text-body font-semibold text-foreground">{s.symbol}</span>
-                  <span className="block truncate text-ui text-foreground">{s.name}</span>
+              <button onClick={() => open(s)} className="press flex min-h-14 w-full items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-secondary/60">
+                <span className="flex min-w-0 items-center gap-3">
+                  <SymbolBadge symbol={s.symbol} size="h-9 w-9" />
+                  <span className="min-w-0">
+                    <span className="block text-body font-semibold text-foreground">{s.symbol}</span>
+                    <span className="block truncate text-ui text-foreground">{s.name}</span>
+                  </span>
                 </span>
                 <span className="shrink-0 text-right">
                   <span className="tabular block text-ui font-semibold text-foreground">₺{num(s.price)}</span>
-                  <span className={`tabular mt-0.5 inline-flex rounded px-1.5 py-0.5 text-micro ${s.changePercent >= 0 ? 'bg-up/12 text-up' : 'bg-down/12 text-down'}`}>
+                  <span className={`tabular mt-0.5 inline-flex rounded-sm px-1.5 py-0.5 text-micro font-semibold ${s.changePercent >= 0 ? 'chip-up' : 'chip-down'}`}>
                     {pct(s.changePercent)}
                   </span>
                 </span>
@@ -154,41 +218,47 @@ export default function StockPanel({ stocks, bist30 }) {
           ))}
         </ul>
 
-        {/* Masaüstü: tablo (eski Market.jsx'ten aynen) */}
+        {/* Masaüstü: tablo */}
         <div className="hidden overflow-x-auto md:block">
-          <table className="w-full text-left text-micro">
+          <table className="w-full text-left text-ui">
             <thead>
-              <tr className="border-b border-border label text-muted-foreground">
-                <th className="px-4 py-2.5 font-normal">{t('assets.symbol')}</th>
-                <th className="px-4 py-2.5 font-normal">{t('market.company')}</th>
-                <th className="px-4 py-2.5 text-right font-normal">{t('assets.price')}</th>
-                <th className="px-4 py-2.5 text-right font-normal">{t('market.change')}</th>
-                <th className="px-4 py-2.5 font-normal">{t('market.dayRange')}</th>
-                <th className="px-4 py-2.5 text-right font-normal">{t('market.volume')}</th>
-                <th className="px-4 py-2.5 font-normal">{t('market.band52')}</th>
+              <tr className="label border-y border-border bg-secondary/40 text-muted-foreground">
+                <th className="px-3 py-2.5 font-semibold">{t('assets.symbol')}</th>
+                <th className="px-3 py-2.5 font-semibold">{t('market.company')}</th>
+                <th className="px-3 py-2.5 text-right font-semibold">{t('assets.price')}</th>
+                <th className="px-3 py-2.5 text-right font-semibold">{t('market.change')}</th>
+                <th className="px-3 py-2.5 font-semibold">{t('market.dayRange')}</th>
+                <th className="px-3 py-2.5 text-right font-semibold">{t('market.volume')}</th>
+                <th className="px-3 py-2.5 font-semibold">{t('market.band52')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {sorted.map((s) => {
                 const band = bandPos(s)
+                const sel = isSel(s)
                 return (
-                  <tr key={s.symbol} onClick={() => open(s)} className="group cursor-pointer hover:bg-secondary">
-                    <td className="px-4 py-2.5">
-                      <span className="inline-flex items-center gap-2 font-semibold text-foreground group-hover:underline">
+                  <tr
+                    key={s.symbol}
+                    onClick={() => open(s)}
+                    aria-selected={sel || undefined}
+                    className={cn('group cursor-pointer', sel ? 'bg-primary/5 shadow-[inset_3px_0_0_hsl(var(--primary))]' : 'hover:bg-primary/5')}
+                  >
+                    <td className="px-3 py-3">
+                      <span className={cn('inline-flex items-center gap-2 font-semibold', sel ? 'text-primary' : 'text-foreground')}>
                         <SymbolBadge symbol={s.symbol} />
                         {s.symbol}
                       </span>
                     </td>
-                    <td className="max-w-[200px] truncate px-4 py-2.5 text-ui text-foreground">{s.name}</td>
-                    <td className="tabular px-4 py-2.5 text-right text-foreground">{num(s.price)}</td>
-                    <td className={`tabular px-4 py-2.5 text-right font-semibold ${pctCls(s.changePercent)}`}>{pct(s.changePercent)}</td>
-                    <td className="px-4 py-2.5">
-                      <RangeBar low={s.dayLow} high={s.dayHigh} value={s.price} />
+                    <td className="max-w-[170px] truncate px-3 py-3 text-foreground">{s.name}</td>
+                    <td className="tabular px-3 py-3 text-right font-medium text-foreground">{num(s.price)}</td>
+                    <td className={`tabular px-3 py-3 text-right font-semibold ${pctCls(s.changePercent)}`}>{pct(s.changePercent)}</td>
+                    <td className="px-3 py-3">
+                      <RangeBar low={s.dayLow} high={s.dayHigh} value={s.price} className="w-20" />
                     </td>
-                    <td className="tabular px-4 py-2.5 text-right text-muted-foreground">{compact(s.volume)}</td>
-                    <td className="px-4 py-2.5">
+                    <td className="tabular px-3 py-3 text-right text-muted-foreground">{compact(s.volume)}</td>
+                    <td className="px-3 py-3">
                       {band != null && (
-                        <span className="block h-1.5 w-16 overflow-hidden rounded-full bg-border">
+                        <span className="block h-1.5 w-16 overflow-hidden rounded-full bg-secondary">
                           <span className={`block h-full rounded-full ${catOf('Gold').dot}`} style={{ width: `${band}%` }} />
                         </span>
                       )}
@@ -201,7 +271,7 @@ export default function StockPanel({ stocks, bist30 }) {
         </div>
 
         {sorted.length === 0 && (
-          <div className="px-4 py-8 text-center">
+          <div className="border-t border-border px-4 py-8 text-center">
             <p className="text-micro text-muted-foreground">{t('market.notInBist30')}</p>
             {wideSearching && <p className="mt-2 text-micro text-muted-foreground">{t('common.loading')}</p>}
             {wideResults.length > 0 && (
@@ -219,17 +289,17 @@ export default function StockPanel({ stocks, bist30 }) {
             )}
           </div>
         )}
-      </Section>
+      </section>
 
       {drawer && <AssetDrawer holding={drawer} onClose={() => setDrawer(null)} onSell={() => {}} />}
     </div>
   )
 }
 
-function SymbolBadge({ symbol }) {
+function SymbolBadge({ symbol, size = 'h-7 w-7' }) {
   const cat = catOf('Stock')
   return (
-    <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md font-mono text-micro ${cat.tint} ${cat.text}`}>
+    <span className={`grid ${size} shrink-0 place-items-center rounded-lg text-micro font-bold ${cat.tint} ${cat.text}`}>
       {symbol.slice(0, 2)}
     </span>
   )

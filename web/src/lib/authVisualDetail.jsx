@@ -11,8 +11,8 @@ const detail = {
       d: 'Spline ya da Three.js, login’in ilk yüklemesine yüzlerce KB ile 1 MB arası ekler. Izgara 2D Canvas’a, mumlar inline SVG’ye çiziliyor; sahnenin tamamı gzip ile yaklaşık 2 KB.',
     },
     {
-      t: 'VOLTAJ dilinde',
-      d: 'Renkler token’dan okunuyor: çizgiler --border, yükselen ve düşen mumlar --up / --down, voltaj rengi yalnızca hareketli ortalama hattında. Gölge, gradyan ya da dördüncü renk yok.',
+      t: 'Tasarım sisteminin dilinde',
+      d: 'Renkler token’dan okunuyor: çizgiler --border, yükselen ve düşen mumlar --up / --down, kobalt aksan yalnızca hareketli ortalama hattında. Açık ve koyu temada aynı token’lar; gradyan ya da ek renk yok.',
     },
     {
       t: 'Veri uydurmuyor',

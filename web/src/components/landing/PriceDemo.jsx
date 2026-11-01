@@ -11,7 +11,7 @@ function Wire({ run, ms }) {
       {run && (
         <i
           key={run}
-          className="absolute inset-0 origin-left bg-voltage"
+          className="absolute inset-0 origin-left bg-primary"
           style={{ animation: REDUCE ? 'none' : `wire-fill ${ms}ms linear forwards` }}
         />
       )}
@@ -23,9 +23,9 @@ function Node({ label, glyph, tone }) {
   return (
     <div className="flex min-w-[56px] flex-col items-center gap-1 text-micro text-muted-foreground">
       <span className={cn('grid h-9 w-9 place-items-center rounded-lg font-mono text-ui font-semibold transition-colors',
-        tone === 'on' ? 'bg-foreground text-background'
-        : tone === 'hit' ? 'bg-up text-white'
-        : tone === 'miss' ? 'bg-down text-white'
+        tone === 'on' ? 'bg-primary text-primary-foreground'
+        : tone === 'hit' ? 'bg-up text-card'
+        : tone === 'miss' ? 'bg-down text-card'
         : 'bg-secondary text-foreground')}
       >
         {glyph}
@@ -68,7 +68,7 @@ export default function PriceDemo() {
   const done = phase?.step === 3
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 md:p-5">
+    <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-card md:p-5">
       <div className="text-body font-semibold text-foreground">Bir fiyat iste, nereden geldiğini gör</div>
 
       <div className="flex gap-1.5">
@@ -77,7 +77,7 @@ export default function PriceDemo() {
             key={s}
             type="button"
             onClick={() => ask(s)}
-            className={cn('press h-10 rounded-full border px-3.5 font-mono text-ui font-semibold text-foreground hover:border-foreground',
+            className={cn('press h-10 rounded-full border bg-card px-3.5 font-mono text-ui font-semibold text-foreground hover:bg-secondary',
               cached.has(s) ? 'border-up' : 'border-border')}
           >
             {s}
@@ -97,7 +97,7 @@ export default function PriceDemo() {
         />
       </div>
 
-      <div className="min-h-[64px] rounded-md bg-secondary px-3 py-2.5 text-ui" aria-live="polite">
+      <div className="min-h-[64px] rounded-lg bg-secondary px-3 py-2.5 text-ui" aria-live="polite">
         {!phase ? (
           <span className="text-muted-foreground">Bir sembole dokun. İlk istek dış kaynağa gider; ikincisi önbellekten gelir.</span>
         ) : !done ? (

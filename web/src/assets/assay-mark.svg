@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Assay monogramı: ink "A" + voltaj rengi taban çizgisi.
-       Gradyan, yuvarlak uç ve gölge yok — VOLTAJ sisteminin kuralı.
-       Renkler currentColor/sabit: 16px'te tek silüet olarak okunur. -->
-  <path d="M32 8 L13 50 M32 8 L51 50 M21.5 36 H42.5"
-        fill="none" stroke="#141414" stroke-width="8"
-        stroke-linecap="butt" stroke-linejoin="miter"/>
-  <rect x="10" y="56.5" width="44" height="3" fill="#C2185B"/>
-</svg>

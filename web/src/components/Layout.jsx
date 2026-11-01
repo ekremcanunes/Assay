@@ -5,7 +5,9 @@ import { cn } from '@/lib/utils'
 import { APP_NAME } from '@/lib/app'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
-import assayMark from '@/assets/assay-mark.svg'
+import { AssayMark } from '@/components/AssayMark'
+import { ThemeSwitch } from '@/components/ThemeSwitch'
+import { StatusBar } from '@/components/StatusBar'
 
 // Canlı sistem tarih/saati (sidebar alt bilgisi)
 function useClock() {
@@ -17,7 +19,7 @@ function useClock() {
   return now
 }
 
-const sectionCls = 'px-4 pb-1.5 pt-4 label text-muted-foreground'
+const sectionCls = 'px-2.5 pb-1.5 pt-4 label text-muted-foreground'
 
 function NavItem({ to, label, icon: Icon, end }) {
   return (
@@ -26,24 +28,20 @@ function NavItem({ to, label, icon: Icon, end }) {
       end={end}
       className={({ isActive }) =>
         cn(
-          'relative flex h-[34px] items-center gap-2.5 rounded-r-md px-2.5 text-ui',
+          'relative flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-ui',
           isActive
-            ? 'nav-active font-semibold text-foreground'
+            ? 'nav-active font-semibold text-primary'
             : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
         )
       }
     >
-      {({ isActive }) => (
-        <>
-          <Icon className={cn('h-4 w-4 shrink-0', isActive && 'text-voltage')} />
-          {label}
-        </>
-      )}
+      <Icon className="h-4 w-4 shrink-0" />
+      {label}
     </NavLink>
   )
 }
 
-// Mobil alt çubuk sekmesi — dokunma hedefi 56px, etiket kısa sürüm
+// Mobil alt çubuk sekmesi — dokunma hedefi 64px, aktifte kobalt + altta nokta
 function TabItem({ to, label, icon: Icon, end }) {
   return (
     <NavLink
@@ -51,15 +49,16 @@ function TabItem({ to, label, icon: Icon, end }) {
       end={end}
       className={({ isActive }) =>
         cn(
-          'flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1 px-0.5',
-          isActive ? 'text-foreground' : 'text-muted-foreground'
+          'relative flex min-h-16 flex-1 flex-col items-center justify-center gap-0.5 px-0.5',
+          isActive ? 'text-primary' : 'text-muted-foreground'
         )
       }
     >
       {({ isActive }) => (
         <>
-          <Icon className={cn('h-[18px] w-[18px] shrink-0', isActive && 'text-voltage')} />
-          <span className={cn('w-full truncate text-center text-micro', isActive && 'font-medium')}>{label}</span>
+          <Icon className="h-[22px] w-[22px] shrink-0" />
+          <span className={cn('w-full truncate text-center text-micro', isActive && 'font-semibold')}>{label}</span>
+          {isActive && <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />}
         </>
       )}
     </NavLink>
@@ -99,7 +98,7 @@ export default function Layout() {
   const langButton = (
     <button
       onClick={() => switchLang(lang === 'tr' ? 'en' : 'tr')}
-      className="flex h-[34px] items-center gap-2.5 rounded-r-md px-2.5 text-ui text-muted-foreground hover:bg-secondary hover:text-foreground"
+      className="flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-ui text-muted-foreground hover:bg-secondary hover:text-foreground"
     >
       <Globe className="h-4 w-4 shrink-0" />
       {lang === 'tr' ? 'English' : 'Türkçe'}
@@ -107,8 +106,8 @@ export default function Layout() {
   )
 
   const userCard = (
-    <div className="mx-2 mt-1 flex items-center gap-2.5 rounded-md border border-border bg-card px-2 py-2">
-      <div className="grid h-[25px] w-[25px] shrink-0 place-items-center rounded-sm bg-secondary text-micro font-semibold text-foreground">
+    <div className="mt-1 flex items-center gap-2.5 rounded-xl border border-border bg-card px-2.5 py-2">
+      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-secondary text-micro font-bold text-foreground">
         {initials}
       </div>
       <div className="min-w-0 flex-1">
@@ -119,7 +118,7 @@ export default function Layout() {
         onClick={logout}
         title={t('nav.logout')}
         aria-label={t('nav.logout')}
-        className="shrink-0 rounded-md p-1 text-muted-foreground hover:text-foreground"
+        className="shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-secondary hover:text-foreground"
       >
         <LogOut className="h-4 w-4" />
       </button>
@@ -127,12 +126,12 @@ export default function Layout() {
   )
 
   return (
-    <div className="min-h-dvh bg-background text-foreground md:flex md:h-dvh">
+    <div className="min-h-dvh text-foreground md:flex md:h-dvh">
       {/* Masaüstü kenar çubuğu — mobilde alt çubuk + menü sayfası devralır */}
-      <aside className="hidden w-[212px] shrink-0 flex-col gap-0.5 border-r border-border bg-card py-2.5 pl-0 pr-2.5 md:flex">
+      <aside className="hidden w-[224px] shrink-0 flex-col gap-0.5 border-r border-border bg-card px-3 py-3 md:flex">
         {/* Marka rozeti */}
-        <div className="mb-1 flex items-center gap-2.5 border-b border-border px-4 pb-3 pt-1">
-          <img src={assayMark} alt="" className="h-[26px] w-[26px] shrink-0" />
+        <div className="mb-1 flex items-center gap-2.5 px-1.5 pb-3 pt-1">
+          <AssayMark className="h-[26px] w-[26px] shrink-0" />
           {/* Yalnızca marka — kullanıcı bilgisi alttaki kartta */}
           <div className="truncate text-body font-bold leading-tight tracking-tight text-foreground">{APP_NAME}</div>
         </div>
@@ -151,7 +150,8 @@ export default function Layout() {
 
         {/* Alt blok: saat + ayarlar + kullanıcı kartı */}
         <div className="mt-auto flex flex-col gap-0.5">
-          <div className="tabular px-4 pb-1 text-micro leading-relaxed text-muted-foreground">{clock}</div>
+          <div className="tabular px-2.5 pb-1 text-micro leading-relaxed text-muted-foreground">{clock}</div>
+          <ThemeSwitch className="mx-0.5 my-1" />
           {langButton}
           {userCard}
         </div>
@@ -160,43 +160,46 @@ export default function Layout() {
       {/* Bone içerik tuvali — padding'i Page bileşeni yönetir (başlık kenara yapışsın diye) */}
       {/* Mobilde kaydırmayı belge yapar (adres çubuğu gizlenebilsin); md+ eski düzen.
           Alt çubuğun altında içerik kalmasın diye çubuk yüksekliği + iPhone ana ekran çizgisi kadar boşluk */}
-      <main ref={mainRef} className="min-w-0 bg-background pb-[calc(56px+env(safe-area-inset-bottom))] text-foreground md:flex-1 md:overflow-auto md:pb-0">
+      <main ref={mainRef} className="min-w-0 pb-[calc(64px+env(safe-area-inset-bottom))] text-foreground md:flex-1 md:overflow-auto md:pb-0">
+        <StatusBar now={now} />
         <Outlet />
       </main>
 
       {/* Mobil alt navigasyon — ana 5 sayfa + ikincil öğeler için menü */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-border bg-card pb-[env(safe-area-inset-bottom)] md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-border bg-card backdrop-blur-xl pb-[env(safe-area-inset-bottom)] md:hidden">
         {[...generalNav, ...marketNav].map((item) => (
           <TabItem key={item.to} to={item.to} label={item.short} icon={item.icon} end={item.end} />
         ))}
         <button
           onClick={() => setMenuOpen(true)}
           aria-label={t('nav.menu')}
-          className="flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1 px-0.5 text-muted-foreground"
+          className="flex min-h-16 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 text-muted-foreground"
         >
-          <Menu className="h-[18px] w-[18px] shrink-0" />
+          <Menu className="h-[22px] w-[22px] shrink-0" />
           <span className="w-full truncate text-center text-micro">{t('nav.menu')}</span>
         </button>
       </nav>
 
       {/* Mobil menü — dil, kullanıcı, çıkış (masaüstünde kenar çubuğunun alt bloğu) */}
       {menuOpen && (
-        <div className="fixed inset-0 z-50 bg-foreground/50 md:hidden" onClick={() => setMenuOpen(false)}>
+        <div className="fixed inset-0 z-50 bg-veil md:hidden" onClick={() => setMenuOpen(false)}>
           <div
-            className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 rounded-t-lg border-t border-border bg-card p-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
+            className="modal-in absolute inset-x-0 bottom-0 flex flex-col gap-0.5 rounded-t-sheet border-t border-border bg-popover p-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-sheet"
             onClick={(e) => e.stopPropagation()}
           >
+            <div className="mx-auto mb-2 h-1 w-9 rounded-full bg-input" aria-hidden="true" />
             <div className="flex items-center justify-between px-2 pb-1">
               <div className="truncate text-ui font-semibold text-foreground">{APP_NAME}</div>
               <button
                 onClick={() => setMenuOpen(false)}
                 aria-label={t('nav.menuClose')}
-                className="rounded-md p-2 text-muted-foreground hover:text-foreground"
+                className="rounded-lg p-2 text-muted-foreground hover:bg-secondary hover:text-foreground"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
             <div className="tabular px-2.5 pb-1 text-micro leading-relaxed text-muted-foreground">{clock}</div>
+            <ThemeSwitch className="mx-0.5 my-1" />
             {langButton}
             {userCard}
           </div>

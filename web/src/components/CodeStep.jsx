@@ -46,7 +46,7 @@ export default function CodeStep({
       </p>
 
       {error && (
-        <div className="mt-4 rounded-md border border-destructive/40 bg-destructive/8 px-3 py-2 text-micro text-destructive" role="alert">
+        <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-ui text-destructive" role="alert">
           {error}
         </div>
       )}
@@ -76,7 +76,7 @@ export default function CodeStep({
             {left > 0 ? (
               <>{t('auth.otpResendIn')} <span className="tabular font-mono">0:{String(left).padStart(2, '0')}</span></>
             ) : (
-              <button type="button" onClick={onResend} disabled={!ready} className="font-semibold text-foreground underline underline-offset-4 hover:opacity-70 disabled:opacity-50">
+              <button type="button" onClick={onResend} disabled={!ready} className="font-semibold text-primary underline-offset-4 hover:underline disabled:opacity-50">
                 {t('auth.otpResend')}
               </button>
             )}

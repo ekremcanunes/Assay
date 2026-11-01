@@ -15,7 +15,7 @@ import { CodeBlock, MiniTable } from '../components/landing/techParts'
 function Fold({ label, children }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
+    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-card">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -39,7 +39,7 @@ function HowBlock({ b }) {
       <figure>
         <h3 className="mb-1.5 text-body font-semibold text-foreground">{b.title}</h3>
         {b.body && <p className="mb-3 text-ui text-muted-foreground">{b.body}</p>}
-        <div className="overflow-x-auto rounded-lg border border-border bg-card p-4">{b.figure}</div>
+        <div className="overflow-x-auto rounded-xl border border-border bg-card p-4">{b.figure}</div>
         {b.caption && <figcaption className="mt-2 font-mono text-micro text-muted-foreground">{b.caption}</figcaption>}
       </figure>
     )
@@ -59,7 +59,7 @@ function HowBlock({ b }) {
 function TechHeader({ tech, tagline }) {
   return (
     <header className="mb-6 rounded-xl border border-foreground bg-card p-5" style={{ viewTransitionName: `tech-${tech.slug}` }}>
-      <span className="text-voltage [&>svg]:h-8 [&>svg]:w-8">{tech.icon}</span>
+      <span className="text-primary [&>svg]:h-8 [&>svg]:w-8">{tech.icon}</span>
       <h1 className="mt-3 text-head font-bold text-foreground">{tech.name}</h1>
       <span className="font-mono text-micro tracking-wide text-muted-foreground">{tech.role}</span>
       {tagline && <p className="mt-3 text-body text-foreground">{tagline}</p>}
@@ -73,7 +73,7 @@ function Body({ tech }) {
     return (
       <>
       <TechHeader tech={tech} />
-      <div className="rounded-lg border border-dashed border-input bg-card p-6 text-center">
+      <div className="rounded-xl border border-dashed border-input bg-card p-6 text-center">
         <h2 className="text-body font-semibold text-foreground">Henüz yazılmadı</h2>
         <p className="mt-1 text-ui text-muted-foreground">Bu teknolojinin yazısı sırada. Önceki / Sonraki ile diğerlerine bakabilirsin.</p>
       </div>
@@ -93,7 +93,7 @@ function Body({ tech }) {
         <h2 className="label mb-3 text-muted-foreground">Neden bunu seçtik</h2>
         <div className="flex flex-col gap-4">
           {why.map((w) => (
-            <div key={w.t} className="rule-accent pt-2.5">
+            <div key={w.t} className="border-t border-border pt-2.5">
               <h3 className="mb-1 text-body font-semibold text-foreground">{w.t}</h3>
               <p className="text-ui text-muted-foreground">{w.d}</p>
             </div>
@@ -115,7 +115,7 @@ function Body({ tech }) {
           <h2 className="label mb-3 text-muted-foreground">Ne öğrendik</h2>
           <div className="flex flex-col gap-3">
             {learned.map((b) => (
-              <div key={b.title} className="edge-accent rounded-r-lg bg-card p-4">
+              <div key={b.title} className="rounded-xl border border-border bg-card p-4 shadow-card">
                 <h3 className="mb-1 text-ui font-semibold text-foreground">{b.title}</h3>
                 <p className="text-ui text-muted-foreground">{b.body}</p>
               </div>
@@ -155,7 +155,7 @@ export default function LandingTech() {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       <div className="sticky top-0 z-10 flex items-center gap-1 border-b border-border bg-card px-2 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))]">
-        <button type="button" onClick={back} aria-label="Landing'e dön" className="press grid h-11 w-11 place-items-center rounded-md text-foreground hover:bg-secondary">
+        <button type="button" onClick={back} aria-label="Landing'e dön" className="press grid h-11 w-11 place-items-center rounded-lg text-foreground hover:bg-secondary">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <span className="text-ui text-muted-foreground">Teknolojiler · {i + 1} / {TECH.length}</span>
@@ -168,10 +168,10 @@ export default function LandingTech() {
       </main>
 
       <nav className="sticky bottom-0 grid grid-cols-2 gap-2 border-t border-border bg-card px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
-        <Link to={`/landing/tech/${prev.slug}`} replace className="press flex h-11 items-center justify-center truncate rounded-md border border-border px-3 text-ui text-foreground hover:border-foreground">
+        <Link to={`/landing/tech/${prev.slug}`} replace className="press flex h-11 items-center justify-center truncate rounded-[10px] border border-border bg-card px-3 text-ui text-foreground hover:bg-secondary">
           ‹ {prev.name}
         </Link>
-        <Link to={`/landing/tech/${next.slug}`} replace className="press flex h-11 items-center justify-center truncate rounded-md border border-border px-3 text-ui text-foreground hover:border-foreground">
+        <Link to={`/landing/tech/${next.slug}`} replace className="press flex h-11 items-center justify-center truncate rounded-[10px] border border-border bg-card px-3 text-ui text-foreground hover:bg-secondary">
           {next.name} ›
         </Link>
       </nav>

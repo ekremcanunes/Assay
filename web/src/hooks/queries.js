@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { assetApi, dashboardApi, transactionApi, marketApi } from '@/services/api'
+import { assetApi, dashboardApi, transactionApi, marketApi, systemApi } from '@/services/api'
 
 export const queryKeys = {
   holdings: ['holdings'],
@@ -82,6 +82,22 @@ export function useDashboard() {
   return useQuery({
     queryKey: queryKeys.dashboard,
     ...serverCached(() => dashboardApi.get()),
+  })
+}
+
+// Durum şeridi — önbelleğe bağlı değil, her istek gerçek ölçüm (DB ping sunucuda, API gidiş-dönüş burada).
+// Dakikada bir yenilenir; şerit görünür kaldıkça süreler güncel kalır.
+export function useSystemStatus() {
+  return useQuery({
+    queryKey: ['system-status'],
+    queryFn: async () => {
+      const t0 = performance.now()
+      const res = await systemApi.status()
+      return { ...res.data, apiMs: Math.round(performance.now() - t0) }
+    },
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    retry: false,
   })
 }
 

@@ -25,7 +25,7 @@ const detail = {
     {
       kind: 'diagram',
       title: 'Kod hangi kontrol noktalarından geçiyor',
-      body: 'Akış yukarıdan aşağı. Her nokta bir öncekinin kaçırdığını yakalar; voltaj renkli etiket o noktada akışı durdurabilen bir kapı olduğunu gösterir.',
+      body: 'Akış yukarıdan aşağı. Her nokta bir öncekinin kaçırdığını yakalar; aksan renkli etiket o noktada akışı durdurabilen bir kapı olduğunu gösterir.',
       figure: <PipelineFigure />,
       caption: 'kapı: bulgu varsa bir sonraki noktaya geçilmez',
     },

@@ -1,18 +1,20 @@
 @import "tailwindcss";
 
 /*
-  VOLTAJ — tek tasarım sistemi. Landing, auth ve panel aynı dili konuşur.
+  Warm Editorial Minimalism — landing, auth ve panel aynı dili konuşur.
   Esas: docs/10-standards/DESIGN.md
 
-  Üç renk: beyaz zemin · ink metin/aksiyon · tek voltaj rengi (magenta).
-  Voltaj rengi ASLA büyük metin ya da dolu buton olmaz — cetvel, kenar,
-  nokta ve sayfada tek bir dolu bant olarak yaşar.
+  Porselen zemin, beyaz kart, 1px hairline, slate mürekkep, tek kobalt aksan.
+  Açık + koyu tema: koyu değerler .dark altında, adlar aynı.
 */
+
+/* Koyu tema: <html class="dark"> — ThemeContext ve index.html betiği koyar */
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
+  --color-card: hsl(var(--card) / var(--card-alpha));
   --color-card-foreground: hsl(var(--card-foreground));
   --color-popover: hsl(var(--popover));
   --color-popover-foreground: hsl(var(--popover-foreground));
@@ -30,15 +32,15 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
 
-  /* Semantik — kâr/zarar. Voltaj renginden ve kategoriden bağımsız. */
+  /* Semantik — kâr/zarar. Aksan renginden ve kategoriden bağımsız. */
   --color-up: hsl(var(--up));
   --color-down: hsl(var(--down));
 
-  /* Voltaj: markanın tek rengi. Kullanımı doz kuralına tabidir. */
-  --color-voltage: hsl(var(--voltage));
-
-  /* Uyarı — semantik, markadan bağımsız. Voltaj rengi uyarı anlamı taşımaz. */
+  /* Uyarı — semantik, markadan bağımsız. Aksan rengi uyarı anlamı taşımaz. */
   --color-warn: hsl(var(--warn));
+
+  /* Modal / sheet arkasındaki perde — açıkta slate, koyuda siyah */
+  --color-veil: hsl(var(--shadow-color) / 0.4);
 
   /* Kategori renkleri — yalnızca AYIRT ETMEK için. Asla kâr/zarar anlamı taşımaz. */
   --color-cat-stock: hsl(var(--cat-stock));
@@ -48,18 +50,24 @@
   --color-cat-index: hsl(var(--cat-index));
   --color-cat-other: hsl(var(--cat-other));
 
-  --radius-sm: 0.375rem;   /* 6  — rozet */
+  --radius-sm: 0.375rem;   /* 6  — delta rozeti */
   --radius-md: var(--radius);
   --radius-lg: 0.75rem;    /* 12 — kart, panel */
+  --radius-sheet: 1.25rem; /* 20 — alt sayfa (sheet) üst köşeleri */
+
+  /* Gölge: yalnız çok hafif ambient. Kartı hairline ayırır, gölge cansızlığı alır. */
+  --shadow-card: 0 1px 3px hsl(var(--shadow-color) / 0.03), 0 1px 2px hsl(var(--shadow-color) / 0.02);
+  --shadow-sheet: 0 -8px 24px hsl(var(--shadow-color) / 0.06);
+  --shadow-float: 0 10px 25px -5px hsl(var(--shadow-color) / 0.12), 0 8px 10px -6px hsl(var(--shadow-color) / 0.06);
 
   /*
-    Tek aile: IBM Plex Sans. Hiyerarşi aileden değil ölçek + ağırlıktan gelir.
+    Tek aile: Plus Jakarta Sans. Hiyerarşi aileden değil ölçek + ağırlıktan gelir.
     --font-display ve --font-mono ayrı aile değil; adları korunuyor ki çağrı yerleri kırılmasın.
     --font-code yalnızca gerçek kod (pre, dosya adı) için: orantılı fontta girinti kayar.
   */
-  --font-sans: "IBM Plex Sans Variable", system-ui, -apple-system, sans-serif;
-  --font-display: "IBM Plex Sans Variable", system-ui, -apple-system, sans-serif;
-  --font-mono: "IBM Plex Sans Variable", system-ui, -apple-system, sans-serif;
+  --font-sans: "Plus Jakarta Sans Variable", system-ui, -apple-system, sans-serif;
+  --font-display: "Plus Jakarta Sans Variable", system-ui, -apple-system, sans-serif;
+  --font-mono: "Plus Jakarta Sans Variable", system-ui, -apple-system, sans-serif;
   --font-code: "IBM Plex Mono", ui-monospace, monospace;
 
   /*
@@ -91,49 +99,98 @@
 }
 
 /*
-  Palet. Panel zemini #F7F7F5, yüzeyler beyaz — yoğun tabloda saf beyaz
-  zemin göz yorduğu için katman tersine kuruldu. Landing'de zemin beyaz,
-  bantlar #F7F7F5; ikisi aynı palet, yalnızca hangisinin zemin olduğu farklı.
+  Palet — açık: porselen zemin, beyaz kart, slate mürekkep, kobalt aksan.
+  Token adları shadcn düzeninde; açık/koyu aynı adları kullanır.
+  Marka aksanı = --primary (kobalt).
 */
 :root {
-  --background: 60 10% 97%;    /* #F7F7F5 panel zemini */
-  --foreground: 0 0% 8%;       /* #141414 ink */
-  --card: 0 0% 100%;           /* #FFFFFF yüzey */
-  --card-foreground: 0 0% 8%;
+  color-scheme: light;
+  --background: 240 14% 99%;   /* #FBFBFC porselen zemin */
+  --foreground: 222 47% 11%;   /* #0F172A birincil mürekkep */
+  --card: 0 0% 100%;           /* #FFFFFF kart / sheet */
+  --card-foreground: 222 47% 11%;
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 8%;
-  --primary: 0 0% 8%;          /* ink — birincil buton dolu ink */
+  --popover-foreground: 222 47% 11%;
+  --primary: 224 76% 48%;      /* #1D4ED8 kobalt — birincil aksiyon */
   --primary-foreground: 0 0% 100%;
-  --secondary: 40 11% 94%;     /* #F2F1EE hover / ikincil yüzey */
-  --secondary-foreground: 0 0% 8%;
-  --muted: 40 11% 94%;
-  --muted-foreground: 45 4% 35%; /* #5C5A55 */
-  --accent: 40 11% 94%;
-  --accent-foreground: 0 0% 8%;
-  --destructive: 3 71% 40%;    /* #B3261E silme/tehlike */
+  --secondary: 214 33% 96%;    /* #F1F4F8 ikincil yüzey / segment oluğu */
+  --secondary-foreground: 222 47% 11%;
+  --muted: 214 33% 96%;
+  --muted-foreground: 215 19% 35%; /* #475569 ikincil mürekkep */
+  --accent: 214 33% 96%;
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 61% 48%;    /* #C53030 karmin */
   --destructive-foreground: 0 0% 100%;
-  --border: 40 13% 89%;        /* #E4E3DE hairline */
-  --input: 40 9% 79%;          /* #CFCDC6 alan alt kenarlığı */
-  --ring: 0 0% 8%;             /* odak halkası ink */
+  --border: 220 19% 94%;       /* #ECEEF2 hairline */
+  --input: 213 27% 84%;        /* #CBD5E1 alan / aktif kenar */
+  --ring: 224 76% 48%;
+  --card-alpha: 1;             /* koyuda kart yarı saydam (zemin ışığı görünsün) */
 
-  --up: 152 72% 28%;           /* kâr #147C4A */
-  --down: 5 61% 46%;           /* zarar #BE3A2E */
+  /* Kâr/zarar — iki temada aynı aile (zümrüt / kırmızı); metin, rozet ve mum grafikleri bunu kullanır */
+  --up: 161 94% 30%;           /* kâr #059669 */
+  --down: 17 88% 40%;          /* zarar #C2410C kiremit — düşüşü söyler, alarm vermez (yeşil–turuncu renk körü dostu) */
 
-  --voltage: 337 78% 43%;      /* #C2185B — markanın tek rengi */
-  --warn: 38 93% 33%;          /* #A16207 yumuşak uyarı (sert uyarı: destructive) */
+  --warn: 35 92% 33%;          /* #A16207 uyarı / açıklama — kiremit zarardan ayrışsın diye amber */
 
-  /* Kategori paleti — beyaz zeminde hepsi 4.5:1 üstü */
-  --cat-stock: 217 56% 42%;    /* #2F5DA8 hisse */
-  --cat-gold: 36 51% 46%;      /* #B08843 altın */
-  --cat-fx: 176 65% 26%;       /* #17706B döviz */
-  --cat-cash: 265 33% 46%;     /* #6B4E9B nakit */
-  --cat-index: 18 54% 44%;     /* #AD5233 endeks */
-  --cat-other: 45 6% 44%;      /* #77746B diğer */
+  /* Kategori paleti — yalnızca ayırt eder, kâr/zarar anlamı taşımaz */
+  --cat-stock: 224 76% 48%;    /* #1D4ED8 hisse */
+  --cat-gold: 39 51% 47%;      /* #B58A3A altın */
+  --cat-fx: 224 15% 40%;       /* #565E74 döviz */
+  --cat-cash: 258 47% 56%;     /* #7C5CC4 nakit */
+  --cat-index: 15 54% 44%;     /* #AD5233 endeks */
+  --cat-other: 215 20% 65%;    /* #94A3B8 diğer */
 
   --radius: 0.5rem;            /* 8 — buton, alan */
+  --shadow-color: 222 47% 11%;
 }
 
-* { border-color: hsl(var(--border)); }
+/*
+  Koyu — Obsidian Pulse: derin lacivert boşluk, yarı saydam kartlar (zemin ışığı arkadan görünür),
+  ince kenarlar, canlı kobalt aksan, zümrüt / mercan kâr-zarar. Aynı adlar, yalnız değerler.
+*/
+.dark {
+  color-scheme: dark;
+  --background: 222 42% 6%;    /* #090D16 boşluk */
+  --foreground: 214 32% 91%;   /* #E2E8F0 */
+  --card: 223 45% 9%;          /* #0D1322, %72 opak — bkz. --card-alpha */
+  --card-alpha: 0.72;
+  --card-foreground: 214 32% 91%;
+  --popover: 221 44% 15%;      /* #162138 açılır katman (tam opak) */
+  --popover-foreground: 214 32% 91%;
+  --primary: 217 91% 60%;      /* #3B82F6 elektrik kobalt */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 223 35% 16%;    /* #1A2236 oluk / hover */
+  --secondary-foreground: 214 32% 91%;
+  --muted: 223 35% 16%;
+  --muted-foreground: 215 20% 65%; /* #94A3B8 */
+  --accent: 223 35% 16%;
+  --accent-foreground: 214 32% 91%;
+  --destructive: 350 89% 60%;  /* #F43F5E */
+  --destructive-foreground: 0 0% 100%;
+  --border: 222 27% 19%;       /* #232B3D ≈ beyaz %8 */
+  --input: 222 27% 25%;        /* #2E3850 ≈ beyaz %14 */
+  --ring: 217 91% 60%;
+
+  --up: 160 84% 39%;           /* #10B981 zümrüt */
+  --down: 350 89% 60%;         /* #F43F5E mercan */
+
+  --warn: 43 96% 56%;          /* #FBBF24 */
+
+  --cat-stock: 213 94% 68%;    /* #60A5FA */
+  --cat-gold: 42 74% 57%;      /* #E3B341 */
+  --cat-fx: 215 20% 65%;       /* #94A3B8 */
+  --cat-cash: 255 92% 76%;     /* #A78BFA */
+  --cat-index: 27 96% 61%;     /* #FB923C */
+  --cat-other: 215 16% 47%;    /* #64748B */
+
+  --shadow-color: 0 0% 0%;
+}
+
+/* Varsayılan kenar rengi. base katmanında olmalı: katmansız kural Tailwind sınıflarını
+   (border-primary, focus:border-primary …) her zaman ezer — v4'te katmansız CSS katmanlıdan güçlüdür. */
+@layer base {
+  *, ::before, ::after { border-color: hsl(var(--border)); }
+}
 
 /* Tailwind v4 preflight butonlara cursor:default veriyor (v3'te pointer'dı) — geri alıyoruz */
 button:not(:disabled), [role="button"]:not(:disabled), a[href] { cursor: pointer; }
@@ -148,6 +205,28 @@ body {
 }
 
 /*
+  Koyu temada zemin ışığı: sağ üstte kobalt, sol altta zümrüt çok düşük opaklıkta.
+  Yalnız body boyar; sayfa kökleri zemin rengi vermez ki ışık yarı saydam kartların arkasından görünsün.
+*/
+.dark body {
+  background-image:
+    radial-gradient(ellipse at top right, rgb(59 130 246 / 0.12), transparent 70%),
+    radial-gradient(ellipse at bottom left, rgb(16 185 129 / 0.08), transparent 60%);
+  background-attachment: fixed;
+}
+
+/* Kâr/zarar ve nötr rozetleri — koyu temada ince renkli kenar da alır (Obsidian) */
+.chip-up { background-color: hsl(var(--up) / 0.1); color: hsl(var(--up)); }
+.chip-down { background-color: hsl(var(--down) / 0.1); color: hsl(var(--down)); }
+.chip-neutral { background-color: hsl(var(--secondary)); color: hsl(var(--muted-foreground)); }
+.dark .chip-up { background-color: hsl(var(--up) / 0.12); box-shadow: inset 0 0 0 1px hsl(var(--up) / 0.25); }
+.dark .chip-down { background-color: hsl(var(--down) / 0.12); box-shadow: inset 0 0 0 1px hsl(var(--down) / 0.25); }
+.dark .chip-neutral { background-color: rgb(255 255 255 / 0.05); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08); }
+
+/* Koyu temada dolu kobalt buton hafif ışıma yayar */
+.dark :is(button, a).bg-primary { box-shadow: 0 0 20px -4px rgb(59 130 246 / 0.45); }
+
+/*
   Mikro etiket: eyebrow, tablo başlığı, kart etiketi, bölüm ayracı.
   Tek aile kuralı gereği mono değil 600 ağırlık; ayrımı tracking yapıyor.
 */
@@ -156,7 +235,7 @@ body {
   font-size: var(--text-micro);
   font-weight: 600;
   line-height: 1.35;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -170,28 +249,8 @@ body {
 /* font-mono artık ayrı aile değil; mono'nun eşit genişlikli rakamlarını tabular-nums sürdürür */
 .font-mono { font-variant-numeric: tabular-nums; }
 
-/* ---------- Voltaj imzaları — aksan yalnızca burada görünür ---------- */
-
-/* Üst cetvel: KPI/stat bloklarının üstünde 3px aksan */
-.rule-accent { border-top: 3px solid hsl(var(--voltage)); }
-
-/* Sol kenar: kartın/panelin sol kenarında 3px aksan */
-.edge-accent { border-left: 3px solid hsl(var(--voltage)); }
-
-/* Aktif nav satırı: yumuşak dolgu + solda 3px aksan şerit */
-.nav-active {
-  background: hsl(var(--secondary));
-  box-shadow: inset 3px 0 0 0 hsl(var(--voltage));
-}
-
-/* Bölüm etiketi önündeki kısa tire */
-.tick-accent::before {
-  content: ""; display: inline-block; width: 22px; height: 2px;
-  background: hsl(var(--voltage)); vertical-align: 0.22em; margin-right: 10px;
-}
-
-/* Tablo toplam satırı: çift çizgi değil, tek ink kural */
-.border-total { border-top: 2px solid hsl(var(--foreground)); }
+/* Aktif nav satırı: yumuşak dolgu, aksan rengi metin/ikonda */
+.nav-active { background: hsl(var(--secondary)); }
 
 /*
   Defter kağıdı: 34px cetvel ızgarası + radyal maske.

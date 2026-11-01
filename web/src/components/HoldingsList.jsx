@@ -32,8 +32,8 @@ const derive = (h) => {
   }
 }
 
-// Bir kategorinin varlık listesi (mobil kart / masaüstü tablo) + sat, düzenle, sil.
-// Portföy detay sayfası kullanır; holdings sayfa tarafından kategoriye göre süzülmüş gelir.
+// Varlık listesi (mobil kart / masaüstü tablo) + sat, düzenle, sil.
+// type verilirse o kategori (detay sayfası, holdings süzülmüş gelir); verilmezse tüm varlıklar (Portföy sayfası).
 export default function HoldingsList({ holdings, type, isLoading, queryError }) {
   const { t } = useLanguage()
   const navigate = useNavigate()
@@ -101,7 +101,7 @@ export default function HoldingsList({ holdings, type, isLoading, queryError }) 
         </div>
       )}
 
-      <Section title={t(`assets.${type.toLowerCase()}`)} meta={`${visible.length} ${t('overview.assetCount')}`}>
+      <Section title={type ? t(`assets.${type.toLowerCase()}`) : t('overview.allAssets')} meta={`${visible.length} ${t('overview.assetCount')}`}>
         <div className="p-4">
           {isLoading ? (
             <div className="space-y-3">
@@ -127,15 +127,15 @@ export default function HoldingsList({ holdings, type, isLoading, queryError }) 
                 return (
                   <div
                     key={h.id}
-                    className="rounded-lg border border-border bg-card p-3 font-mono"
+                    className="rounded-xl border border-border bg-card p-3.5"
                     onClick={() => !isActive && setDrawer(h)}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="inline-flex min-w-0 items-center gap-2">
-                        <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-md text-micro ${catOf(h.assetType).tint} ${catOf(h.assetType).text}`}>
+                        <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg text-micro font-bold ${catOf(h.assetType).tint} ${catOf(h.assetType).text}`}>
                           {h.symbol.slice(0, 2)}
                         </span>
-                        <span className="truncate text-ui font-bold text-foreground">{h.symbol}</span>
+                        <span className="truncate text-body font-semibold text-foreground">{h.symbol}</span>
                       </span>
                       {!isActive && (
                         <span className={`tabular shrink-0 text-right text-micro font-bold ${plColor}`}>
@@ -163,10 +163,10 @@ export default function HoldingsList({ holdings, type, isLoading, queryError }) 
                           <MoneyInput currency={h.currency} value={form.price} onChange={(v) => setForm((f) => ({ ...f, price: v }))} className="h-10 w-32 text-micro" placeholder="0,00" />
                         </label>
                         <div className="flex gap-2 pt-1">
-                          <button onClick={handleConfirm} disabled={saving || !form.quantity || (isSell && !form.price)} className="press flex h-11 flex-1 items-center justify-center border border-up text-up hover:bg-up/10 disabled:opacity-40">
+                          <button onClick={handleConfirm} disabled={saving || !form.quantity || (isSell && !form.price)} className="press flex h-11 flex-1 items-center justify-center rounded-[10px] bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40">
                             <Check className="h-4 w-4" />
                           </button>
-                          <button onClick={() => setEditing(null)} className="press flex h-11 flex-1 items-center justify-center border border-border text-muted-foreground hover:border-foreground hover:text-foreground">
+                          <button onClick={() => setEditing(null)} className="press flex h-11 flex-1 items-center justify-center rounded-[10px] border border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground">
                             <X className="h-4 w-4" />
                           </button>
                         </div>
@@ -197,15 +197,15 @@ export default function HoldingsList({ holdings, type, isLoading, queryError }) 
                         </dl>
 
                         <div className="mt-3 flex gap-2" onClick={(e) => e.stopPropagation()}>
-                          <button onClick={() => startSell(h)} className="press flex h-11 flex-1 items-center justify-center gap-1.5 border border-border text-micro text-down hover:border-down hover:bg-down/5" title={t('assets.sell')}>
+                          <button onClick={() => startSell(h)} className="press flex h-11 flex-1 items-center justify-center gap-1.5 rounded-[10px] bg-down/10 text-ui font-semibold text-down hover:bg-down/15" title={t('assets.sell')}>
                             <ArrowDownRight className="h-3.5 w-3.5" />
                             {t('assets.sell')}
                           </button>
-                          <button onClick={() => startEdit(h)} className="press flex h-11 flex-1 items-center justify-center gap-1.5 border border-border text-micro text-muted-foreground hover:border-foreground hover:text-foreground" title={t('assets.edit')}>
+                          <button onClick={() => startEdit(h)} className="press flex h-11 flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-border bg-card text-ui font-medium text-foreground hover:bg-secondary" title={t('assets.edit')}>
                             <Pencil className="h-3.5 w-3.5" />
                             {t('assets.edit')}
                           </button>
-                          <button onClick={() => setConfirmId(h.id)} className="press flex h-11 w-11 shrink-0 items-center justify-center border border-border text-muted-foreground hover:border-down hover:text-down" aria-label={t('common.delete')}>
+                          <button onClick={() => setConfirmId(h.id)} className="press flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-border bg-card text-muted-foreground hover:bg-down/10 hover:text-down" aria-label={t('common.delete')}>
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
@@ -215,7 +215,7 @@ export default function HoldingsList({ holdings, type, isLoading, queryError }) 
                 )
               })}
 
-              <div className="tabular flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-3 font-mono text-micro font-bold uppercase">
+              <div className="tabular flex items-center justify-between rounded-xl bg-secondary px-3.5 py-3 text-ui font-semibold">
                 <span>{t('common.total')}</span>
                 <span className="text-foreground">{formatMoney(tabTotal)}</span>
               </div>
@@ -223,9 +223,9 @@ export default function HoldingsList({ holdings, type, isLoading, queryError }) 
 
             {/* Masaüstü: tam tablo */}
             <div className="hidden overflow-x-auto md:block">
-              <table className="tabular w-full whitespace-nowrap text-left font-mono text-micro">
+              <table className="tabular w-full whitespace-nowrap text-left text-ui">
                 <thead>
-                  <tr className="border-b-2 border-foreground uppercase tracking-wider text-muted-foreground">
+                  <tr className="label border-b border-border text-muted-foreground">
                     <th className="px-2 py-3 font-normal">{t('assets.name')}</th>
                     <th className="px-2 py-3 text-right font-normal">{qtyLabel}</th>
                     <th className="px-2 py-3 text-right font-normal">{costLabel}</th>
@@ -250,7 +250,7 @@ export default function HoldingsList({ holdings, type, isLoading, queryError }) 
                       >
                         <td className="px-2 py-3.5 font-bold text-foreground group-hover:underline">
                           <span className="inline-flex items-center gap-2">
-                            <span className={`grid h-5 w-5 place-items-center rounded-md text-micro ${catOf(h.assetType).tint} ${catOf(h.assetType).text}`}>
+                            <span className={`grid h-7 w-7 place-items-center rounded-lg text-micro font-bold ${catOf(h.assetType).tint} ${catOf(h.assetType).text}`}>
                               {h.symbol.slice(0, 2)}
                             </span>
                             {h.symbol}
@@ -270,10 +270,10 @@ export default function HoldingsList({ holdings, type, isLoading, queryError }) 
                                 <span className="text-muted-foreground">{isSell ? t('assets.unitPrice') : t('assets.purchasePrice')}</span>
                                 <MoneyInput currency={h.currency} value={form.price} onChange={(v) => setForm((f) => ({ ...f, price: v }))} className="h-7 w-28 text-micro" placeholder="0,00" />
                               </div>
-                              <button onClick={handleConfirm} disabled={saving || !form.quantity || (isSell && !form.price)} className="press border border-up p-1 text-up hover:bg-up/10 disabled:opacity-40">
+                              <button onClick={handleConfirm} disabled={saving || !form.quantity || (isSell && !form.price)} className="press rounded-lg bg-primary p-1.5 text-primary-foreground hover:opacity-90 disabled:opacity-40">
                                 <Check className="h-4 w-4" />
                               </button>
-                              <button onClick={() => setEditing(null)} className="press border border-border p-1 text-muted-foreground hover:border-foreground">
+                              <button onClick={() => setEditing(null)} className="press rounded-lg border border-border p-1.5 text-muted-foreground hover:bg-secondary">
                                 <X className="h-4 w-4" />
                               </button>
                             </div>
@@ -295,13 +295,13 @@ export default function HoldingsList({ holdings, type, isLoading, queryError }) 
                             </td>
                             <td className="px-2 py-3.5 text-right">
                               <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                                <button onClick={() => startSell(h)} className="press border border-border px-2 py-1 text-down hover:border-down hover:bg-down/5" title={t('assets.sell')}>
+                                <button onClick={() => startSell(h)} className="press rounded-lg bg-down/10 p-1.5 text-down hover:bg-down/15" title={t('assets.sell')}>
                                   <ArrowDownRight className="h-3.5 w-3.5" />
                                 </button>
-                                <button onClick={() => startEdit(h)} className="press border border-border p-1 text-muted-foreground hover:border-foreground hover:text-foreground" title={t('assets.edit')}>
+                                <button onClick={() => startEdit(h)} className="press rounded-lg border border-border p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground" title={t('assets.edit')}>
                                   <Pencil className="h-3.5 w-3.5" />
                                 </button>
-                                <button onClick={() => setConfirmId(h.id)} className="press border border-border p-1 text-muted-foreground hover:border-down hover:text-down" title={t('common.delete')}>
+                                <button onClick={() => setConfirmId(h.id)} className="press rounded-lg border border-border p-1.5 text-muted-foreground hover:bg-down/10 hover:text-down" title={t('common.delete')}>
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </button>
                               </div>
@@ -313,7 +313,7 @@ export default function HoldingsList({ holdings, type, isLoading, queryError }) 
                   })}
                 </tbody>
                 <tfoot>
-                  <tr className="border-total bg-secondary/50 font-semibold uppercase">
+                  <tr className="border-t border-border bg-secondary/60 font-semibold">
                     <td className="px-2 py-3.5" colSpan={4}>{t('common.total')}</td>
                     <td className="px-2 py-3.5 text-right text-foreground">{formatMoney(tabTotal)}</td>
                     <td className="px-2 py-3.5"></td>
@@ -342,16 +342,16 @@ export default function HoldingsList({ holdings, type, isLoading, queryError }) 
         subtitle="Portföy Kaydı"
         actions={
           <>
-            <button onClick={() => setConfirmId(null)} className="w-1/2 border border-foreground py-2.5 font-mono text-micro font-bold uppercase text-foreground hover:bg-secondary">
+            <button onClick={() => setConfirmId(null)} className="press h-12 w-1/2 rounded-[10px] border border-border bg-card text-ui font-semibold text-foreground hover:bg-secondary">
               {t('common.cancel')}
             </button>
-            <button onClick={doDelete} className="w-1/2 border border-down bg-down py-2.5 font-mono text-micro font-bold uppercase text-white hover:opacity-90">
+            <button onClick={doDelete} className="press h-12 w-1/2 rounded-[10px] bg-down text-ui font-semibold text-destructive-foreground hover:opacity-90">
               {t('common.delete')}
             </button>
           </>
         }
       >
-        <p className="text-center font-mono text-micro text-muted-foreground">{t('assets.confirmDelete')}</p>
+        <p className="text-body text-muted-foreground">{t('assets.confirmDelete')}</p>
       </Modal>
     </>
   )

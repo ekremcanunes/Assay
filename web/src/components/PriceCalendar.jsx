@@ -8,10 +8,11 @@ import { heatTier, shortPrice, closesByDay, monthsBack, nearestClose } from '@/l
 import { catOf } from '@/lib/assetColors'
 import { cn } from '@/lib/utils'
 
-// Kategori rengi kart zeminiyle karıştırılır: %10 → %100 (voltaj değil — DESIGN.md doz kuralı)
+// Kategori rengi kart zeminiyle karıştırılır: %10 → %100
+// Koyu hücrede metin kart rengini alır: açık temada beyaz, koyu temada koyu (kategori rengi orada açık)
 const MIX = [10, 28, 48, 72, 100]
-const heatStyle = (hex, tier) =>
-  tier == null ? undefined : { background: `color-mix(in oklab, ${hex} ${MIX[tier]}%, hsl(var(--card)))`, color: tier >= 3 ? '#fff' : undefined }
+const heatStyle = (color, tier) =>
+  tier == null ? undefined : { background: `color-mix(in oklab, ${color} ${MIX[tier]}%, hsl(var(--card)))`, color: tier >= 3 ? 'hsl(var(--card))' : undefined }
 
 const YEARS_BACK = 20
 
@@ -35,7 +36,7 @@ function CalendarSheet({ market = '', symbol, assetType, label, value, onClose, 
   const { data: history } = usePriceHistory(market, symbol, assetType, '1y')
   const closes = useMemo(() => closesByDay(history?.candles), [history])
   const hasSeries = closes.size > 0
-  const hex = catOf(assetType).hex
+  const color = catOf(assetType).color
 
   const [picked, setPicked] = useState(value)
   // null = son 1 yıl görünümü; formdaki tarih 1 yıldan eskiyse o yılın görünümüyle açılır
@@ -79,7 +80,7 @@ function CalendarSheet({ market = '', symbol, assetType, label, value, onClose, 
   const weekdays = lang === 'tr' ? ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'] : ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
 
   return createPortal(
-    <div className="fixed inset-0 z-50 md:grid md:place-items-center md:bg-foreground/50" onClick={onClose}>
+    <div className="fixed inset-0 z-50 md:grid md:place-items-center md:bg-veil" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
@@ -104,7 +105,7 @@ function CalendarSheet({ market = '', symbol, assetType, label, value, onClose, 
         {hasSeries && year == null && (
           <div className="flex items-center gap-2 px-4 py-2.5 text-micro text-muted-foreground">
             <span>{t('cal.cheap')}</span>
-            <span className="flex gap-0.5">{MIX.map((_, i) => <i key={i} className="h-2 w-4 rounded-sm" style={heatStyle(hex, i)} />)}</span>
+            <span className="flex gap-0.5">{MIX.map((_, i) => <i key={i} className="h-2 w-4 rounded-sm" style={heatStyle(color, i)} />)}</span>
             <span>{t('cal.expensive')}</span>
             <span className="ml-auto">{t('cal.inMonth')}</span>
           </div>
@@ -147,7 +148,7 @@ function CalendarSheet({ market = '', symbol, assetType, label, value, onClose, 
                         type="button"
                         disabled={future}
                         onClick={() => setPicked(ds)}
-                        style={heatStyle(hex, tier)}
+                        style={heatStyle(color, tier)}
                         aria-label={`${formatDisplayDate(ds, lang)}${v != null ? ` ${money(v)}` : ''}`}
                         aria-pressed={picked === ds}
                         className={cn(
@@ -156,7 +157,7 @@ function CalendarSheet({ market = '', symbol, assetType, label, value, onClose, 
                           picked === ds && 'outline outline-2 outline-offset-1 outline-foreground'
                         )}
                       >
-                        <span className={cn('text-ui font-medium', closed && 'text-muted-foreground opacity-60', ds === todayStr && (tier >= 3 ? 'font-bold underline underline-offset-2' : 'font-bold text-voltage'))}>
+                        <span className={cn('text-ui font-medium', closed && 'text-muted-foreground opacity-60', ds === todayStr && (tier >= 3 ? 'font-bold underline underline-offset-2' : 'font-bold text-primary'))}>
                           {i + 1}
                         </span>
                         <span className="tabular min-h-[11px] text-[9.5px] leading-none tracking-tight opacity-90">{v != null ? shortPrice(v) : ''}</span>

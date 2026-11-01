@@ -3,12 +3,12 @@ import { useAuth } from './contexts/AuthContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './contexts/AuthContext'
 import { LanguageProvider } from './contexts/LanguageContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import PageLoader from './components/PageLoader'
 import Layout from './components/Layout'
 import Overview from './pages/Overview'
 import Market from './pages/Market'
-import MarketDetail from './pages/MarketDetail'
 import Assets from './pages/Assets'
 import AddAsset from './pages/AddAsset'
 import AssetCategory from './pages/AssetCategory'
@@ -40,6 +40,7 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
       <LanguageProvider>
         <AuthProvider>
           <BrowserRouter>
@@ -61,12 +62,13 @@ export default function App() {
             >
               <Route path="/overview" element={<Overview />} />
               <Route path="/market" element={<Market />} />
-              <Route path="/market/:panel" element={<MarketDetail />} />
+              {/* Borsa ve Altın & Döviz artık tek sayfada */}
+              <Route path="/market/:panel" element={<Navigate to="/market" replace />} />
               <Route path="/assets" element={<Assets />} />
               <Route path="/assets/buy" element={<AddAsset />} />
               <Route path="/assets/:category" element={<AssetCategory />} />
               {/* Eski route'lar yönlendirmesi */}
-              <Route path="/gold-fx" element={<Navigate to="/market/gold-fx" replace />} />
+              <Route path="/gold-fx" element={<Navigate to="/market" replace />} />
               {/* Analiz yeniden tasarlanana kadar menüde yok (bkz. mobil faz 1 spec §3.1) */}
               <Route path="/analytics" element={<Navigate to="/overview" replace />} />
               <Route path="/portfolios" element={<Navigate to="/assets" replace />} />
@@ -77,6 +79,7 @@ export default function App() {
           </BrowserRouter>
         </AuthProvider>
       </LanguageProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   )
 }

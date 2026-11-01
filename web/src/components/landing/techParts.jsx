@@ -5,11 +5,11 @@ export function CodeBlock({ code, title, note }) {
     <div>
       {title && (
         <div className="mb-2 flex items-center gap-2 font-mono text-micro text-muted-foreground">
-          <i className="h-[6px] w-[6px] rounded-full bg-voltage" aria-hidden="true" />
+          <i className="h-[6px] w-[6px] rounded-full bg-primary" aria-hidden="true" />
           {title}
         </div>
       )}
-      <pre className="overflow-x-auto rounded-lg bg-foreground p-5 font-code text-micro leading-[1.7] text-background/85">
+      <pre className="overflow-x-auto rounded-xl bg-foreground p-5 font-code text-micro leading-[1.7] text-background/85">
         {code}
       </pre>
       {note && <p className="mt-2 font-mono text-micro text-muted-foreground">{note}</p>}
@@ -53,7 +53,7 @@ export function DetailBlock({ b }) {
       <figure>
         <h4 className="mb-1.5 text-figure font-semibold text-foreground">{b.title}</h4>
         {b.body && <p className="mb-4 text-ui text-muted-foreground">{b.body}</p>}
-        <div className="overflow-x-auto rounded-lg border border-border bg-background p-5">{b.figure}</div>
+        <div className="overflow-x-auto rounded-xl border border-border bg-background p-5">{b.figure}</div>
         {b.caption && <figcaption className="mt-2 font-mono text-micro text-muted-foreground">{b.caption}</figcaption>}
       </figure>
     )
@@ -61,7 +61,7 @@ export function DetailBlock({ b }) {
 
   if (b.kind === 'warn') {
     return (
-      <div className="edge-accent rounded-r-lg bg-background p-5">
+      <div className="rounded-xl border border-border bg-background p-5">
         <h4 className="mb-1.5 text-ui font-semibold text-foreground">{b.title}</h4>
         <p className="text-ui text-muted-foreground">{b.body}</p>
       </div>

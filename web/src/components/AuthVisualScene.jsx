@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { APP_NAME } from '../lib/app'
+import { useTheme } from '../contexts/ThemeContext'
 
 const CELL = 34 // .paper ızgarasıyla aynı
 const STEP = 17
@@ -52,7 +53,13 @@ export default function AuthVisualScene() {
   const canvasRef = useRef(null)
   const cursorRef = useRef(null)
   const svgRef = useRef(null)
+  const { dark } = useTheme() // ızgara rengi token’dan okunur; tema değişince yeniden kurulur
   const candleRefs = useRef([])
+  // Dekorasyon, veri değil (kâr/zarar anlamı taşımaz): açık temada marka paleti — yükselen kobalt,
+  // düşen açık slate, ortalama mürekkep. Beyaz zeminde üç doygun renk yarışmasın. Koyuda kâr/zarar renkleri.
+  const upColor = dark ? 'hsl(var(--up))' : 'hsl(var(--primary))'
+  const downColor = dark ? 'hsl(var(--down))' : 'hsl(var(--input))'
+  const maColor = dark ? 'hsl(var(--primary))' : 'hsl(var(--foreground))'
 
   useEffect(() => {
     const wrap = wrapRef.current
@@ -192,7 +199,7 @@ export default function AuthVisualScene() {
       window.removeEventListener('pointermove', onMove)
       document.documentElement.removeEventListener('pointerleave', onLeave)
     }
-  }, [])
+  }, [dark])
 
   return (
     <div ref={wrapRef} aria-hidden="true" className="pointer-events-none relative ml-12 flex-1 self-stretch">
@@ -215,8 +222,8 @@ export default function AuthVisualScene() {
             <g
               key={i}
               ref={(el) => { candleRefs.current[i] = el }}
-              fill={k.up ? 'hsl(var(--up))' : 'hsl(var(--down))'}
-              stroke={k.up ? 'hsl(var(--up))' : 'hsl(var(--down))'}
+              fill={k.up ? upColor : downColor}
+              stroke={k.up ? upColor : downColor}
               className="transition-transform duration-[110ms] ease-[cubic-bezier(0,0,.38,.9)] motion-reduce:transition-none"
             >
               <line x1={k.x} x2={k.x} y1={k.yh} y2={k.yl} strokeWidth="1.2" />
@@ -232,7 +239,7 @@ export default function AuthVisualScene() {
           <path
             d={MA_PATH}
             fill="none"
-            stroke="hsl(var(--voltage))"
+            stroke={maColor}
             strokeWidth="1.7"
             strokeDasharray="5 7"
             className="[animation:flow_1.5s_linear_infinite] motion-reduce:[animation:none]"

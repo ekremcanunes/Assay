@@ -24,9 +24,9 @@ const currencySymbols = ['USD', 'EUR', 'GBP']
 const currencies = ['TRY', 'USD']
 const stockMarkets = ['BIST', 'US']
 
-// Seçili/seçili değil hap düğmesi (tür, döviz, para birimi)
-const pill = (on) => cn('press h-9 shrink-0 rounded-full border px-3.5 text-ui',
-  on ? 'border-foreground bg-foreground text-background' : 'border-border bg-card text-foreground hover:border-foreground')
+// Seçili/seçili değil hap düğmesi (döviz, para birimi) — seçili: kobalt yıkama
+const pill = (on) => cn('press h-10 shrink-0 rounded-full border px-4 text-ui',
+  on ? 'border-primary/30 bg-primary/10 font-semibold text-primary' : 'border-border bg-card text-foreground hover:bg-secondary')
 
 export default function AddAsset() {
   const navigate = useNavigate()
@@ -175,13 +175,13 @@ export default function AddAsset() {
     >
       <form onSubmit={handleSubmit} className="max-w-md space-y-4 pb-24 md:pb-0">
         {error && (
-          <div className="rounded-md border border-destructive/25 bg-destructive/10 px-3 py-2 text-ui text-destructive">{error}</div>
+          <div className="rounded-xl border border-destructive/25 bg-destructive/10 px-3.5 py-2.5 text-ui text-destructive">{error}</div>
         )}
 
         {/* Tür — açılır menü yerine üç düğme: tek dokunuş, seçim hep görünür */}
         <div className="space-y-1.5">
           <Label>{t('common.type')}</Label>
-          <div role="radiogroup" aria-label={t('common.type')} className="grid grid-cols-3 gap-1 rounded-lg border border-border bg-secondary p-[3px]">
+          <div role="radiogroup" aria-label={t('common.type')} className="grid grid-cols-3 gap-1 rounded-[10px] bg-secondary p-1">
             {assetTypes.map((type) => (
               <button
                 key={type}
@@ -189,10 +189,10 @@ export default function AddAsset() {
                 role="radio"
                 aria-checked={assetType === type}
                 onClick={() => handleTypeChange(type)}
-                className={cn('press flex h-10 items-center justify-center gap-1.5 rounded-md text-ui font-semibold',
-                  assetType === type ? 'bg-card text-foreground ring-1 ring-border' : 'text-muted-foreground hover:text-foreground')}
+                className={cn('press flex h-10 items-center justify-center gap-1.5 rounded-lg border text-ui',
+                  assetType === type ? 'border-border bg-card font-bold text-foreground shadow-card' : 'border-transparent font-medium text-muted-foreground hover:text-foreground')}
               >
-                <i className={cn('h-2 w-2 rounded-sm', catOf(type).dot)} />
+                <i className={cn('h-2 w-2 rounded-full', catOf(type).dot)} />
                 {t(`assets.${type.toLowerCase()}`)}
               </button>
             ))}
@@ -213,9 +213,12 @@ export default function AddAsset() {
             )}
 
             {assetType === 'Stock' && symbol && (
-              <div className="flex items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-2">
-                <div className="min-w-0">
-                  <div className="text-ui font-semibold text-foreground">{symbol}</div>
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-3 shadow-card">
+                <span className={cn('grid h-10 w-10 shrink-0 place-items-center rounded-lg text-ui font-bold', catOf('Stock').tint, catOf('Stock').text)}>
+                  {symbol.slice(0, 2)}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-body font-semibold text-foreground">{symbol}</div>
                   <div className="truncate text-ui text-foreground">{selectedName}</div>
                 </div>
                 <Button type="button" variant="ghost" size="icon" onClick={handleClearSymbol} aria-label={t('common.clear')}>
@@ -237,7 +240,7 @@ export default function AddAsset() {
                   />
                 </div>
                 {(searching || results.length > 0) && (
-                  <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-input bg-popover">
+                  <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl border border-border bg-popover shadow-float">
                     {searching && (
                       <div className="px-3 py-2 text-ui text-muted-foreground">{t('common.loading')}</div>
                     )}
@@ -246,7 +249,7 @@ export default function AddAsset() {
                         key={`${r.market}-${r.symbol}`}
                         type="button"
                         onClick={() => handleSelectResult(r)}
-                        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-secondary"
+                        className="flex min-h-11 w-full items-center justify-between gap-2 px-3.5 py-2.5 text-left hover:bg-secondary"
                       >
                         <div className="min-w-0">
                           <div className="text-ui font-semibold text-foreground">{r.symbol}</div>
@@ -261,8 +264,8 @@ export default function AddAsset() {
             )}
 
             {assetType === 'Gold' && (
-              <div className="flex items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-2.5">
-                <span className="text-ui font-medium text-foreground">{t('assets.goldGram')}</span>
+              <div className="flex h-12 items-center justify-between gap-2 rounded-[10px] border border-border bg-card px-3.5">
+                <span className="text-body font-medium text-foreground">{t('assets.goldGram')}</span>
                 <span className="tabular text-micro text-muted-foreground">XAU</span>
               </div>
             )}
@@ -289,10 +292,10 @@ export default function AddAsset() {
           <button
             type="button"
             onClick={openCal}
-            className="press flex h-12 w-full items-center justify-between rounded-md border border-border bg-card px-3 text-body text-foreground hover:border-foreground"
+            className="press flex h-12 w-full items-center justify-between rounded-[10px] border border-border bg-card px-3.5 text-body font-semibold text-foreground hover:border-input"
           >
             <span>{formatDisplayDate(date, lang)}{date === today && <span className="text-muted-foreground"> · {t('buy.todayTag')}</span>}</span>
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            <CalendarDays className="h-4 w-4 text-primary" />
           </button>
         </div>
 
@@ -341,7 +344,7 @@ export default function AddAsset() {
           </p>
         ) : priceSource === 'manual' && refPrice != null && tier !== 'none' ? (
           <p className={
-            tier === 'confirm' ? 'flex items-center gap-1.5 text-micro text-margin'
+            tier === 'confirm' ? 'flex items-center gap-1.5 text-micro text-destructive'
             : tier === 'warn' ? 'flex items-center gap-1.5 text-micro text-warn'
             : 'text-micro text-muted-foreground'
           }>
@@ -350,7 +353,7 @@ export default function AddAsset() {
               ? t('assets.deviationInfo').replace('{price}', refPrice.toFixed(2))
               : t('assets.deviationWarn').replace('{price}', refPrice.toFixed(2)).replace('{pct}', pct)}
             <button type="button" onClick={() => { setPriceSource('auto'); setUnitPrice('') }}
-              className="ml-1 underline hover:no-underline">
+              className="ml-1 font-semibold text-primary hover:underline">
               {t('assets.useThatDayPrice')}
             </button>
           </p>
@@ -360,23 +363,25 @@ export default function AddAsset() {
 
         {/* O gün / bugün karşılaştırması — yalnızca otomatik fiyatta */}
         {priceSource === 'auto' && thenPrice != null && (
-          <div className="space-y-2.5 rounded-lg border border-border bg-card p-3.5">
+          <div className="space-y-3 rounded-xl border border-border bg-secondary/50 p-3.5">
             {date === today ? (
               <div className="flex items-baseline justify-between">
                 <span className="text-ui text-muted-foreground">{t('buy.livePrice')}</span>
-                <span className="tabular text-body text-foreground">{money(thenPrice)}</span>
+                <span className="tabular text-body font-semibold text-foreground">{money(thenPrice)}</span>
               </div>
             ) : (
               <>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-ui text-muted-foreground">{t('buy.thenPrice')}</span>
-                  <span className="tabular text-body text-foreground">{money(thenPrice)}</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-lg border border-border bg-card p-3">
+                    <div className="text-micro font-medium text-muted-foreground">{t('buy.thenPrice')}</div>
+                    <div className="tabular mt-0.5 text-body font-bold text-foreground">{money(thenPrice)}</div>
+                  </div>
+                  <div className="rounded-lg border border-border bg-card p-3">
+                    <div className="text-micro font-medium text-muted-foreground">{t('buy.nowPrice')}</div>
+                    <div className="tabular mt-0.5 text-body font-bold text-foreground">{nowPrice != null ? money(nowPrice) : '…'}</div>
+                  </div>
                 </div>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-ui text-muted-foreground">{t('buy.nowPrice')}</span>
-                  <span className="tabular text-body text-foreground">{nowPrice != null ? money(nowPrice) : '…'}</span>
-                </div>
-                <div className="flex items-baseline justify-between border-t border-border pt-2.5">
+                <div className="flex items-baseline justify-between px-0.5">
                   <span className="label text-muted-foreground">{t('buy.sinceThen')}</span>
                   <span className={cn('tabular text-figure font-semibold', sinceThen == null ? 'text-muted-foreground' : sinceThen >= 0 ? 'text-up' : 'text-down')}>
                     {formatPct(sinceThen)}
@@ -388,14 +393,14 @@ export default function AddAsset() {
         )}
 
         {totalCost != null && !Number.isNaN(totalCost) && (
-          <div className="flex items-baseline justify-between px-0.5">
-            <span className="label text-muted-foreground">{t('buy.total')}</span>
-            <span className="tabular text-figure font-semibold text-foreground">{money(totalCost)}</span>
+          <div className="flex items-baseline justify-between rounded-xl border border-border bg-card p-4 shadow-card">
+            <span className="text-body text-muted-foreground">{t('buy.total')}</span>
+            <span className="tabular text-head font-bold text-foreground">{money(totalCost)}</span>
           </div>
         )}
 
         {/* Al: mobilde alt menünün hemen üstüne sabit, masaüstünde formun sonunda */}
-        <div className="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] z-30 border-t border-border bg-background px-4 py-3 md:static md:border-0 md:bg-transparent md:p-0 md:pt-2">
+        <div className="fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 border-t border-border bg-background/95 px-4 py-3 backdrop-blur md:static md:border-0 md:bg-transparent md:p-0 md:pt-2 md:backdrop-blur-none">
           <Button type="submit" className="h-12 w-full text-body" disabled={!canBuy}>
             {buyMutation.isPending
               ? '...'
@@ -425,17 +430,17 @@ export default function AddAsset() {
         actions={
           <>
             <button onClick={() => setConfirmOpen(false)}
-              className="w-1/2 border border-foreground py-2.5 font-mono text-micro font-bold uppercase text-foreground hover:bg-secondary">
+              className="press h-12 w-1/2 rounded-[10px] border border-border bg-card text-ui font-semibold text-foreground hover:bg-secondary">
               {t('common.cancel')}
             </button>
             <button onClick={() => handleSubmit()}
-              className="w-1/2 border border-margin bg-margin py-2.5 font-mono text-micro font-bold uppercase text-white hover:opacity-90">
+              className="press h-12 w-1/2 rounded-[10px] bg-destructive text-ui font-semibold text-destructive-foreground hover:opacity-90">
               {t('assets.confirmPriceKeep')}
             </button>
           </>
         }
       >
-        <p className="text-center font-mono text-micro text-muted-foreground">
+        <p className="text-body text-muted-foreground">
           {t('assets.confirmPriceBody').replace('{pct}', pct)}
         </p>
       </Modal>

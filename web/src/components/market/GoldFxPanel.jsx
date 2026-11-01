@@ -1,13 +1,9 @@
 import { useState } from 'react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import AssetDrawer from '@/components/AssetDrawer'
+import { AreaSpark } from '@/components/AreaSpark'
 import { Section } from '@/components/Section'
-import { Sparkline } from '@/components/Sparkline'
-import { catOf } from '@/lib/assetColors'
-
-const num = (v, d = 2) =>
-  new Intl.NumberFormat('tr-TR', { minimumFractionDigits: d, maximumFractionDigits: d }).format(v ?? 0)
-const pct = (v) => (v != null ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}%` : '—')
+import { num, pct, pctCls } from './marketFormat'
 
 // Sarrafiye ağırlıkları — gram fiyatından türetilir, ayrı veri kaynağı yok.
 // Milyem: külçe dışındaki ürünler 22 ayar (0.916) ve gram karşılıkları standarttır.
@@ -19,12 +15,56 @@ const GOLD_UNITS = [
   { key: 'republic', labelKey: 'goldfx.republic', grams: 7.216, purity: 0.916 },
 ]
 
-// Altın & Döviz detay içeriği (pages/GoldFx.jsx'ten taşındı): 2×2 kurlar + sarrafiye + 30 günlük değişim
+// 30 gün grafiğinde seri renkleri: altın hep altın rengi, kurlar sırayla — yalnız ayırt eder
+const FX_COLORS = ['--cat-stock', '--cat-cash', '--cat-index', '--cat-fx']
+const seriesColor = (q, i) => `hsl(var(${q.symbol === 'XAU' ? '--cat-gold' : FX_COLORS[i % FX_COLORS.length]}))`
+
+// 30 günlük değişim: her seri kendi ilk değerine göre % — tek grafikte karşılaştırılabilir
+function MonthChart({ strip }) {
+  const series = strip
+    .map((q, i) => {
+      const s = q.spark ?? []
+      if (s.length < 2 || !s[0]) return null
+      return { q, color: seriesColor(q, i), pts: s.map((v) => ((v - s[0]) / s[0]) * 100) }
+    })
+    .filter(Boolean)
+  if (series.length === 0) return <p className="py-8 text-center text-micro text-muted-foreground">—</p>
+
+  const all = series.flatMap((x) => x.pts)
+  const lo = Math.min(0, ...all)
+  const hi = Math.max(0, ...all)
+  const y = (v) => 46 - ((v - lo) / (hi - lo || 1)) * 42
+  const path = (pts) => pts.map((v, i) => `${i ? 'L' : 'M'}${((i / (pts.length - 1)) * 100).toFixed(2)} ${y(v).toFixed(2)}`).join(' ')
+
+  return (
+    <div className="p-4 pt-1">
+      <div className="mb-3 flex flex-wrap gap-1.5">
+        {series.map(({ q, color, pts }) => {
+          const last = pts[pts.length - 1]
+          return (
+            <span key={q.symbol} className="chip-neutral inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-micro">
+              <i className="h-2 w-2 rounded-full" style={{ background: color }} />
+              <span className="text-foreground">{q.name || q.symbol}</span>
+              <span className={`tabular font-semibold ${pctCls(last)}`}>{pct(last)}</span>
+            </span>
+          )
+        })}
+      </div>
+      <svg viewBox="0 0 100 50" preserveAspectRatio="none" className="h-40 w-full" aria-hidden="true">
+        <line x1="0" x2="100" y1={y(0)} y2={y(0)} stroke="hsl(var(--border))" strokeDasharray="2 2" vectorEffect="non-scaling-stroke" />
+        {series.map(({ q, color, pts }) => (
+          <path key={q.symbol} d={path(pts)} fill="none" stroke={color} strokeWidth="1.8" vectorEffect="non-scaling-stroke" />
+        ))}
+      </svg>
+    </div>
+  )
+}
+
+// Altın & Döviz bölümü: kur kutuları (mini grafikli) + sarrafiye + 30 günlük değişim
 export default function GoldFxPanel({ strip }) {
   const { t } = useLanguage()
   const [drawer, setDrawer] = useState(null)
   const gold = strip.find((q) => q.symbol === 'XAU')
-  const fx = strip.filter((q) => q.symbol !== 'XAU')
 
   const open = (q) =>
     setDrawer({
@@ -44,24 +84,27 @@ export default function GoldFxPanel({ strip }) {
         <div className="label mb-2 text-muted-foreground">{t('goldfx.rates')}</div>
         {/* Mobilde 2×2 — dört kur ilk ekrana sığar */}
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-4 lg:gap-3">
-          {strip.map((q) => (
-            <button
-              key={q.symbol}
-              onClick={() => open(q)}
-              className="press flex min-w-0 flex-col gap-1 rounded-lg border border-border bg-card p-3 text-left hover:border-foreground"
-            >
-              <span className="label truncate text-muted-foreground">{q.name || q.symbol}</span>
-              <span className="tabular truncate text-body font-semibold tracking-tight text-foreground">{num(q.price)} ₺</span>
-              <span className="flex items-end justify-between gap-2">
-                {q.changePercent != null ? (
-                  <span className={`tabular inline-flex rounded-full px-1.5 py-0.5 text-micro ${q.changePercent >= 0 ? 'bg-up/12 text-up' : 'bg-down/12 text-down'}`}>
-                    {pct(q.changePercent)}
-                  </span>
-                ) : <span />}
-                <Sparkline data={q.spark} className="h-6 w-14" />
-              </span>
-            </button>
-          ))}
+          {strip.map((q) => {
+            const up = (q.changePercent ?? 0) >= 0
+            return (
+              <button
+                key={q.symbol}
+                onClick={() => open(q)}
+                className="press flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card text-left shadow-card hover:border-input"
+              >
+                <span className="flex items-start justify-between gap-2 px-3.5 pt-3.5">
+                  <span className="label truncate text-muted-foreground">{q.name || q.symbol}</span>
+                  {q.changePercent != null && (
+                    <span className={`tabular shrink-0 rounded-sm px-1.5 py-0.5 text-micro font-semibold ${up ? 'chip-up' : 'chip-down'}`}>
+                      {pct(q.changePercent)}
+                    </span>
+                  )}
+                </span>
+                <span className="tabular truncate px-3.5 pt-1 text-figure font-bold text-foreground">{num(q.price)} ₺</span>
+                <AreaSpark values={q.spark ?? []} color={`hsl(var(${up ? '--up' : '--down'}))`} className="mt-2 h-10 w-full" />
+              </button>
+            )
+          })}
         </div>
       </div>
 
@@ -70,52 +113,34 @@ export default function GoldFxPanel({ strip }) {
         <Section title={t('goldfx.units')} meta={t('goldfx.derivedNote')}>
           {gold ? (
             <div className="overflow-x-auto">
-            <table className="w-full text-left text-ui">
-              <thead>
-                <tr className="border-b border-border label text-muted-foreground">
-                  <th className="px-4 py-2.5 font-normal">{t('goldfx.unit')}</th>
-                  <th className="px-4 py-2.5 text-right font-normal">{t('assets.grams')}</th>
-                  <th className="px-4 py-2.5 text-right font-normal">{t('goldfx.approxValue')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {GOLD_UNITS.map((u) => (
-                  <tr key={u.key}>
-                    <td className="px-4 py-2.5 text-foreground">{t(u.labelKey)}</td>
-                    <td className="tabular px-4 py-2.5 text-right text-muted-foreground">{num(u.grams, 3)}</td>
-                    <td className="tabular px-4 py-2.5 text-right font-semibold text-foreground">
-                      {num(gold.price * u.grams * u.purity)} ₺
-                    </td>
+              <table className="w-full text-left text-ui">
+                <thead>
+                  <tr className="label border-y border-border bg-secondary/40 text-muted-foreground">
+                    <th className="px-4 py-2.5 font-semibold">{t('goldfx.unit')}</th>
+                    <th className="px-4 py-2.5 text-right font-semibold">{t('assets.grams')}</th>
+                    <th className="px-4 py-2.5 text-right font-semibold">{t('goldfx.approxValue')}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {GOLD_UNITS.map((u) => (
+                    <tr key={u.key}>
+                      <td className="px-4 py-3 text-foreground">{t(u.labelKey)}</td>
+                      <td className="tabular px-4 py-3 text-right text-muted-foreground">{num(u.grams, 3)}</td>
+                      <td className="tabular px-4 py-3 text-right font-semibold text-foreground">
+                        {num(gold.price * u.grams * u.purity)} ₺
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : (
             <p className="py-8 text-center text-micro text-muted-foreground">—</p>
           )}
         </Section>
 
-        {/* 30 günlük değişim */}
         <Section title={t('goldfx.month')} meta={t('goldfx.monthNote')}>
-          <div className="space-y-3 p-4">
-            {strip.map((q) => {
-              const s = q.spark ?? []
-              const change = s.length > 1 ? ((s[s.length - 1] - s[0]) / s[0]) * 100 : null
-              const cat = catOf(q.symbol === 'XAU' ? 'Gold' : 'Currency')
-              return (
-                <div key={q.symbol} className="flex items-center gap-3 text-ui">
-                  <span className={`h-2.5 w-2.5 shrink-0 rounded-sm ${cat.dot}`} />
-                  <span className="w-24 shrink-0 text-foreground">{q.name || q.symbol}</span>
-                  <Sparkline data={s} className="h-7 flex-1" />
-                  <span className={`tabular w-16 text-right font-semibold ${change == null ? 'text-muted-foreground' : change >= 0 ? 'text-up' : 'text-down'}`}>
-                    {pct(change)}
-                  </span>
-                </div>
-              )
-            })}
-            {fx.length === 0 && <p className="py-6 text-center text-micro text-muted-foreground">—</p>}
-          </div>
+          <MonthChart strip={strip} />
         </Section>
       </div>
 

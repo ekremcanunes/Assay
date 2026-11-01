@@ -17,10 +17,10 @@ const formatTRY = (value) =>
   new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(value ?? 0)
 
 const CHART_TOOLTIP_STYLE = {
-  backgroundColor: '#F7F6F1',
-  border: '1px solid #D9D6CB',
+  backgroundColor: 'hsl(var(--card))',
+  border: '1px solid hsl(var(--border))',
   borderRadius: '8px',
-  color: '#1C1B18',
+  color: 'hsl(var(--foreground))',
 }
 
 export default function Analytics() {
@@ -66,7 +66,7 @@ export default function Analytics() {
                     label={({ name, value }) => `${name}: ${value}%`}
                   >
                     {pieData.map((entry) => (
-                      <Cell key={entry.typeKey} fill={catOf(entry.typeKey).hex} />
+                      <Cell key={entry.typeKey} fill={catOf(entry.typeKey).color} />
                     ))}
                   </Pie>
                   <Tooltip

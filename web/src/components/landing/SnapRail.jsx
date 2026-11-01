@@ -46,7 +46,7 @@ export default function SnapRail({ children, className, label }) {
             aria-current={i === index ? 'true' : undefined}
             className="grid h-6 place-items-center px-0.5"
           >
-            <i className={cn('block h-1.5 rounded-full transition-all', i === index ? 'w-4 bg-foreground' : 'w-1.5 bg-border')} />
+            <i className={cn('block h-1.5 rounded-full transition-all', i === index ? 'w-4 bg-primary' : 'w-1.5 bg-border')} />
           </button>
         ))}
       </div>

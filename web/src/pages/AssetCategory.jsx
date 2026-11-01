@@ -45,7 +45,7 @@ export default function AssetCategory() {
         value={money(summary.value)}
         changePct={summary.changePct}
         values={(history?.candles ?? []).map((c) => c.close)}
-        color={catOf(type).hex}
+        color={catOf(type).color}
         backLabel={t('portfolio.back')}
         onBack={() => navigate('/assets', { viewTransition: true, state: { from: category } })}
       />

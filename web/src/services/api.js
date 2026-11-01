@@ -22,6 +22,10 @@ export const dashboardApi = {
   get: () => api.get('/api/dashboard'),
 }
 
+export const systemApi = {
+  status: () => api.get('/api/system/status'),
+}
+
 export const transactionApi = {
   getAll: (params) => api.get('/api/transactions', { params }),
   getById: (id) => api.get(`/api/transactions/${id}`),

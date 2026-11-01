@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createChart, CandlestickSeries, AreaSeries, HistogramSeries } from 'lightweight-charts'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import { usePriceHistory } from '@/hooks/queries'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ExternalLink } from 'lucide-react'
@@ -27,6 +28,7 @@ const tradingViewUrl = (symbol, assetType, exchange) => {
 
 export default function PriceChart({ market = '', symbol, assetType = 'Stock', exchange, height = 320 }) {
   const { t } = useLanguage()
+  const { dark } = useTheme() // tema değişince grafik yeni token'larla yeniden kurulur
   const [range, setRange] = useState('1mo')
   const containerRef = useRef(null)
   const { data, isLoading, isError } = usePriceHistory(market, symbol, assetType, range)
@@ -81,9 +83,10 @@ export default function PriceChart({ market = '', symbol, assetType = 'Stock', e
       })
       area.setData(candles.map((c) => ({ time: c.time, value: c.close })))
     } else {
+      // Gövde %85 (göz yormasın, kobalt çizgiler öne çıksın); kenar ve fitil tam renk
       const series = chart.addSeries(CandlestickSeries, {
-        upColor: up,
-        downColor: down,
+        upColor: token('--up', 0.85),
+        downColor: token('--down', 0.85),
         borderUpColor: up,
         borderDownColor: down,
         wickUpColor: up,
@@ -102,7 +105,8 @@ export default function PriceChart({ market = '', symbol, assetType = 'Stock', e
           withVolume.map((c) => ({
             time: c.time,
             value: c.volume,
-            color: c.close >= c.open ? up : down,
+            // Hacim arka planda kalır: mumlarla yarışmasın
+            color: token(c.close >= c.open ? '--up' : '--down', 0.35),
           }))
         )
         volume.priceScale().applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } })
@@ -119,22 +123,27 @@ export default function PriceChart({ market = '', symbol, assetType = 'Stock', e
       window.removeEventListener('resize', resize)
       chart.remove()
     }
-  }, [candles, assetType, range, height])
+  }, [candles, assetType, range, height, dark])
 
   return (
     <div>
-      <div className="mb-2 flex flex-wrap items-center gap-1">
-        {RANGES.map((r) => (
-          <button
-            key={r}
-            onClick={() => setRange(r)}
-            className={`rounded-md px-2 py-1 font-mono text-micro ${
-              range === r ? 'bg-foreground text-background' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
-            }`}
-          >
-            {RANGE_LABEL[r]}
-          </button>
-        ))}
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        {/* Segment oluğu: aktif dilim beyaz yüzey + hairline */}
+        <div className="inline-flex rounded-[10px] bg-secondary p-1">
+          {RANGES.map((r) => (
+            <button
+              key={r}
+              onClick={() => setRange(r)}
+              className={`tabular rounded-lg border px-2.5 py-1 text-micro ${
+                range === r
+                  ? 'border-border bg-card font-bold text-foreground shadow-card'
+                  : 'border-transparent font-medium text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {RANGE_LABEL[r]}
+            </button>
+          ))}
+        </div>
         {tvUrl && (
           <a
             href={tvUrl}

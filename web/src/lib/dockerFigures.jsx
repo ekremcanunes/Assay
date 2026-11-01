@@ -7,14 +7,14 @@ const CARD = 'hsl(var(--card))'
 const INPUT = 'hsl(var(--input))'
 const INK = 'hsl(var(--foreground))'
 const MUTED = 'hsl(var(--muted-foreground))'
-const VOLT = 'hsl(var(--voltage))'
+const VOLT = 'hsl(var(--primary))'
 
 const LBL = 'fill-[hsl(var(--muted-foreground))] font-mono text-[9.5px] tracking-wider'
 const TTL = 'fill-[hsl(var(--foreground))] text-[12.5px] font-semibold'
 const MONO = 'fill-[hsl(var(--foreground))] font-mono text-[11px]'
 const MONO_S = 'fill-[hsl(var(--foreground))] font-mono text-[10px]'
 const SUB = 'fill-[hsl(var(--muted-foreground))] font-mono text-[9.5px]'
-const VLBL = 'fill-[hsl(var(--voltage))] font-mono text-[9.5px]'
+const VLBL = 'fill-[hsl(var(--primary))] font-mono text-[9.5px]'
 
 function Markers({ id }) {
   const head = (name, color) => (

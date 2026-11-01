@@ -9,7 +9,7 @@ export default function PageLoader({ label, className }) {
     <div role="status" className={cn('flex min-h-screen items-center justify-center bg-background', className)}>
       <span
         aria-hidden="true"
-        className="h-5 w-5 animate-spin rounded-full border-2 border-border border-t-foreground motion-reduce:animate-none"
+        className="h-5 w-5 animate-spin rounded-full border-2 border-border border-t-primary motion-reduce:animate-none"
       />
       <span className="sr-only">{label ?? t('common.loading')}</span>
     </div>

@@ -12,16 +12,16 @@ export function Checkbox({ checked, onCheckedChange, label, disabled, className,
         className
       )}
     >
-      <span className="relative inline-flex h-4 w-4 items-center justify-center">
+      <span className="relative inline-flex h-5 w-5 items-center justify-center">
         <input
           id={id}
           type="checkbox"
           checked={checked}
           disabled={disabled}
           onChange={(e) => onCheckedChange?.(e.target.checked)}
-          className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-input bg-transparent transition-colors checked:border-foreground checked:bg-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed"
+          className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-input bg-card transition-colors checked:border-primary checked:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed"
         />
-        <Check className="pointer-events-none absolute h-3 w-3 text-background opacity-0 peer-checked:opacity-100" />
+        <Check className="pointer-events-none absolute h-3.5 w-3.5 text-primary-foreground opacity-0 peer-checked:opacity-100" />
       </span>
       {label}
     </label>

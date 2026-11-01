@@ -8,7 +8,8 @@ import { APP_NAME, KRATOS_URL } from '../lib/app'
 import { csrfOf, browserFlowUrl, getFlow, submitFlow, classifyFlowError } from '../lib/kratosFlow'
 import { markOtpPending, clearOtpPending, isOtpPendingFresh } from '../lib/otpPending'
 import { hasPasswordUpdated, clearPasswordUpdated } from '../lib/passwordNotice'
-import assayMark from '../assets/assay-mark.svg'
+import { AssayMark } from '@/components/AssayMark'
+import { ThemeSwitch } from '@/components/ThemeSwitch'
 import AuthVisual from '../components/AuthVisual'
 import PasswordToggle from '../components/PasswordToggle'
 import CodeStep from '../components/CodeStep'
@@ -204,22 +205,25 @@ export default function Login() {
           <div key="password" className="flex flex-1 flex-col">
             <div className="flex items-center justify-between">
               <Link to="/landing" aria-label={`${APP_NAME} tanıtım sayfası`} className="inline-block rounded-sm hover:opacity-70">
-                <img src={assayMark} alt="" className="h-[30px] w-[30px]" />
+                <AssayMark className="h-[30px] w-[30px]" />
               </Link>
-              <Link to="/landing" className="py-2.5 text-ui text-muted-foreground hover:text-foreground md:hidden">
-                <span aria-hidden="true">&larr;</span> {APP_NAME} nedir?
-              </Link>
+              <div className="flex items-center gap-3">
+                <Link to="/landing" className="py-2.5 text-ui text-muted-foreground hover:text-foreground md:hidden">
+                  <span aria-hidden="true">&larr;</span> {APP_NAME} nedir?
+                </Link>
+                <ThemeSwitch iconOnly />
+              </div>
             </div>
             <h1 className="mt-6 text-head font-bold text-foreground md:mt-4">{t('auth.signIn')}</h1>
             <p className="mt-1 text-ui text-muted-foreground">{APP_NAME} — {t('auth.signInSubtitle')}</p>
 
             {notice && !error && (
-              <div className="mt-4 rounded-md border border-border bg-secondary px-3 py-2 text-micro text-foreground" role="status">
+              <div className="mt-4 rounded-xl border border-border bg-secondary px-3.5 py-2.5 text-ui text-foreground" role="status">
                 {t('auth.passwordUpdated')}
               </div>
             )}
             {error && (
-              <div className="mt-4 rounded-md border border-destructive/40 bg-destructive/8 px-3 py-2 text-micro text-destructive" role="alert">
+              <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-ui text-destructive" role="alert">
                 {error}
               </div>
             )}
@@ -252,7 +256,7 @@ export default function Login() {
                 <PasswordToggle shown={showPass} onToggle={() => setShowPass((v) => !v)} />
               </div>
               {fieldErr.password && <p className="mt-1 text-micro text-down">{fieldErr.password}</p>}
-              <Link to="/recovery" reloadDocument className="mt-1 self-end py-2.5 text-ui text-muted-foreground underline underline-offset-4 hover:text-foreground">
+              <Link to="/recovery" reloadDocument className="mt-1 self-end py-2.5 text-ui font-medium text-primary underline-offset-4 hover:underline">
                 {t('auth.forgotPassword')}
               </Link>
 
@@ -264,7 +268,7 @@ export default function Login() {
                 </button>
                 <p className="mt-3 text-center text-ui text-muted-foreground md:mt-5 md:text-left">
                   {t('auth.noAccount')}{' '}
-                  <Link to="/register" reloadDocument className="font-semibold text-foreground underline underline-offset-4 hover:opacity-70">{t('auth.createOne')}</Link>
+                  <Link to="/register" reloadDocument className="font-semibold text-primary underline-offset-4 hover:underline">{t('auth.createOne')}</Link>
                 </p>
               </div>
             </form>

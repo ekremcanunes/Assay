@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client'
-import '@fontsource-variable/ibm-plex-sans'
+import '@fontsource-variable/plus-jakarta-sans'
 import '@fontsource/ibm-plex-mono/400.css'
 import './index.css'
 import App from './App.jsx'
