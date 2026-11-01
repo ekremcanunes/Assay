@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+
+<html class="light" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Assay // Terminal - Portföy Defteri</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Hanken+Grotesk:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Hanken+Grotesk:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary": "#004ac6",
+            "tertiary": "#005a89",
+            "outline": "#737686",
+            "on-surface-variant": "#434655",
+            "on-secondary-fixed-variant": "#005137",
+            "surface-container-lowest": "#ffffff",
+            "inverse-primary": "#b4c5ff",
+            "on-secondary-fixed": "#002114",
+            "on-error-container": "#93000a",
+            "on-tertiary-fixed-variant": "#004b73",
+            "error": "#ba1a1a",
+            "on-primary-fixed-variant": "#003ea8",
+            "on-primary-fixed": "#00174b",
+            "secondary-fixed-dim": "#68dba9",
+            "on-error": "#ffffff",
+            "primary-fixed": "#dbe1ff",
+            "surface-container-highest": "#dae2fd",
+            "surface-dim": "#d2d9f4",
+            "inverse-surface": "#283044",
+            "on-tertiary-fixed": "#001d31",
+            "on-tertiary-container": "#e7f2ff",
+            "surface-container-low": "#f2f3ff",
+            "secondary-fixed": "#85f8c4",
+            "surface-container-high": "#e2e7ff",
+            "surface-tint": "#0053db",
+            "on-surface": "#131b2e",
+            "on-primary-container": "#eeefff",
+            "tertiary-fixed-dim": "#93ccff",
+            "primary-container": "#2563eb",
+            "primary-fixed-dim": "#b4c5ff",
+            "tertiary-container": "#0073ae",
+            "surface": "#faf8ff",
+            "on-tertiary": "#ffffff",
+            "surface-variant": "#dae2fd",
+            "tertiary-fixed": "#cce5ff",
+            "on-background": "#131b2e",
+            "outline-variant": "#c3c6d7",
+            "secondary": "#006c4a",
+            "background": "#faf8ff",
+            "on-secondary-container": "#00714e",
+            "on-secondary": "#ffffff",
+            "secondary-container": "#82f5c1",
+            "on-primary": "#ffffff",
+            "error-container": "#ffdad6",
+            "surface-bright": "#faf8ff",
+            "inverse-on-surface": "#eef0ff",
+            "surface-container": "#eaedff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "margin": "1rem",
+            "space-lg": "1rem",
+            "gutter": "1rem",
+            "space-xs": "0.25rem",
+            "space-xl": "1.5rem",
+            "gutter-desktop": "1.25rem",
+            "space-sm": "0.5rem",
+            "space-md": "0.75rem",
+            "margin-desktop": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-md": ["Hanken Grotesk"],
+            "mono-data-md": ["JetBrains Mono"],
+            "mono-data-lg": ["JetBrains Mono"],
+            "headline-sm": ["Hanken Grotesk"],
+            "label-caps": ["JetBrains Mono"],
+            "headline-lg": ["Hanken Grotesk"],
+            "mono-data-sm": ["JetBrains Mono"],
+            "body-md": ["Geist"],
+            "display-lg": ["Hanken Grotesk"],
+            "display-lg-mobile": ["Hanken Grotesk"],
+            "body-sm": ["Geist"],
+            "body-lg": ["Geist"]
+          },
+          "fontSize": {
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "mono-data-md": ["13px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "mono-data-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+            "headline-sm": ["16px", { "lineHeight": "22px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-caps": ["10px", { "lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "mono-data-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.03em", "fontWeight": "600" }],
+            "display-lg-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-lg": ["15px", { "lineHeight": "22px", "letterSpacing": "-0.005em", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      font-size: 18px;
+      line-height: 1;
+    }
+    .grid-pattern {
+      background-size: 24px 24px;
+      background-image: 
+        linear-gradient(to right, rgba(195, 198, 215, 0.18) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(195, 198, 215, 0.18) 1px, transparent 1px);
+    }
+    .pulse-node {
+      box-shadow: 0 0 0 0 rgba(0, 108, 74, 0.4);
+      animation: pulse-ring 2s infinite;
+    }
+    @keyframes pulse-ring {
+      0% { box-shadow: 0 0 0 0 rgba(0, 108, 74, 0.35); }
+      70% { box-shadow: 0 0 0 6px rgba(0, 108, 74, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 108, 74, 0); }
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased selection:bg-secondary-container selection:text-on-secondary-container min-h-screen flex justify-center">
+<!-- Mobile Frame Wrapper (Simulating mobile ~390px flow with daylight atmosphere) -->
+<div class="w-full max-w-[420px] bg-background min-h-screen relative flex flex-col grid-pattern border-x border-outline-variant/30 pb-20 shadow-2xl">
+<!-- Top Navigation Bar (Shared Component Anchor) -->
+<header class="sticky top-0 z-40 bg-surface/95 backdrop-blur-md border-b border-outline-variant/40 flex justify-between items-center w-full px-margin h-14">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="account_balance_wallet">account_balance_wallet</span>
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-on-surface font-extrabold tracking-tight">Assay</span>
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-wider">// TERMINAL</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<!-- Live Ping Indicator Badge -->
+<div class="flex items-center gap-1 bg-secondary-container/30 px-2 py-0.5 rounded border border-secondary/20">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary pulse-node"></span>
+<span class="font-mono-data-sm text-mono-data-sm text-secondary font-semibold">0.8ms</span>
+</div>
+<!-- Login / Action Button -->
+<button class="h-8 px-3 rounded bg-surface-container-lowest border border-outline-variant/60 font-body-sm text-body-sm text-on-surface font-medium hover:bg-surface-container active:scale-95 transition-all">
+          Giriş Yap
+        </button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-margin pt-6 flex flex-col gap-6">
+<!-- Hero Section -->
+<section class="flex flex-col gap-2.5">
+<div class="inline-flex items-center gap-1.5 w-fit px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed border border-primary/10">
+<span class="font-label-caps text-label-caps uppercase tracking-wider">LÜKS GÜN IŞIĞI / MİMARİ DEFTER</span>
+</div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-on-surface tracking-tight leading-tight">
+          Hisse, altın ve döviz. <br/>
+<span class="text-secondary font-bold">Hepsi tek defterde.</span>
+</h1>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          Gecikmesiz piyasa telemetrisi, parçalanmış varlık takibi ve deterministik mutabakat. Kurumsal kalibredeki şeffaflık masanıza geliyor.
+        </p>
+<div class="flex items-center gap-2 pt-1">
+<button class="flex-1 h-9 bg-secondary text-on-secondary rounded flex items-center justify-center gap-1.5 font-body-md text-body-md font-medium hover:opacity-95 active:scale-95 transition-all shadow-sm">
+<span>Defterini Aç</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<button class="h-9 px-3 bg-surface-container-lowest border border-outline-variant/50 text-on-surface rounded flex items-center justify-center gap-1 font-body-md text-body-md hover:bg-surface-container active:scale-95 transition-all">
+<span class="material-symbols-outlined text-outline" data-icon="terminal">terminal</span>
+<span>API Docs</span>
+</button>
+</div>
+</section>
+<!-- Live Simulator Card (Interactive/Precision Feel) -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-space-md shadow-[0_8px_24px_-4px_rgba(15,23,42,0.06)] flex flex-col gap-3">
+<!-- Simulator Header -->
+<div class="flex items-center justify-between border-b border-outline-variant/30 pb-2.5">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary" data-icon="sync_alt">sync_alt</span>
+<span class="font-mono-data-sm text-mono-data-sm text-on-surface font-semibold">CANLI SİMÜLATÖR</span>
+</div>
+<span class="font-label-caps text-label-caps bg-surface-container px-2 py-0.5 rounded text-on-surface-variant font-medium border border-outline-variant/20">
+            ÖNBELLEK: AKTİF (TTL 300s)
+          </span>
+</div>
+<!-- Asset Segment Pills -->
+<div class="grid grid-cols-3 gap-1.5 p-1 bg-surface-container rounded-lg border border-outline-variant/30 text-center">
+<button class="py-1 rounded bg-surface-container-lowest text-on-surface font-mono-data-sm text-mono-data-sm font-semibold shadow-xs border border-outline-variant/30">
+            THYAO
+          </button>
+<button class="py-1 rounded text-outline font-mono-data-sm text-mono-data-sm hover:text-on-surface transition-colors">
+            GRAM
+          </button>
+<button class="py-1 rounded text-outline font-mono-data-sm text-mono-data-sm hover:text-on-surface transition-colors">
+            USD/TRY
+          </button>
+</div>
+<!-- Selected Asset Depth & Telemetry -->
+<div class="flex items-center justify-between p-2.5 rounded bg-surface border border-outline-variant/30">
+<div>
+<div class="font-mono-data-lg text-mono-data-lg text-on-surface font-bold tracking-tight">₺314.75</div>
+<div class="flex items-center gap-1 text-secondary font-mono-data-sm text-mono-data-sm">
+<span class="material-symbols-outlined text-[14px]" data-icon="trending_up">trending_up</span>
+<span>+%2.34 (GÜNLÜK)</span>
+</div>
+</div>
+<div class="text-right">
+<div class="font-label-caps text-label-caps text-outline">DERİNLİK L1</div>
+<div class="font-mono-data-sm text-mono-data-sm text-on-surface-variant">148,290 LOT</div>
+</div>
+</div>
+<!-- Data Pipeline Flow Trace -->
+<div class="flex flex-col gap-1.5 pt-1">
+<div class="font-label-caps text-label-caps text-outline uppercase tracking-wider">YÖNLENDİRME HATTı</div>
+<div class="flex items-center justify-between text-center gap-1">
+<div class="flex-1 py-1.5 px-1 bg-surface-container-low rounded border border-outline-variant/40">
+<span class="font-label-caps text-label-caps text-outline block">İSTEMCİ</span>
+<span class="font-mono-data-sm text-mono-data-sm font-semibold text-on-surface">Sen</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[14px]" data-icon="chevron_right">chevron_right</span>
+<div class="flex-1 py-1.5 px-1 bg-secondary-container/20 rounded border border-secondary/30">
+<span class="font-label-caps text-label-caps text-secondary block">MOTOR</span>
+<span class="font-mono-data-sm text-mono-data-sm font-semibold text-secondary">Assay .NET</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[14px]" data-icon="chevron_right">chevron_right</span>
+<div class="flex-1 py-1.5 px-1 bg-surface-container-low rounded border border-outline-variant/40">
+<span class="font-label-caps text-label-caps text-outline block">TAKAS/BORSA</span>
+<span class="font-mono-data-sm text-mono-data-sm font-semibold text-on-surface">Kaynak</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Metrics 2x2 Bento Grid -->
+<section class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-wider">ALTYAPI TELEMETRİSİ</span>
+<span class="font-mono-data-sm text-mono-data-sm text-secondary font-medium">99.99% UPTIME</span>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<!-- Stat 1 -->
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/50 flex flex-col justify-between">
+<span class="material-symbols-outlined text-primary mb-2" data-icon="inventory_2">inventory_2</span>
+<div>
+<div class="font-display-lg-mobile text-display-lg-mobile text-on-surface font-bold tracking-tight">6</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Container Node</div>
+</div>
+</div>
+<!-- Stat 2 -->
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/50 flex flex-col justify-between">
+<span class="material-symbols-outlined text-tertiary mb-2" data-icon="hub">hub</span>
+<div>
+<div class="font-display-lg-mobile text-display-lg-mobile text-on-surface font-bold tracking-tight">2</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">.NET Core Servisi</div>
+</div>
+</div>
+<!-- Stat 3 -->
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/50 flex flex-col justify-between">
+<span class="material-symbols-outlined text-secondary mb-2" data-icon="dataset">dataset</span>
+<div>
+<div class="font-display-lg-mobile text-display-lg-mobile text-on-surface font-bold tracking-tight">3</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Veri Kaynağı</div>
+</div>
+</div>
+<!-- Stat 4 -->
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/50 flex flex-col justify-between">
+<span class="material-symbols-outlined text-outline mb-2" data-icon="timer">timer</span>
+<div>
+<div class="font-display-lg-mobile text-display-lg-mobile text-on-surface font-bold tracking-tight">5dk</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Akıllı Cache</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Defterin Tuttukları (Capabilities) -->
+<section class="flex flex-col gap-3">
+<div class="border-b border-outline-variant/40 pb-1.5 flex justify-between items-baseline">
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Defterin Tuttukları</h2>
+<span class="font-label-caps text-label-caps text-outline">MODÜLER MODÜLLER</span>
+</div>
+<div class="grid grid-cols-1 gap-2.5">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest p-3.5 rounded-lg border border-outline-variant/50 flex gap-3 items-start">
+<div class="w-8 h-8 rounded bg-primary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary" data-icon="account_balance">account_balance</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Varlık Takibi</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                BIST hisseleri, fiziksel/dijital altın ve döviz pozisyonlarını tek bir ağırlıklı bilançoda toplar.
+              </p>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest p-3.5 rounded-lg border border-outline-variant/50 flex gap-3 items-start">
+<div class="w-8 h-8 rounded bg-secondary-container/40 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary" data-icon="candlestick_chart">candlestick_chart</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Canlı Piyasa & Arbitraj</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                Eş zamanlı parite dönüşümleri, spread analizi ve saniyeden kısa veri tazeleme döngüleri.
+              </p>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest p-3.5 rounded-lg border border-outline-variant/50 flex gap-3 items-start">
+<div class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-tertiary" data-icon="menu_book">menu_book</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">İşlem Defteri (Ledger)</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                Değiştirilemez işlem geçmişi, gerçekleşmiş/gerçekleşmemiş kâr-zarar (P&L) ve maliyet matrisi.
+              </p>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface-container-lowest p-3.5 rounded-lg border border-outline-variant/50 flex gap-3 items-start">
+<div class="w-8 h-8 rounded bg-surface-container-highest flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-outline" data-icon="manage_search">manage_search</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Semantik Arama</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                ISIN, sembol veya sektör bazlı anında arama ve akıllı filtreleme motoru.
+              </p>
+</div>
+</div>
+</div>
+</section>
+<!-- Fiyat İstek Akış Mimarisi (Pipeline Diagram) -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-space-md flex flex-col gap-3">
+<div class="border-b border-outline-variant/30 pb-2 flex justify-between items-center">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary" data-icon="account_tree">account_tree</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">Fiyat İstek Akış Mimarisi</span>
+</div>
+<span class="font-mono-data-sm text-mono-data-sm text-secondary font-semibold">REST + WS</span>
+</div>
+<div class="flex flex-col gap-2 pt-1 relative">
+<!-- Step 1 -->
+<div class="flex items-center gap-3 p-2 rounded bg-surface border border-outline-variant/30">
+<span class="w-6 h-6 rounded bg-primary text-on-primary flex items-center justify-center font-mono-data-sm text-mono-data-sm font-bold">1</span>
+<div class="flex-1">
+<div class="font-headline-sm text-headline-sm text-on-surface">React Client</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Luxe daylight UI, anlık durum aboneliği</div>
+</div>
+<span class="font-mono-data-sm text-mono-data-sm text-outline">HTTP GET</span>
+</div>
+<div class="flex justify-center -my-1 text-outline">
+<span class="material-symbols-outlined text-[16px]" data-icon="arrow_downward">arrow_downward</span>
+</div>
+<!-- Step 2 -->
+<div class="flex items-center gap-3 p-2 rounded bg-surface border border-outline-variant/30">
+<span class="w-6 h-6 rounded bg-tertiary text-on-tertiary flex items-center justify-center font-mono-data-sm text-mono-data-sm font-bold">2</span>
+<div class="flex-1">
+<div class="font-headline-sm text-headline-sm text-on-surface">nginx Reverse Proxy</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">SSL sonlandırma, rate-limit, gzip</div>
+</div>
+<span class="font-mono-data-sm text-mono-data-sm text-secondary">0.1ms</span>
+</div>
+<div class="flex justify-center -my-1 text-outline">
+<span class="material-symbols-outlined text-[16px]" data-icon="arrow_downward">arrow_downward</span>
+</div>
+<!-- Step 3 -->
+<div class="flex items-center gap-3 p-2 rounded bg-surface border border-outline-variant/30">
+<span class="w-6 h-6 rounded bg-primary-container text-on-primary-container flex items-center justify-center font-mono-data-sm text-mono-data-sm font-bold">3</span>
+<div class="flex-1">
+<div class="font-headline-sm text-headline-sm text-on-surface">.NET Core Web API</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">İş mantığı, mutabakat, token doğrulama</div>
+</div>
+<span class="font-mono-data-sm text-mono-data-sm text-primary">C# 12</span>
+</div>
+<div class="flex justify-center -my-1 text-outline">
+<span class="material-symbols-outlined text-[16px]" data-icon="arrow_downward">arrow_downward</span>
+</div>
+<!-- Step 4 -->
+<div class="flex items-center gap-3 p-2 rounded bg-surface border border-outline-variant/30">
+<span class="w-6 h-6 rounded bg-secondary text-on-secondary flex items-center justify-center font-mono-data-sm text-mono-data-sm font-bold">4</span>
+<div class="flex-1">
+<div class="font-headline-sm text-headline-sm text-on-surface">Redis Cache & Memory</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">In-memory anahtar/değer, 5dk TTL</div>
+</div>
+<span class="font-mono-data-sm text-mono-data-sm text-secondary">HIT 98%</span>
+</div>
+</div>
+</section>
+<!-- Teknolojiler & Gerekçeler -->
+<section class="flex flex-col gap-2.5">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-wider">TEKNOLOJİ STACK VE TERCİHLER</span>
+<div class="flex flex-wrap gap-1.5">
+<span class="px-2 py-1 bg-surface-container-lowest border border-primary text-primary font-mono-data-sm text-mono-data-sm rounded font-medium">.NET 8</span>
+<span class="px-2 py-1 bg-surface-container-lowest border border-outline-variant/60 text-on-surface font-mono-data-sm text-mono-data-sm rounded">PostgreSQL</span>
+<span class="px-2 py-1 bg-surface-container-lowest border border-outline-variant/60 text-on-surface font-mono-data-sm text-mono-data-sm rounded">Redis</span>
+<span class="px-2 py-1 bg-surface-container-lowest border border-outline-variant/60 text-on-surface font-mono-data-sm text-mono-data-sm rounded">Docker Swarm</span>
+<span class="px-2 py-1 bg-surface-container-lowest border border-outline-variant/60 text-on-surface font-mono-data-sm text-mono-data-sm rounded">TailwindCSS</span>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/50 flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Neden .NET 8?</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Yüksek hacimli eşzamanlı isteklerde sıfır bellek tahsisli (zero-allocation) JSON serileştirme ve deterministik CPU performansı.
+          </p>
+</div>
+</section>
+<!-- Bilinçli Ödünler (Trade-offs) -->
+<section class="flex flex-col gap-2.5">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-outline" data-icon="balance">balance</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Bilinçli Ödünler</h2>
+</div>
+<div class="space-y-2">
+<div class="p-2.5 rounded bg-surface-container-lowest border border-outline-variant/50">
+<div class="flex justify-between items-center">
+<span class="font-mono-data-sm text-mono-data-sm font-semibold text-on-surface">5 Dakika Önbellek</span>
+<span class="font-label-caps text-label-caps text-error bg-error-container/40 px-1.5 py-0.2 rounded">TİCARET</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+              HFT tarzı milisaniyelik fiyat güncellemeleri yerine; stabil sunucu yükü, sıfır borsa kotalama maliyeti ve kesintisiz pil ömrü seçildi.
+            </p>
+</div>
+<div class="p-2.5 rounded bg-surface-container-lowest border border-outline-variant/50">
+<div class="flex justify-between items-center">
+<span class="font-mono-data-sm text-mono-data-sm font-semibold text-on-surface">İstemci Taraflı Hesaplama</span>
+<span class="font-label-caps text-label-caps text-secondary bg-secondary-container/40 px-1.5 py-0.2 rounded">GİZLİLİK</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+              Kullanıcı portföy adetleri ve net toplam serveti merkezi sunucuya gönderilmez; ham veri çekilir, matris telefonda çözülür.
+            </p>
+</div>
+</div>
+</section>
+<!-- Manifesto & CTA Section -->
+<section class="bg-surface-container p-4 rounded-xl border border-outline-variant/50 flex flex-col gap-3 my-2">
+<div class="flex items-center gap-1.5 text-secondary">
+<span class="material-symbols-outlined text-[18px]" data-icon="auto_stories">auto_stories</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider font-bold">MANIFESTO</span>
+</div>
+<blockquote class="font-headline-sm text-headline-sm text-on-surface italic font-medium leading-snug">
+          "Bitmiş bir ürün değil, ömür boyu süren bir portföy defteri."
+        </blockquote>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Gereksiz animasyonlar ve dikkat dağıtıcı bannerlar yok. Sadece net rakamlar, saf tipografi ve kontrol edilebilir varlıklar.
+        </p>
+<button class="w-full h-10 bg-secondary text-on-secondary rounded flex items-center justify-center gap-2 font-headline-sm text-headline-sm font-semibold hover:opacity-95 active:scale-98 transition-all shadow-sm">
+<span>Defterini Aç</span>
+<span class="material-symbols-outlined text-[18px]" data-icon="north_east">north_east</span>
+</button>
+</section>
+<!-- Footer Info -->
+<footer class="pt-2 pb-6 border-t border-outline-variant/30 flex flex-col gap-2 text-center">
+<div class="flex justify-center items-center gap-2 text-outline">
+<span class="font-label-caps text-label-caps">ASSAY ARCHITECTURE</span>
+<span>•</span>
+<span class="font-label-caps text-label-caps">v2.4-DAYLIGHT</span>
+</div>
+<p class="font-body-sm text-body-sm text-outline">
+          Tüm veriler bilgilendirme amaçlıdır. Finansal tavsiye niteliği taşımaz.
+        </p>
+</footer>
+</main>
+<!-- BottomNavBar (Shared Component Anchor) -->
+<!-- Active Navigation Tab Logic: Landing page focuses on overall overview/landing ("Özet") -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter h-16 pb-safe bg-surface-container-lowest border-t border-outline-variant/30">
+<!-- Özet (Active) -->
+<a class="flex flex-col items-center justify-center text-primary font-semibold transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="dashboard">dashboard</span>
+<span class="font-body-sm text-body-sm mt-0.5">Özet</span>
+</a>
+<!-- Portföy (Inactive) -->
+<a class="flex flex-col items-center justify-center text-secondary font-normal transition-transform active:scale-95 hover:text-primary" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="pie_chart">pie_chart</span>
+<span class="font-body-sm text-body-sm mt-0.5">Portföy</span>
+</a>
+<!-- Piyasa (Inactive) -->
+<a class="flex flex-col items-center justify-center text-secondary font-normal transition-transform active:scale-95 hover:text-primary" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="trending_up">trending_up</span>
+<span class="font-body-sm text-body-sm mt-0.5">Piyasa</span>
+</a>
+<!-- Menü (Inactive) -->
+<a class="flex flex-col items-center justify-center text-secondary font-normal transition-transform active:scale-95 hover:text-primary" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="menu">menu</span>
+<span class="font-body-sm text-body-sm mt-0.5">Menü</span>
+</a>
+</nav>
+</div>
+</body></html>

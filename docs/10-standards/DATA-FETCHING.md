@@ -102,6 +102,11 @@ Sonuç:
 - "Bugün" seçilirse ayrı kayıt tutulmaz. Fiyat, portföyle aynı `stock:...` kaydından okunur (`Live`).
 - Uç nokta: `GET /api/market/price-on/{symbol}?market=BIST&assetType=Stock&date=2026-06-16` — portfolio-service aracılığıyla, market-service tarafından sunuluyor. Hisse için `market` zorunludur.
 
+### Durum şeridi (ek)
+
+- `useSystemStatus` — `['system-status']`, uç `GET /api/system/status` (portfolio-service). **`serverCached` kullanmaz, bilinçli:** bu bir veri değil ölçümdür (DB ping sunucuda, API gidiş-dönüşü tarayıcıda `performance.now()` ile). `staleTime` ve `refetchInterval` 60 sn; `retry: false` — erişilemiyorsa şerit bunu göstermeli, tekrar denemek gizlerdi.
+- Piyasa özetindeki `asOf` / `sessionStart` / `sessionEnd` (yalnız endekslerde) Yahoo'dan gelir; overview 5 dk önbellekte kaldığı için **açık/kapalı hükmü tarayıcıda** anlık saatle verilir (`lib/marketSession.js`).
+
 ---
 
 ## 3. React Query DIŞINDA kalanlar (bilinçli)

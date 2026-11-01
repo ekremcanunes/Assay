@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+
+<html class="light" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Assay Mobile - Luxe Daylight Borsa Terminali</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=Hanken+Grotesk:wght@500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-secondary-container": "#00714e",
+            "surface": "#faf8ff",
+            "secondary-fixed-dim": "#68dba9",
+            "surface-container-highest": "#dae2fd",
+            "primary-fixed": "#dbe1ff",
+            "surface-dim": "#d2d9f4",
+            "on-surface": "#131b2e",
+            "error-container": "#ffdad6",
+            "primary": "#004ac6",
+            "surface-bright": "#faf8ff",
+            "outline-variant": "#c3c6d7",
+            "on-error-container": "#93000a",
+            "on-tertiary-fixed-variant": "#004b73",
+            "error": "#ba1a1a",
+            "on-secondary-fixed-variant": "#005137",
+            "on-secondary": "#ffffff",
+            "surface-container-high": "#e2e7ff",
+            "inverse-primary": "#b4c5ff",
+            "surface-container-lowest": "#ffffff",
+            "tertiary-fixed": "#cce5ff",
+            "on-tertiary-fixed": "#001d31",
+            "primary-container": "#2563eb",
+            "surface-container": "#eaedff",
+            "inverse-surface": "#283044",
+            "on-primary-fixed-variant": "#003ea8",
+            "secondary-fixed": "#85f8c4",
+            "on-primary-fixed": "#00174b",
+            "inverse-on-surface": "#eef0ff",
+            "tertiary-fixed-dim": "#93ccff",
+            "on-tertiary-container": "#e7f2ff",
+            "on-surface-variant": "#434655",
+            "on-secondary-fixed": "#002114",
+            "surface-tint": "#0053db",
+            "surface-container-low": "#f2f3ff",
+            "on-background": "#131b2e",
+            "surface-variant": "#dae2fd",
+            "tertiary": "#005a89",
+            "tertiary-container": "#0073ae",
+            "background": "#faf8ff",
+            "on-error": "#ffffff",
+            "primary-fixed-dim": "#b4c5ff",
+            "on-primary-container": "#eeefff",
+            "on-primary": "#ffffff",
+            "secondary-container": "#82f5c1",
+            "on-tertiary": "#ffffff",
+            "outline": "#737686",
+            "secondary": "#006c4a"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-xl": "1.5rem",
+            "gutter-desktop": "1.25rem",
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "space-lg": "1rem",
+            "margin": "1rem",
+            "margin-desktop": "1.5rem",
+            "space-md": "0.75rem",
+            "gutter": "1rem"
+          },
+          "fontFamily": {
+            "mono-data-sm": ["JetBrains Mono"],
+            "headline-md": ["Hanken Grotesk"],
+            "body-md": ["Geist"],
+            "body-lg": ["Geist"],
+            "mono-data-lg": ["JetBrains Mono"],
+            "headline-lg": ["Hanken Grotesk"],
+            "mono-data-md": ["JetBrains Mono"],
+            "body-sm": ["Geist"],
+            "display-lg": ["Hanken Grotesk"],
+            "label-caps": ["JetBrains Mono"],
+            "headline-sm": ["Hanken Grotesk"],
+            "display-lg-mobile": ["Hanken Grotesk"]
+          },
+          "fontSize": {
+            "mono-data-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-lg": ["15px", { "lineHeight": "22px", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+            "mono-data-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "mono-data-md": ["13px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.03em", "fontWeight": "600" }],
+            "label-caps": ["10px", { "lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "600" }],
+            "headline-sm": ["16px", { "lineHeight": "22px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "display-lg-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      vertical-align: middle;
+    }
+    body {
+      background-color: #faf8ff;
+      color: #131b2e;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface antialiased pb-24 selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- ==================== SHARED COMPONENT: TopAppBar ==================== -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-margin h-14 bg-surface-container-lowest/80 dark:bg-surface-container-lowest/80 backdrop-blur-md shadow-sm border-b border-outline-variant/30">
+<div class="flex items-center gap-2">
+<div class="flex items-center justify-center w-8 h-8 rounded-lg bg-surface-container text-primary">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+</div>
+<div>
+<span class="font-headline-sm text-headline-sm tracking-tight font-bold text-on-surface">ASSAY // TERMINAL</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5">
+<!-- Latency Telemetry Badge -->
+<div class="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">NODE 01-NY4 • 0.8ms</span>
+</div>
+<button aria-label="Arama" class="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary active:scale-95 transition-transform duration-100" type="button">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</button>
+<button aria-label="Bildirimler" class="relative w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary active:scale-95 transition-transform duration-100" type="button">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-secondary ring-2 ring-surface-container-lowest"></span>
+</button>
+</div>
+</header>
+<!-- ==================== MAIN CONTENT CANVAS ==================== -->
+<main class="pt-16 px-margin max-w-lg mx-auto space-y-3.5">
+<!-- SUB-BAR: Live Ticker Telemetry Pill & Engine Status -->
+<section class="flex items-center justify-between py-1 px-2 rounded-lg bg-surface-container-lowest border border-outline-variant/30 shadow-sm">
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-surface-container-low border border-outline-variant/30 font-label-caps text-label-caps text-secondary font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+          BIST 100
+        </span>
+<span class="font-mono-data-sm text-mono-data-sm font-semibold text-on-surface">10.245,60</span>
+<span class="font-mono-data-sm text-mono-data-sm text-secondary font-medium">+%1,42</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Piyasa Açık</span>
+<span class="w-2 h-2 rounded-full bg-secondary ring-1 ring-secondary/30"></span>
+</div>
+</section>
+<!-- ==================== 1. PRIMARY CARD: Canlı Endeks Bilgisi ==================== -->
+<section class="p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/40 shadow-sm relative overflow-hidden">
+<!-- Ambient titanium corner glow -->
+<div class="absolute -right-8 -top-8 w-28 h-28 bg-primary-fixed/20 rounded-full blur-2xl pointer-events-none"></div>
+<!-- Card Top Telemetry -->
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-1.5">
+<span class="font-label-caps text-label-caps tracking-wider text-on-surface-variant uppercase">Borsa İstanbul (BIST)</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-caps text-label-caps text-primary uppercase font-bold">XU100.IS</span>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-low px-2 py-0.5 rounded border border-outline-variant/30">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">CANLI VERİ AKIŞI</span>
+</div>
+</div>
+<!-- Main Metric Focus -->
+<div class="flex items-baseline justify-between gap-2 mb-2">
+<div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-on-surface font-bold tracking-tight">10.245,60</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Önceki Kapanış: <span class="font-mono-data-sm text-mono-data-sm text-on-surface font-medium">10.102,40</span></p>
+</div>
+<div class="text-right">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-secondary-container/40 border border-secondary/30 text-secondary font-mono-data-md text-mono-data-md font-bold">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+            +%1,42
+          </span>
+<p class="font-mono-data-sm text-mono-data-sm text-secondary font-medium mt-1">+143,20 Puan</p>
+</div>
+</div>
+<!-- Sparkline Momentum Chart (SVG daylight gradient) -->
+<div class="relative w-full h-20 mb-3 bg-surface-container-low/40 rounded-lg p-1.5 border border-outline-variant/20 overflow-hidden">
+<svg class="w-full h-full" fill="none" preserveaspectratio="none" viewbox="0 0 360 64">
+<defs>
+<lineargradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#006c4a" stop-opacity="0.28"></stop>
+<stop offset="100%" stop-color="#006c4a" stop-opacity="0.0"></stop>
+</lineargradient>
+<lineargradient id="lineStroke" x1="0" x2="1" y1="0" y2="0">
+<stop offset="0%" stop-color="#006c4a"></stop>
+<stop offset="100%" stop-color="#2563eb"></stop>
+</lineargradient>
+</defs>
+<!-- Grid lines -->
+<line stroke="#dae2fd" stroke-dasharray="2 3" stroke-width="0.75" x1="0" x2="360" y1="16" y2="16"></line>
+<line stroke="#dae2fd" stroke-dasharray="2 3" stroke-width="0.75" x1="0" x2="360" y1="36" y2="36"></line>
+<line stroke="#dae2fd" stroke-dasharray="2 3" stroke-width="0.75" x1="0" x2="360" y1="56" y2="56"></line>
+<!-- Area -->
+<path d="M0 50 C 40 46, 75 52, 110 38 C 150 22, 185 30, 220 20 C 265 8, 305 15, 360 4 L 360 64 L 0 64 Z" fill="url(#chartGradient)"></path>
+<!-- Line -->
+<path d="M0 50 C 40 46, 75 52, 110 38 C 150 22, 185 30, 220 20 C 265 8, 305 15, 360 4" fill="none" stroke="url(#lineStroke)" stroke-linecap="round" stroke-width="2.25"></path>
+<!-- Live Coordinate Pulse Point -->
+<circle cx="360" cy="4" fill="#006c4a" r="3.5" stroke="#ffffff" stroke-width="1.5"></circle>
+</svg>
+<div class="absolute bottom-1.5 left-2 flex gap-4 text-outline font-label-caps text-label-caps">
+<span>10:00</span>
+<span>12:30</span>
+<span>15:00</span>
+<span class="text-secondary font-semibold">17:45 (ŞU AN)</span>
+</div>
+</div>
+<!-- Market Breadth / Distribution Indicator -->
+<div class="space-y-1.5 pt-1 border-t border-outline-variant/30">
+<div class="flex items-center justify-between font-label-caps text-label-caps">
+<span class="text-secondary font-bold flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> 312 Yükselen (%62)
+          </span>
+<span class="text-outline-variant font-medium">45 Nötr (%9)</span>
+<span class="text-error font-bold flex items-center gap-1">
+            143 Düşen (%29) <span class="w-2 h-2 rounded-full bg-error"></span>
+</span>
+</div>
+<!-- Segmented Bar -->
+<div class="w-full h-2 rounded-full flex overflow-hidden bg-surface-container gap-0.5 p-0.5 border border-outline-variant/20">
+<div class="h-full bg-secondary rounded-l-full" style="width: 62%;"></div>
+<div class="h-full bg-outline-variant/70" style="width: 9%;"></div>
+<div class="h-full bg-error rounded-r-full" style="width: 29%;"></div>
+</div>
+</div>
+</section>
+<!-- ==================== 2. AI SECTION: Yapay Zekâ Borsa Özeti ==================== -->
+<section class="p-3.5 rounded-xl bg-gradient-to-br from-surface-container-lowest via-surface-container-low to-surface-container-high/30 border border-primary/20 shadow-sm relative">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-1.5">
+<div class="w-5 h-5 rounded-md bg-primary text-on-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+</div>
+<h2 class="font-label-caps text-label-caps tracking-wider text-primary font-bold uppercase">YAPAY ZEKÂ BORSA ÖZETİ</h2>
+</div>
+<span class="font-mono-data-sm text-mono-data-sm text-on-surface-variant font-medium">1 dk önce güncellendi</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed mb-3">
+        BIST 100 endeksi sabah seansındaki yabancı alımlarıyla <strong class="text-primary font-semibold">10.200</strong> direnç eşiğini aştı. Özellikle <span class="font-medium text-secondary">bankacılık</span> ve <span class="font-medium text-secondary">havacılık</span> sektörleri güçlü hacim ivmesiyle pozitif ayrışıyor.
+      </p>
+<!-- Active Stock Chips from AI & Quant Tags -->
+<div class="flex flex-wrap items-center gap-1.5">
+<span class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container-lowest border border-outline-variant/40 shadow-xs">
+<span class="font-mono-data-sm text-mono-data-sm font-bold text-on-surface">THYAO</span>
+<span class="font-mono-data-sm text-mono-data-sm text-secondary font-semibold">₺312,50 (+%3,80)</span>
+</span>
+<span class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container-lowest border border-outline-variant/40 shadow-xs">
+<span class="font-mono-data-sm text-mono-data-sm font-bold text-on-surface">FROTO</span>
+<span class="font-mono-data-sm text-mono-data-sm text-secondary font-semibold">₺1.148,00 (+%2,90)</span>
+</span>
+<span class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary-container/30 border border-secondary/30 font-label-caps text-label-caps text-secondary font-bold">
+<span class="material-symbols-outlined text-[12px]">verified</span>
+          Kurumsal Akış Pozitif
+        </span>
+<span class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container border border-outline-variant/40 font-label-caps text-label-caps text-on-surface-variant font-semibold">
+<span class="material-symbols-outlined text-[12px]">shield</span>
+          Düşük Risk
+        </span>
+</div>
+</section>
+<!-- ==================== 3. MARKET WATCH LIST: Öne Çıkan Hisseler ==================== -->
+<section class="rounded-xl bg-surface-container-lowest border border-outline-variant/40 shadow-sm overflow-hidden">
+<!-- Header & Tabs -->
+<div class="p-3 border-b border-outline-variant/20 flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-primary">monitoring</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">Öne Çıkan Hisseler</h3>
+</div>
+<button class="font-label-caps text-label-caps text-primary hover:underline font-bold flex items-center gap-0.5" type="button">
+            TÜMÜNÜ GÖR
+            <span class="material-symbols-outlined text-[13px]">chevron_right</span>
+</button>
+</div>
+<!-- Filter Segmented Tabs -->
+<div class="flex items-center p-0.5 bg-surface-container-low rounded-lg border border-outline-variant/30">
+<button class="flex-1 py-1 text-center font-label-caps text-label-caps rounded-md bg-surface-container-lowest text-primary font-bold shadow-xs border border-outline-variant/20">
+            BIST 30
+          </button>
+<button class="flex-1 py-1 text-center font-label-caps text-label-caps rounded-md text-on-surface-variant hover:text-on-surface font-semibold">
+            Hacim Liderleri
+          </button>
+<button class="flex-1 py-1 text-center font-label-caps text-label-caps rounded-md text-on-surface-variant hover:text-on-surface font-semibold">
+            En Çok Artanlar
+          </button>
+</div>
+</div>
+<!-- Dense Stock Rows -->
+<div class="divide-y divide-outline-variant/15">
+<!-- ITEM 1: THYAO (Active State Focus) -->
+<div class="p-3 flex items-center justify-between bg-primary-fixed/15 border-l-4 border-l-primary hover:bg-surface-container-low transition-colors duration-150">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-surface-container-lowest flex items-center justify-center font-mono-data-sm text-mono-data-sm font-bold text-primary border border-outline-variant/30">
+              THY
+            </div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-mono-data-md text-mono-data-md font-bold text-on-surface">THYAO</span>
+<span class="px-1 py-0.2 rounded bg-primary/10 text-primary font-label-caps text-label-caps font-bold">AKTİF</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Türk Hava Yolları</p>
+</div>
+</div>
+<!-- Mini Sparkline SVG -->
+<div class="hidden xs:block w-16 h-6">
+<svg class="w-full h-full" fill="none" viewbox="0 0 64 24">
+<path d="M2 18 L18 14 L34 16 L50 8 L62 4" stroke="#006c4a" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"></path>
+</svg>
+</div>
+<div class="text-right">
+<p class="font-mono-data-md text-mono-data-md font-bold text-on-surface">₺312,50</p>
+<span class="inline-block font-mono-data-sm text-mono-data-sm font-bold text-secondary">
+              +%3,80
+            </span>
+</div>
+</div>
+<!-- ITEM 2: FROTO -->
+<div class="p-3 flex items-center justify-between hover:bg-surface-container-low transition-colors duration-150">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-surface-container-lowest flex items-center justify-center font-mono-data-sm text-mono-data-sm font-bold text-on-surface-variant border border-outline-variant/30">
+              FRD
+            </div>
+<div>
+<span class="font-mono-data-md text-mono-data-md font-bold text-on-surface">FROTO</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Ford Otosan</p>
+</div>
+</div>
+<div class="hidden xs:block w-16 h-6">
+<svg class="w-full h-full" fill="none" viewbox="0 0 64 24">
+<path d="M2 20 L20 16 L36 10 L52 12 L62 5" stroke="#006c4a" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"></path>
+</svg>
+</div>
+<div class="text-right">
+<p class="font-mono-data-md text-mono-data-md font-bold text-on-surface">₺1.148,00</p>
+<span class="inline-block font-mono-data-sm text-mono-data-sm font-bold text-secondary">
+              +%2,90
+            </span>
+</div>
+</div>
+<!-- ITEM 3: EREGL (Negative) -->
+<div class="p-3 flex items-center justify-between hover:bg-surface-container-low transition-colors duration-150">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-surface-container-lowest flex items-center justify-center font-mono-data-sm text-mono-data-sm font-bold text-on-surface-variant border border-outline-variant/30">
+              ERG
+            </div>
+<div>
+<span class="font-mono-data-md text-mono-data-md font-bold text-on-surface">EREGL</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Ereğli Demir Çelik</p>
+</div>
+</div>
+<div class="hidden xs:block w-16 h-6">
+<svg class="w-full h-full" fill="none" viewbox="0 0 64 24">
+<path d="M2 6 L18 8 L32 14 L48 12 L62 20" stroke="#ba1a1a" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"></path>
+</svg>
+</div>
+<div class="text-right">
+<p class="font-mono-data-md text-mono-data-md font-bold text-on-surface">₺48,22</p>
+<span class="inline-block font-mono-data-sm text-mono-data-sm font-bold text-error">
+              -%0,82
+            </span>
+</div>
+</div>
+<!-- ITEM 4: SISE -->
+<div class="p-3 flex items-center justify-between hover:bg-surface-container-low transition-colors duration-150">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-surface-container-lowest flex items-center justify-center font-mono-data-sm text-mono-data-sm font-bold text-on-surface-variant border border-outline-variant/30">
+              SIS
+            </div>
+<div>
+<span class="font-mono-data-md text-mono-data-md font-bold text-on-surface">SISE</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Şişecam Cam San.</p>
+</div>
+</div>
+<div class="hidden xs:block w-16 h-6">
+<svg class="w-full h-full" fill="none" viewbox="0 0 64 24">
+<path d="M2 16 L22 18 L36 12 L48 10 L62 6" stroke="#006c4a" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"></path>
+</svg>
+</div>
+<div class="text-right">
+<p class="font-mono-data-md text-mono-data-md font-bold text-on-surface">₺52,10</p>
+<span class="inline-block font-mono-data-sm text-mono-data-sm font-bold text-secondary">
+              +%1,15
+            </span>
+</div>
+</div>
+</div>
+</section>
+<!-- ==================== 4. COCKPIT / VARLIK DENETLEYİCİSİ CARD ==================== -->
+<section class="p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/40 shadow-sm space-y-3">
+<!-- Title & Segment Switcher -->
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant/20">
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">THYAO</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container font-label-caps text-label-caps text-on-surface-variant">Havacılık</span>
+</div>
+<p class="font-mono-data-sm text-mono-data-sm text-secondary font-semibold">₺312,50 (+%3,80)</p>
+</div>
+<!-- Segmented Pills Switcher -->
+<div class="flex items-center p-0.5 bg-surface-container-low rounded-md border border-outline-variant/30">
+<button class="px-2.5 py-1 rounded bg-surface-container-lowest font-label-caps text-label-caps text-primary font-bold shadow-xs">
+            Piyasa Verileri
+          </button>
+<button class="px-2.5 py-1 rounded font-label-caps text-label-caps text-on-surface-variant font-medium">
+            Portföyüm
+          </button>
+</div>
+</div>
+<!-- Range Sliders (Gün İçi & 52 Hafta) -->
+<div class="space-y-2.5 bg-surface-container-low/50 p-2.5 rounded-lg border border-outline-variant/20">
+<!-- Gün İçi Aralık -->
+<div>
+<div class="flex justify-between items-center font-mono-data-sm text-mono-data-sm mb-1">
+<span class="text-on-surface-variant">Gün İçi Aralık</span>
+<span class="text-on-surface font-medium">₺302,20 - ₺314,00</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-high rounded-full relative overflow-hidden">
+<div class="absolute left-[15%] right-[10%] h-full bg-primary rounded-full"></div>
+<!-- Pin point -->
+<div class="absolute left-[82%] top-0 bottom-0 w-1.5 bg-secondary-fixed-dim rounded-full shadow-xs"></div>
+</div>
+</div>
+<!-- 52 Haftalık Aralık -->
+<div>
+<div class="flex justify-between items-center font-mono-data-sm text-mono-data-sm mb-1">
+<span class="text-on-surface-variant">52 Haftalık Aralık</span>
+<span class="text-secondary font-bold">%84 Zirveye Yakın (₺184,50 - ₺325,00)</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-high rounded-full relative overflow-hidden">
+<div class="absolute left-[0%] right-[16%] h-full bg-secondary rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Key Quantitative Ratios Grid -->
+<div class="grid grid-cols-2 gap-2 font-mono-data-sm text-mono-data-sm">
+<div class="p-2 rounded bg-surface-container-low/40 border border-outline-variant/20">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase block mb-0.5">Günlük Hacim</span>
+<span class="font-mono-data-md text-mono-data-md font-bold text-on-surface">₺14,24 Mlyr</span>
+</div>
+<div class="p-2 rounded bg-surface-container-low/40 border border-outline-variant/20">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase block mb-0.5">Piyasa Değeri</span>
+<span class="font-mono-data-md text-mono-data-md font-bold text-on-surface">₺431,25 Mlyr</span>
+</div>
+<div class="p-2 rounded bg-surface-container-low/40 border border-outline-variant/20">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase block mb-0.5">F/K Oranı</span>
+<span class="font-mono-data-md text-mono-data-md font-bold text-on-surface">3,12</span>
+</div>
+<div class="p-2 rounded bg-surface-container-low/40 border border-outline-variant/20">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase block mb-0.5">PD/DD Oranı</span>
+<span class="font-mono-data-md text-mono-data-md font-bold text-on-surface">0,88</span>
+</div>
+</div>
+<!-- 5-Kademe Derinlik Bar -->
+<div class="p-2.5 rounded-lg bg-surface-container-low border border-outline-variant/20 space-y-1.5">
+<div class="flex items-center justify-between font-label-caps text-label-caps">
+<span class="text-secondary font-bold">ALICILAR %64 (2.418.910 Lot)</span>
+<span class="text-error font-bold">SATICILAR %36 (1.360.420 Lot)</span>
+</div>
+<div class="w-full h-2 rounded flex overflow-hidden">
+<div class="bg-secondary h-full" style="width: 64%;"></div>
+<div class="bg-error h-full" style="width: 36%;"></div>
+</div>
+</div>
+<!-- Action Button CTA -->
+<button class="w-full h-10 rounded-lg bg-primary-container text-on-primary font-body-md text-body-md font-semibold flex items-center justify-center gap-2 hover:bg-primary active:scale-[0.98] transition-all duration-100 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">add_shopping_cart</span>
+        Alım Emri Gir / Portföye Ekle
+      </button>
+</section>
+</main>
+<!-- ==================== SHARED COMPONENT: BottomNavBar ==================== -->
+<!-- Contextual State: "Piyasalar" is ACTIVE as per instruction & user request -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex items-center justify-around px-gutter py-2 bg-surface-container-lowest/85 dark:bg-surface-container-lowest/85 backdrop-blur-xl shadow-2xl border-t border-outline-variant/30">
+<!-- Tab 1: Özet (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant py-1.5 px-3 hover:text-primary dark:hover:text-primary transition-colors duration-150 active:scale-95 transition-transform duration-100" href="#ozet">
+<span class="material-symbols-outlined text-[20px]">grid_view</span>
+<span class="font-label-caps text-label-caps tracking-wider uppercase mt-0.5">Özet</span>
+</a>
+<!-- Tab 2: Piyasalar (ACTIVE - style_active_navigation applied verbatim) -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary py-1.5 px-3 rounded-lg bg-surface-container-high/60 dark:bg-surface-container-high/60 hover:text-primary dark:hover:text-primary transition-colors duration-150 active:scale-95 transition-transform duration-100" href="#piyasalar">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">candlestick_chart</span>
+<span class="font-label-caps text-label-caps tracking-wider uppercase mt-0.5">Piyasalar</span>
+</a>
+<!-- Tab 3: Kokpit (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant py-1.5 px-3 hover:text-primary dark:hover:text-primary transition-colors duration-150 active:scale-95 transition-transform duration-100" href="#kokpit">
+<span class="material-symbols-outlined text-[20px]">query_stats</span>
+<span class="font-label-caps text-label-caps tracking-wider uppercase mt-0.5">Kokpit</span>
+</a>
+<!-- Tab 4: Portföy (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant py-1.5 px-3 hover:text-primary dark:hover:text-primary transition-colors duration-150 active:scale-95 transition-transform duration-100" href="#portfoy">
+<span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+<span class="font-label-caps text-label-caps tracking-wider uppercase mt-0.5">Portföy</span>
+</a>
+</nav>
+</body></html>

@@ -1,70 +1,91 @@
-# Tasarım Sistemi — "VOLTAJ"
+# Tasarım Sistemi — "Warm Editorial"
 
-Tek sistem, üç yüzey: **landing** (`/landing`), **auth** (`/login`, `/register`), **panel** (giriş sonrası tüm sayfalar). Üçü de aynı token'ları, aynı tip ölçeğini ve aynı bileşen anatomisini kullanır.
+Tek sistem, üç yüzey: **landing** (`/landing`), **auth** (`/login`, `/register`), **panel** (giriş sonrası tüm sayfalar). Üçü de aynı token'ları, aynı tip ölçeğini ve aynı bileşen anatomisini kullanır. **Açık tema = Warm Editorial, koyu tema = Obsidian Pulse**; ikisi aynı token adlarıyla çalışır.
 
 > Kaynak: [`web/src/index.css`](../../web/src/index.css) — tüm token'lar burada. **Önce token, sonra bileşen.**
-> Canlı referans: `/landing`. Tasarımı değiştirmek istediğinde **önce orada** dene, oturunca panele yay.
+> Tasarım girdisi: açık için [`sistem-warm-editorial-minimalism.md`](../60-design/sistem-warm-editorial-minimalism.md), koyu için [`sistem-obsidian-pulse.md`](../60-design/sistem-obsidian-pulse.md); ekranlar `mobil-01..05` ve `web-09-piyasa` (Piyasa web düzeni). Bu dosya onların projeye uyarlanmış, bağlayıcı özetidir.
+> Canlı referans: `/landing` (oturumsuz açılır; açık/koyu sistem temasından).
 
-> **Geçersiz:** LEDGER (bone/ink muhasebe defteri) sistemi kaldırıldı. `docs/superpowers/` altındaki 2026-08 tarihli spec'ler o döneme aittir — tarihsel kayıttır, bağlayıcı değildir.
+> **Geçersiz:** VOLTAJ (beyaz + ink + magenta) ve ondan önceki LEDGER sistemleri kaldırıldı. `docs/superpowers/` altındaki eski spec'ler tarihsel kayıttır, bağlayıcı değildir.
 
 ---
 
 ## 1. Felsefe
 
-- **Üç renk.** Beyaz zemin, ink metin ve aksiyon, tek voltaj rengi. Dördüncü marka rengi yok.
-- **Voltaj rengi az yerde, keskin.** Doz kuralı §4'te — ihlal edilirse sistem ucuzlar.
-- **Tek font ailesi.** Hiyerarşi aileden değil, ölçek + ağırlık + tracking'den gelir.
-- **Gölge yok.** Derinlik hairline kenarlıklardan ve yüzey tonundan gelir.
-- **Rakamlar birinci sınıf.** Aynı aile + tabular rakam, sütunlar hizalı. Mono yalnızca gerçek kodda.
+- **Sakin kesinlik.** Rakamlar sakin otoriteyle sunulur; zarar bir analiz verisidir, kriz değil. Neon yeşil/kırmızı yok.
+- **Porselen zemin, beyaz kart, 1px hairline.** Katmanlar ton farkı ve ince kenarlıkla ayrılır; kartta yalnızca algılanması zor bir ambient gölge.
+- **Tek aksan: kobalt** (`primary`). Birincil aksiyon, aktif sekme/segment, seçili durum. Başka marka rengi yok.
+- **Tek font ailesi** (Plus Jakarta Sans). Hiyerarşi ölçek + ağırlık + tracking'den gelir.
+- **Rakamlar birinci sınıf.** Tabular rakam zorunlu, sütunlar hizalı. Mono yalnızca gerçek kodda.
 - **Semantik vurgudan ayrı.** Kâr/zarar, kategori, uyarı ve marka birbirinin yerine geçmez.
 
 ---
 
 ## 2. Renk
 
-### 2.1 Yüzeyler
+Token'lar `hsl` üçlüsü olarak `:root` (açık) ve `.dark` (koyu) altında; Tailwind'e `@theme inline` ile `--color-*` olarak bağlı. **Bileşen hex yazmaz** — SVG/grafik gibi sınıf alamayan yerler `hsl(var(--token))` kullanır, böylece tema değişince kendiliğinden güncellenir.
 
-Panel ile landing aynı paleti kullanır; fark yalnızca **hangisinin zemin olduğudur**. Yoğun tabloda saf beyaz zemin göz yorduğu için panelde katman terstir.
+### 2.1 Yüzeyler ve mürekkep
 
-| Token | Hex | Panel | Landing |
-|-------|-----|-------|---------|
-| `background` | `#F7F7F5` | **zemin** | bant |
-| `card` | `#FFFFFF` | yüzey/panel | **zemin** |
-| `secondary` / `muted` / `accent` | `#F2F1EE` | hover, ikincil yüzey | rozet dolgusu |
-| `border` | `#E4E3DE` | hairline | hairline |
-| `input` | `#CFCDC6` | alan alt kenarlığı, güçlü ayraç | aynı |
-| `foreground` | `#141414` | ink metin + birincil buton | aynı |
-| `muted-foreground` | `#5C5A55` | ikincil metin | aynı |
+| Token | Açık | Koyu | Rol |
+|-------|------|------|-----|
+| `background` | `#FBFBFC` | `#090D16` | zemin (Tier 0) |
+| `card` | `#FFFFFF` | `#0D1322` **%72 opak** | kart, alan (Tier 1) — koyuda zemin ışığı arkadan görünür |
+| `popover` | `#FFFFFF` | `#162138` (opak) | modal, sheet, açılır menü, detay paneli (Tier 2–3) |
+| `secondary` / `muted` / `accent` | `#F1F4F8` | `#1A2236` | segment oluğu, hover, ikincil yüzey |
+| `border` | `#ECEEF2` | `#232B3D` (≈ beyaz %8) | hairline |
+| `input` | `#CBD5E1` | `#2E3850` (≈ beyaz %14) | aktif/hover kenar, sheet tutamağı |
+| `foreground` | `#0F172A` | `#E2E8F0` | birincil mürekkep |
+| `muted-foreground` | `#475569` | `#94A3B8` | ikincil mürekkep, etiket |
+| `veil` | slate %40 | siyah %40 | modal/sheet arkası perde (`bg-veil`) |
+
+**Koyu temanın atmosferi** ([`index.css`](../../web/src/index.css)): `body` sağ üstte kobalt (%12), sol altta zümrüt (%8) çok hafif ışık taşır. Bu yüzden sayfa kökleri (`Layout`, auth, landing) **zemin rengi boyamaz** — ışığı yalnız `body` verir, yarı saydam kartlar onu gösterir. Açılır katmanlar kart değil `bg-popover` kullanır; yarı saydam kartla okunmaz olurlar.
 
 ### 2.2 Marka
 
-| Token | Hex | Anlam |
-|-------|-----|-------|
-| `voltage` | `#C2185B` | **Markanın tek rengi.** Kullanımı §4'e tabidir. |
+| Token | Açık | Koyu | Anlam |
+|-------|------|------|-------|
+| `primary` (+`ring`) | `#1D4ED8` | `#3B82F6` | **Tek aksan.** Birincil buton, aktif sekme/segment, odak kenarı, seçili hap/satır, logo taban çizgisi |
+| `primary-foreground` | `#FFFFFF` | `#FFFFFF` | aksan üstündeki metin |
+
+Koyu temada dolu kobalt buton hafif ışıma yayar (`0 0 20px -4px` kobalt %45) — [`index.css`](../../web/src/index.css)'te tek kural, bileşen yazmaz.
 
 ### 2.3 Semantik
 
-| Token | Hex | Anlam |
-|-------|-----|-------|
-| `up` | `#147C4A` | Kâr |
-| `down` | `#BE3A2E` | Zarar |
-| `warn` | `#A16207` | Yumuşak uyarı (dikkat çeker, engellemez) |
-| `destructive` | `#B3261E` | Sert uyarı / silme (onay ister) |
+| Token | Açık | Koyu | Anlam |
+|-------|------|------|-------|
+| `up` | `#059669` | `#10B981` | Kâr — zümrüt ailesi |
+| `down` | `#C2410C` | `#F43F5E` | Zarar — açıkta kiremit (düşüşü söyler, alarm vermez; yeşil–turuncu renk körü dostu), koyuda mercan |
+| `warn` | `#A16207` | `#FBBF24` | Yumuşak uyarı, açıklama (kiremit zarardan ayrışsın diye amber) |
+| `destructive` | `#C53030` | `#F43F5E` | Silme / sert uyarı — kâr/zarardan ayrı "tehlike" anlamı; açıkta kırmızı kalır |
+
+Kâr/zarar iki temada **aynı ailedir**; metin, rozet, dağılım çubuğu ve **mum grafikleri** (fiyat grafiği, giriş görseli) aynı token'ı kullanır — ayrı grafik rengi yoktur.
+
+**Fiyat grafiği kuralı** ([`PriceChart`](../../web/src/components/PriceChart.jsx)): mum gövdesi %85 opak, fitil ve kenar tam renk; hacim çubukları %35. Böylece kâr/zarar renkleri eşit sertlikte bağırmaz. Giriş görseli ([`AuthVisualScene`](../../web/src/components/AuthVisualScene.jsx)) çerçevesiz kalır — arkadaki ızgara animasyonuyla bütün; önüne kart/katman konmaz (2026-11-01 denendi, beğenilmedi). Görseldeki mumlar **dekorasyondur, veri değil**: açık temada marka paletiyle çizilir (yükselen kobalt, düşen açık slate `input`, ortalama mürekkep) — beyaz zeminde yeşil + turuncu + kobalt yarışıyordu. Koyu temada kâr/zarar renkleri kalır. Gerçek veri grafikleri (Piyasa, varlık detayı) her temada `up`/`down` kullanır.
+
+Delta rozeti: **`.chip-up` / `.chip-down` / `.chip-neutral`** sınıfları (renkli metin + %10 yıkama; koyuda ayrıca %25 ince renkli kenar). Elle `bg-up/10 text-up` yazılmaz.
 
 ### 2.4 Kategori
 
-Varlık türünü **ayırt etmek** için. Rozet, halka dilimi, KPI şeridi.
+Varlık türünü **ayırt etmek** için (ikon kutusu, nokta, dağılım çubuğu, takvim ısısı). Erişim: [`lib/assetColors.js`](../../web/src/lib/assetColors.js) → `catOf(type)` (`text`, `tint`, `dot`, `color`).
 
-| Token | Hex | Kategori |
-|-------|-----|----------|
-| `cat-stock` | `#2F5DA8` | Hisse |
-| `cat-gold` | `#B08843` | Altın |
-| `cat-fx` | `#17706B` | Döviz |
-| `cat-cash` | `#6B4E9B` | Nakit |
-| `cat-index` | `#AD5233` | Endeks |
-| `cat-other` | `#77746B` | Diğer |
+| Token | Açık | Koyu | Kategori |
+|-------|------|------|----------|
+| `cat-stock` | `#1D4ED8` | `#60A5FA` | Hisse |
+| `cat-gold` | `#B58A3A` | `#E3B341` | Altın |
+| `cat-fx` | `#565E74` | `#94A3B8` | Döviz |
+| `cat-cash` | `#7C5CC4` | `#A78BFA` | Nakit |
+| `cat-index` | `#AD5233` | `#FB923C` | Endeks |
+| `cat-other` | `#94A3B8` | `#64748B` | Diğer |
 
-> **Kural:** kategori rengi asla artı/eksi anlamı taşımaz; `up`/`down` asla kategori göstermez; `voltage` asla ikisinin yerine geçmez. Üçü karışırsa "pembe kutu" hem marka hem kâr hem hisse demeye başlar.
+> **Kural:** kategori rengi asla artı/eksi anlamı taşımaz; `up`/`down` asla kategori göstermez.
+
+### 2.5 Tema
+
+- Tercih: `light` · `dark` · `system` (varsayılan). [`ThemeContext`](../../web/src/contexts/ThemeContext.jsx) `<html>`'e `.dark` koyar, tercihi `localStorage.theme`'de tutar. Seçici tek bileşen: [`ThemeSwitch`](../../web/src/components/ThemeSwitch.jsx) — kenar çubuğu / mobil menü (etiketli), landing üst menüsü ve giriş/kayıt (`iconOnly`).
+- İlk boyamada beyaz flaş olmasın diye [`index.html`](../../web/index.html)'deki küçük betik aynı kuralla sınıfı önceden koyar.
+- Tailwind `dark:` varyantı `.dark` sınıfına bağlı (`@custom-variant dark`). Ama önce token: renk token'dan geliyorsa `dark:` yazmaya gerek yoktur.
+- Token'ı JS'te okuyan yer ([`PriceChart`](../../web/src/components/PriceChart.jsx), [`AuthVisualScene`](../../web/src/components/AuthVisualScene.jsx) ızgarası) `useTheme().dark`'ı bağımlılık yapar; tema değişince yeniden kurulur.
 
 ---
 
@@ -72,167 +93,181 @@ Varlık türünü **ayırt etmek** için. Rozet, halka dilimi, KPI şeridi.
 
 | Rol | Font | Sınıf |
 |-----|------|-------|
-| Her şey (rakam dahil) | **IBM Plex Sans Variable** | `font-sans` (varsayılan); `font-display` ve `font-mono` aynı aile, adlar korundu |
+| Her şey (rakam dahil) | **Plus Jakarta Sans Variable** | `font-sans` (varsayılan); `font-display` ve `font-mono` aynı aile, adlar korundu |
 | Yalnızca gerçek kod (`pre`, dosya adı) | **IBM Plex Mono** 400 | `font-code` |
 
-Self-host (`@fontsource-variable/ibm-plex-sans`, `@fontsource/ibm-plex-mono`), CDN yok. Tüm sayısal değerlere `.tabular` (`tabular-nums`); `font-mono` da `tabular-nums` verir.
+Self-host (`@fontsource-variable/plus-jakarta-sans`, `@fontsource/ibm-plex-mono`), CDN yok. Tüm sayısal değerlere `.tabular` (`tabular-nums`).
 
-### 3.1 Tip ölçeği — 8 basamak
+### 3.1 Tip ölçeği
 
-Ölçek [`index.css`](../../web/src/index.css)'te `--text-*` olarak tanımlı. **Ad-hoc boyut yazılmaz** (`text-[13.5px]`, `text-xs`, `text-lg` yok).
+Ölçek [`index.css`](../../web/src/index.css)'te `--text-*`. **Ad-hoc boyut yazılmaz** (`text-[13.5px]`, `text-xs`, `text-lg` yok).
 
-| Sınıf | px | Ağırlık | Tracking | Nerede |
-|-------|----|---------|----------|--------|
-| `text-micro` | 11 | 400–600 | — | mikro metin, çip, rozet, log satırı |
-| `text-ui` | 13 | 400–600 | — | **varsayılan** — UI, tablo hücresi, buton, form |
-| `text-body` | 15 | 400 | — | vurgulu gövde, açıklama paragrafı |
-| `text-figure` | 18 | 600 | −0.01em | KPI / kart değeri, kart başlığı |
-| `text-head` | 24 | 700 | −0.025em | modal/auth başlığı, mobil sayfa başlığı |
-| `text-title` | 32 | 700 | −0.032em | sayfa başlığı (md+) |
-| `text-display` | 44 | 700 | −0.038em | **yalnızca landing** bölüm başlığı, stat sayısı |
-| `text-hero` | 60 | 700 | −0.042em | **yalnızca landing** h1 |
+| Sınıf | px | Ağırlık | Nerede |
+|-------|----|---------|--------|
+| `text-micro` | 11 | 400–600 | mikro metin, çip, rozet |
+| `text-ui` | 13 | 400–600 | **varsayılan** — UI, tablo hücresi, buton |
+| `text-body` | 15 | 400–600 | gövde, form alanı, liste satırı adı |
+| `text-figure` | 18 | 600–700 | kart değeri, modal başlığı |
+| `text-head` | 24 | 700 | bölüm başlığı, mobil sayfa başlığı, varlık sembolü |
+| `text-title` | 32 | 700 | sayfa başlığı (md+), ana KPI (net varlık, güncel fiyat) |
+| `text-display` | 44 | 700 | **yalnızca landing** bölüm başlığı |
+| `text-hero` | 60 | 700 | **yalnızca landing** h1 |
 
-**Negatif tracking zorunlu.** 700 ağırlık tracking'siz fazla geniş okunur; sıkıştırma sisteme mühendislik hissini veren şeydir.
+Büyük basamaklarda negatif tracking ölçeğin içinde tanımlı; elle `tracking-tight` eklenmez.
 
-**`.label`** — 600 + uppercase + `0.12em` tracking, 11px. Eyebrow, tablo başlığı, kart etiketi, sidebar bölüm ayracı: hepsi bu tek sınıf. Elle `text-[11px] uppercase tracking-[0.12em]` yazılmaz.
+**`.label`** — 600 + uppercase + `0.06em` tracking, 11px. Eyebrow, KPI etiketi, form alanı etiketi (`ui/label`), tablo başlığı: hepsi bu tek sınıf.
 
 **Ölçek dışı izinli iki istisna** (başka yerde kullanılmaz):
 
 | Nerede | Boyut | Neden |
 |--------|-------|-------|
-| Mobilde form alanı yazısı ([`authStyles`](../../web/src/lib/authStyles.js) ve önek) | 16px (`text-[16px] md:text-ui`) | iOS Safari 16px altı alana odaklanınca sayfayı yakınlaştırır |
-| Fiyatlı takvim hücresindeki kısa fiyat ([`PriceCalendar`](../../web/src/components/PriceCalendar.jsx)) | 9.5px | 7 sütunlu ızgarada hücreye sığmak zorunda; en fazla 5 karakter |
+| Mobilde auth form alanı yazısı ([`authStyles`](../../web/src/lib/authStyles.js) ve önek) | 16px (`text-[16px] md:text-body`) | iOS Safari 16px altı alana odaklanınca sayfayı yakınlaştırır |
+| Fiyatlı takvim hücresindeki kısa fiyat ([`PriceCalendar`](../../web/src/components/PriceCalendar.jsx)) | 9.5px | 7 sütunlu ızgarada hücreye sığmak zorunda |
 
-**Şirket adı ikincil metin değildir.** Hisse listelerinde sembolün altındaki şirket adı `text-ui text-foreground` — sembolden yalnız boy ve ağırlıkla ayrılır, gri yazılmaz.
+**Şirket adı ikincil metin değildir.** Sembolün altındaki şirket adı `text-foreground` — sembolden yalnız boy ve ağırlıkla ayrılır, gri yazılmaz.
 
-> **Dikkat:** ölçek sınıfları Tailwind'in varsayılan adları değil. [`lib/utils.js`](../../web/src/lib/utils.js)'teki `cn()` bunları `extendTailwindMerge` ile `font-size` grubuna kaydeder — bildirilmezse tailwind-merge `text-ui`'yi renk sanıp eler ve boyut sessizce 16px'e düşer. **Yeni basamak eklenirse oraya da eklenmeli.**
+> **Dikkat:** ölçek sınıfları Tailwind'in varsayılan adları değil. [`lib/utils.js`](../../web/src/lib/utils.js)'teki `cn()` bunları `extendTailwindMerge` ile `font-size` grubuna kaydeder. **Yeni basamak eklenirse oraya da eklenmeli.**
 
 ---
 
-## 4. Voltaj doz kuralı — sistemin özü
+## 4. Şekil, derinlik, aksan dozu
 
-Voltaj rengi neyin markası olduğunu söyler, ama **kapladığı alan** ne kadar pahalı durduğunu söyler. Doygun bir rengi 44px sayıda veya dolu butonda kullanmak sistemi ucuzlatır.
+### 4.1 Köşe
 
-### Voltaj rengi ASLA
+| Öğe | Köşe | Sınıf |
+|-----|------|-------|
+| Delta rozeti, küçük etiket | 6px | `rounded-sm` |
+| Segment dilimi, ikon kutusu, küçük düğme | 8px | `rounded-lg` / `rounded-md` |
+| Buton, form alanı, segment oluğu | 10px | `rounded-[10px]` |
+| Kart, panel, liste kutusu | 12px | `rounded-xl` |
+| Masaüstü modal, büyük bant | 16px | `rounded-2xl` |
+| Alt sayfa (sheet) üst köşeleri | 20px | `rounded-t-sheet` |
+| Hap / filtre çipi | tam | `rounded-full` |
 
-- ❌ Büyük metin olmaz (başlık, stat sayısı, kart başlığı — hepsi ink)
-- ❌ Birincil butonu doldurmaz (birincil aksiyon **ink dolu**)
-- ❌ Uyarı/hata anlamı taşımaz (o `warn` ve `destructive`'in işi)
-- ❌ Kategori ya da kâr/zarar göstermez
+### 4.2 Derinlik (gölge)
 
-### Voltaj rengi YALNIZCA
+Gölge yalnızca token'dan, üç kademe — `shadow-*` varsayılanları kullanılmaz:
 
-- ✅ **Cetvel** — `.rule-accent` (3px üst kenar; stat/KPI blokları)
-- ✅ **Kenar** — `.edge-accent` (3px sol kenar; öne çıkan kart, auth kartı, panel bandı)
-- ✅ **Aktif nav şeridi** — `.nav-active` (yumuşak dolgu + solda 3px)
-- ✅ **Bölüm etiketi tiresi** — `.tick-accent` (22×2px)
-- ✅ **Mikro metin** — 11px durum etiketi (`devam`), diyagramdaki akan hat, logo taban çizgisi
-- ✅ **Tek dolu bant** — sayfa başına **en fazla bir** tam dolgulu voltaj yüzeyi (landing kapanış bandı). Orada metin değil, zemindir.
+| Sınıf | Nerede |
+|-------|--------|
+| `shadow-card` | kart (hairline'ı canlandıran, neredeyse görünmez ambient) |
+| `shadow-sheet` | alttan açılan sheet |
+| `shadow-float` | açılır menü, masaüstü modal, dolu bant |
+
+Koyu temada gölge siyaha döner ve pratikte görünmez; ayrımı `border`, yarı saydam yüzey ve zemin ışığı taşır.
+
+### 4.3 Aksan (kobalt) dozu
+
+- ✅ Birincil buton dolgusu, aktif sekme/segment/nav metni ve noktası, odak kenarı, seçili hap yıkaması (`bg-primary/10 text-primary`), metin bağlantısı, landing bölüm etiketi, logo taban çizgisi.
+- ✅ Sayfa başına **en fazla bir** dolu aksan bandı (landing kapanışı).
+- ❌ Uyarı/hata anlamı (o `warn`/`destructive`'in işi), kâr/zarar, büyük gövde metni.
 
 ---
 
 ## 5. Bileşen anatomisi
 
-### 5.1 Buton
+### 5.1 Buton ([`ui/button`](../../web/src/components/ui/button.jsx), [`Page`](../../web/src/components/Page.jsx))
 
 | Tür | Görünüm |
 |-----|---------|
-| Birincil | `bg-foreground text-background`, radius 8px |
-| İkincil | `border border-input`, dolgusuz, hover'da `border-foreground` |
-| Tehlike | `bg-destructive text-destructive-foreground` |
-
-Yükseklik ≥ 40px (form içi 36px). Radius `rounded-md` (8px). **Gölge yok.**
+| Birincil | `bg-primary text-primary-foreground`, 10px, form CTA'sı 48px (`h-12`) |
+| İkincil | `bg-card border border-border`, hover `bg-secondary` |
+| Tehlike | yıkama: `bg-down/10 text-down`; onay modalındaki son adım dolu `bg-destructive` |
+| Başlık aksiyonu | `PrimaryAction` / `GhostAction` — 36px |
 
 ### 5.2 Alan (input)
 
-`bg-secondary` dolgu + **yalnızca alt kenarlık** (`border-b border-input`). Çerçeveli input yok. Odakta 2px iç ink çerçeve, dış halka yok. Ortak stiller: [`lib/authStyles.js`](../../web/src/lib/authStyles.js).
+`bg-card` + `border border-border` + 10px köşe, 48px yükseklik, `text-body`. Hover `border-input`, odakta `border-primary` — **dış parlama yok**. Etiket üstte `.label`. Ortak auth stilleri: [`lib/authStyles.js`](../../web/src/lib/authStyles.js) (mobilde 52px + 16px yazı). Her alana `autoComplete` / `inputMode`.
 
-Mobilde (`md` altı) alan 52px yükseklik ve 16px yazı (§3.1 istisnası); stil aynı. Doğru klavye ve otomatik doldurma için her alana `autoComplete` / `inputMode` verilir.
+Checkbox 20px, seçilince dolu kobalt.
 
-### 5.3 Yüzeyler
+### 5.3 Segment ve hap
 
-- Kart / panel: `rounded-lg` (12px) + `border border-border` veya `bg-card` üzerinde `bg-background`.
-- Rozet: `rounded-sm` (6px) veya `rounded-full` (çip).
-- **Gölge yok.** Ayrım kenarlık ve yüzey tonuyla kurulur.
+- **Segment** (tür seçici, grafik aralığı, tema): oluk `bg-secondary p-1 rounded-[10px]`; aktif dilim `bg-card border-border shadow-card font-bold`, pasif `text-muted-foreground`.
+- **Hap** (döviz, para birimi, sıralama): `rounded-full border`; seçili `border-primary/30 bg-primary/10 text-primary`.
 
-### 5.4 Yapısal yardımcılar
+### 5.4 Kart ve liste
 
-CSS [`index.css`](../../web/src/index.css)'te:
-
-- **`.rule-accent`** / **`.edge-accent`** — voltaj cetveli ve kenarı
-- **`.nav-active`** — aktif nav satırı
-- **`.tick-accent`** — bölüm etiketi tiresi
-- **`.border-total`** — tablo toplam satırı (2px ink üst kenar)
-- **`.paper`** — 34px cetvel ızgarası + radyal maske (landing hero'su, auth zemini)
-- **`.label`**, **`.tabular`** — §3
-- **`.modal-in`** — modal giriş animasyonu, `prefers-reduced-motion`'a saygılı
-- **`@keyframes flow`** — mimari diyagramındaki akan hat
-- **`.press`** — her butonun basma hissi (`active` → `scale(.97)`); hover rengi butonun kendi sınıfında
-- **`.rise`** — detay sayfasında içeriğin aşağıdan gelişi (`backwards` dolgu: animasyon bitince `transform` kalmaz, içindeki `fixed` öğeleri kapsamaz)
-- **`@keyframes wire-fill`** — landing "Fiyat sor" rota çizgisi
-- **[`StoryCard`](../../web/src/components/StoryCard.jsx) / [`StoryHero`](../../web/src/components/StoryHero.jsx) / [`CardRail`](../../web/src/components/CardRail.jsx)** — karttan sayfaya geçiş dili (Portföy, Piyasa)
-- **[`SnapRail`](../../web/src/components/landing/SnapRail.jsx)** — landing mobil kart rayı (tek kart, nokta göstergesi)
-- **[`PriceDemo`](../../web/src/components/landing/PriceDemo.jsx)** — önbellek canlandırması (§6)
-- **Takvim ısısı** — varlığın **kategori rengi** kart zeminiyle karıştırılır (%10 → %100, 5 kademe, ay içi göreli). Voltaj kullanılmaz.
-- **[`AuthVisual`](../../web/src/components/AuthVisual.jsx)** — auth sağ alanı: mouse'a bükülen ızgara + temsili mum grafiği (`--up`/`--down`, voltaj yalnızca hareketli ortalama hattında; fiyat/eksen rakamı yok, §6). Yalnızca `lg`+ ekranda lazy yüklenir.
+- Kart: `rounded-xl border border-border bg-card shadow-card`, iç boşluk 16px (`p-4`). Blok için [`Section`](../../web/src/components/Section.jsx) (başlık + meta + aksiyon).
+- KPI: `.label` üstte → değer (`text-title`/`text-figure`, `.tabular`, bold) → altta rozet.
+- Liste satırı: ≥44px; solda kategori tonunda monogram kutusu (`rounded-lg`, `catOf().tint/text`), sembol `text-body font-semibold`, sağda değer + delta.
+- Dağılım: 6px yüksek segment çubuğu (`rounded-full`, dilimler `catOf().dot`) + lejant.
 
 ### 5.5 Sayfa iskeleti
 
-- Her panel sayfası [`Page`](../../web/src/components/Page.jsx) ile: yapışkan başlık çubuğu (eyebrow + başlık + meta + aksiyon + sekme), altında padding'li gövde.
-- İçerik bloğu [`Section`](../../web/src/components/Section.jsx); yanında `StatCard` ve `DeltaChip` (yalnızca K/Z).
-- Sidebar: beyaz panel, sağda hairline, aktif öğe `.nav-active`. **Koyu şasi yok — tek katman.**
-- Modal: ortak [`ui/modal.jsx`](../../web/src/components/ui/modal.jsx), `window.confirm` yerine de bu.
-- Tam ekran yükleniyor: [`PageLoader`](../../web/src/components/PageLoader.jsx) — yazısız halka, metin yalnız ekran okuyucuya (`sr-only`). Ekran font inmeden çizildiği için görünür metin yedek fontla görünürdü.
+- Her panel sayfası [`Page`](../../web/src/components/Page.jsx): yapışkan başlık (`bg-background/90` + blur, alt hairline) + padding'li gövde.
+- Kenar çubuğu (md+): `bg-card`, aktif öğe `.nav-active` + `text-primary`. Altta saat, tema seçici, dil, kullanıcı kartı.
+- Modal: ortak [`ui/modal`](../../web/src/components/ui/modal.jsx) — mobilde alttan sheet (tutamak 36×4px `bg-input`), md+ ortada pencere. `window.confirm` yerine de bu.
+- Varlık detayı: [`AssetDrawer`](../../web/src/components/AssetDrawer.jsx) — mobilde sheet, md+ sağ panel, genişletilince iki kolonlu tam ekran.
+- Tam ekran yükleniyor: [`PageLoader`](../../web/src/components/PageLoader.jsx) — yazısız halka (`border-t-primary`), metin yalnız ekran okuyucuya.
 
-### 5.6 Geçişler
+### 5.6 Ekran yapıları
 
-110ms + `cubic-bezier(0,0,.38,.9)`. Sert duran "productive" easing — yumuşak `ease-out` butonu kart gibi gösterir. `prefers-reduced-motion`'a saygılı.
+- **Özet:** net varlık KPI kartı + dağılım kartı (segment çubuğu + 3 kategori kutusu).
+- **Portföy:** kategori kartları alt alta (md+ üç sütun; ad, adet, pay rozeti, değer + K/Z, temsilci seri, pay çubuğu) + aynı sayfada tüm varlıklar listesi. Karta dokununca `/assets/<kategori>` detayına büyür ([`CategoryCard`](../../web/src/components/CategoryCard.jsx) → [`StoryHero`](../../web/src/components/StoryHero.jsx), View Transitions).
+- **Piyasa:** iki sekme — Borsa · Altın & Döviz (`?tab=goldfx`, yenileyince aynı sekme); başlıkta BIST 100 ve USD/TRY mini göstergesi (md+).
+  - Borsa: nabız kartı (BIST 100 + son 30 gün alan grafiği, yorum + BIST 30 endeksi, yükselen/sabit/düşen çubuğu, öne çıkan 3 hisse: en çok yükselen / düşen / hacim lideri) → BIST 30 tablosu (segment sıralama + arama başlıkta; gün aralığı ve 52H konum çubukları).
+  - **lg+:** iki sütun; sağda seçili hissenin sabit paneli ([`StockDetail`](../../web/src/components/market/StockDetail.jsx)): fiyat + dünkü kapanış, aralık sekmeli grafik, dönem getirisi (1 ay / 3 ay / 1 yıl, 1 yıllık seriden), gün içi aralık ve 52H konum **çubuk + düz cümle** ("zirvenin %17 altında, dipten %43 yukarıda"), günlük hacim + BIST 30 hacim sırası, "Portföyüme ekle". Bilmeyen birine rakam tek başına bırakılmaz. İlk açılışta en çok yükselen seçili; seçili satır kobalt yıkama + solda 3px kobalt. Daha dar ekranda satır kayan paneli (`AssetDrawer`) açar.
+  - Altın & Döviz: 4 kur kutusu (yöne göre renkli mini alan grafiği) → sarrafiye tablosu + 30 günlük değişim (tüm seriler kendi başlangıcına göre %, tek grafik).
+- **Alım:** tür segmenti → varlık → miktar → tarih (fiyatlı takvim) → birim fiyat → o gün/bugün kutuları → toplam kartı; ana eylem altta sabit.
 
-Sayfalar arası kart büyümesi **View Transitions API** ile (`navigate(to, { viewTransition: true })` + aynı `view-transition-name`); kütüphane yok, desteklemeyen tarayıcıda animasyonsuz açılır.
+- **Durum şeridi** ([`StatusBar`](../../web/src/components/StatusBar.jsx), md+, tüm panel sayfalarının en üstü): solda BIST açık/kapalı + "Fiyatlar 18:10 itibarıyla"; sağda ortam, bölge, veritabanı sağlayıcısı + ping, API gidiş-dönüşü, sürüm. **Hepsi gerçek veri** (§6) — seans Yahoo'nun seans sınırlarından tarayıcı saatiyle, sistem bilgisi `/api/system/status`'tan.
 
-### 5.7 Mobil
+### 5.7 Yardımcı sınıflar ([`index.css`](../../web/src/index.css))
 
-Tek kod tabanı, önce mobil. Sınır **`md`**: altı telefon, üstü masaüstü. Masaüstü düzeni mobil için bozulmaz; mobilde farklı biçim gerekiyorsa iki dal `md:hidden` / `hidden md:block` ile yazılır.
+`.label`, `.tabular` (§3) · `.nav-active` · `.paper` (34px hairline ızgara + radyal maske; landing hero'su, auth zemini — [`AuthVisual`](../../web/src/components/AuthVisual.jsx) ızgarası buna hizalı) · `.press` (basınca `scale(.97)`) · `.modal-in`, `.rise`, `.step-in` · `@keyframes flow`, `wire-fill`. Hepsi `prefers-reduced-motion`'a saygılı.
 
-- **Gezinme:** alt menü 4 sekme — Özet · Portföy · Piyasa · Menü — çentik payı `env(safe-area-inset-bottom)`. Masaüstünde sidebar.
-- **Kaydırma:** mobilde sayfanın kendisi (belge) kayar. Yeni sayfa en üstten açılır; geri tuşunda tarayıcı eski konumu geri getirir ([`Layout`](../../web/src/components/Layout.jsx)).
-- **Kart dili:** liste yerine kart → dokununca kart sayfanın başlığına büyür (§5.6). Rayda **ekranda tek kart**; komşu kart kenardan sızmaz (aradaki boşluk = kenar boşluğu). Kart içinde kart yok.
-- **Ana eylem altta sabit:** Al, Giriş yap, Hesap oluştur — alt menünün / ekranın hemen üstünde, miktarı veya eylemi yazar ("25 gram al").
-- **Dokunma alanı ≥ 44px.** İkon düğmeler `h-11 w-11`; kısa metin bağlantılarına dikey dolgu.
-- **Açılır katmanlar** (yan panel, modal, takvim) sayfa köküne çizilir (`createPortal`). Animasyonla `transform` taşıyan bir ata, içindeki `position: fixed` öğeyi ekrana değil kendisine göre konumlar; portal bunu önler. Açıkken arka sayfa kaymaz, odak katmana geçer.
-- **Tekrarı azalt:** masaüstünde yan yana duran tekrarlı içerik (ör. landing'deki ikon ızgarası + 3 tablo) mobilde gizlenir; yerine özet biçim (ızgara, dikey adımlar, katlanır liste) gelir. Uzun detay kendi sayfasına taşınır.
-- **Geçici kontrol:** her ekran Playwright ile 360 / 375 / 390 genişlikte yatay taşma (`scrollWidth === innerWidth`) için taranır.
+Logo: [`AssayMark`](../../web/src/components/AssayMark.jsx) — satır içi SVG, "A" `currentColor`, taban çizgisi `primary`. `<img>` olarak eklenmez (koyu temada görünmez olur).
+
+### 5.8 Geçişler
+
+110ms + `cubic-bezier(0,0,.38,.9)`. Sayfalar arası kart büyümesi **View Transitions API** ile (`navigate(to, { viewTransition: true })` + aynı `view-transition-name`); desteklemeyen tarayıcıda animasyonsuz açılır.
+
+### 5.9 Mobil
+
+Tek kod tabanı, önce mobil. Sınır **`md`**: altı telefon, üstü masaüstü. Farklı biçim gerekiyorsa iki dal `md:hidden` / `hidden md:block`.
+
+- **Gezinme:** alt çubuk 64px, 4 sekme — Özet · Portföy · Piyasa · Menü; aktif sekme kobalt + altta nokta; çentik payı `env(safe-area-inset-bottom)`. Masaüstünde kenar çubuğu.
+- **Kaydırma:** mobilde belge kayar. Yeni sayfa en üstten açılır; geri tuşunda tarayıcı eski konumu getirir ([`Layout`](../../web/src/components/Layout.jsx)).
+- **Kenar boşluğu 16px**, bloklar arası 12–16px. Kart içinde kart yok.
+- **Ana eylem altta sabit:** Al, Giriş yap, Hesap oluştur — alt çubuğun / ekranın hemen üstünde, eylemi yazar ("25 gram al").
+- **Dokunma alanı ≥ 44px.**
+- **Açılır katmanlar** (sheet, modal, takvim) sayfa köküne çizilir (`createPortal`); `transform` taşıyan ata `fixed` öğeyi kendine göre konumlar, portal bunu önler. Açıkken arka sayfa kaymaz, odak katmana geçer.
+- **Tekrarı azalt:** masaüstündeki tekrarlı içerik mobilde özet biçime iner (ızgara, dikey adımlar, katlanır liste).
+- **Kontrol:** her ekran 360 / 375 / 390 genişlikte yatay taşma (`scrollWidth === innerWidth`) ve iki temada taranır.
 
 ---
 
 ## 6. Veri dürüstlüğü
 
-Bunlar renk ya da font değil, **anlam** taşır. Palet değişirse bile geçerlidir.
+Bunlar renk ya da font değil, **anlam** taşır. Palet değişse de geçerlidir.
 
-- Elimizde olmayan piyasa verisi **uydurulmaz, mock'lanmaz**: sektör/endüstri, F/K, piyasa değeri, temettü, emir defteri/derinlik, seans içi tick, haber akışı, duyarlılık skoru. Hiçbir kaynağımız bunları vermiyor.
-- BIST 30 içi arama **client-side filtredir** — 30 satır için ağ turu ya da DB indeksi kurulmaz. Filtre boş dönerse `/market/search` ile tüm BIST evreni önerilir.
+- Elimizde olmayan piyasa verisi **uydurulmaz, mock'lanmaz**: sektör, F/K, PD/DD, piyasa değeri, temettü, emir defteri, haber akışı, duyarlılık skoru. Tasarım girdilerinde bunlar olsa bile ekrana gelmez.
+- **Yapay zekâ özeti kartları gösterilmez** — arkasında bir servis yok. Servis gelince kart, "yatırım tavsiyesi değildir" notuyla eklenir.
+- BIST 30 içi arama **client-side filtredir**; boş dönerse `/market/search` ile tüm BIST evreni önerilir.
 - Piyasa sembolleri Postgres'te tutulmaz; DB yalnızca portföy ve işlemler içindir.
-- **Canlandırma gerçek veri gibi sunulmaz.** Davranışı anlatan demo (landing "Fiyat sor") üzerinde açıkça "Canlandırma · gerçek istek değil" yazar; fiyatları sabit örnektir. Rastgele üretilip canlı servis logu gibi akan kutu **yasak** (eski hero "stdout" kutusu bu yüzden kaldırıldı).
-- Grafik renkleri **token'dan okunur** — [`PriceChart`](../../web/src/components/PriceChart.jsx) `token('--up')` ile çalışır. Palet değişirse `applyOptions` yeniden çağrılmalı.
+- **Canlandırma gerçek veri gibi sunulmaz.** Landing "Fiyat sor" demosunda "Canlandırma · gerçek istek değil" yazar. Rastgele üretilip canlı log gibi akan kutu **yasak**.
+- Kategori kartındaki grafik **portföy değeri değil**, kategorinin temsilci serisidir (BIST 100, USD/TRY, gram altın) — altında etiketle yazılır.
 
 ---
 
 ## 7. YAPMA listesi
 
-- ❌ Ad-hoc renk (`gray-950`, `#111`) — sadece token.
-- ❌ Ad-hoc boyut (`text-[13.5px]`) veya Tailwind varsayılanı (`text-xs`, `text-sm`, `text-lg`) — sadece §3.1 ölçeği.
+- ❌ Ad-hoc renk (`gray-950`, `#111`, `text-white`) — sadece token. Dolu renkli zemin üstünde metin için `text-card` / `*-foreground`.
+- ❌ `bg-foreground/50` gibi perde — `bg-veil` (koyu temada `foreground` açık renktir).
+- ❌ Ad-hoc boyut veya Tailwind varsayılanı (`text-xs`, `text-lg`) — §3.1.
 - ❌ Elle `text-[11px] uppercase tracking-…` — `.label`.
-- ❌ Rakamı `tabular-nums`'suz — `.tabular`.
-- ❌ Etiket, rakam veya cümlede mono — mono (`font-code`) yalnızca gerçek kodda.
-- ❌ Elle "Yükleniyor…" ekranı — `PageLoader`.
-- ❌ Voltaj rengini büyük metinde, dolu butonda, uyarıda, kategoride veya kâr/zararda kullanmak — §4.
-- ❌ Sayfada birden fazla dolu voltaj bandı.
-- ❌ Gölge eklemek (`shadow-*`) — ayrım kenarlıkla kurulur.
-- ❌ Dördüncü marka rengi eklemek.
-- ❌ Sayfayı `Page` olmadan yazmak — başlık çubuğu ve padding oradan gelir.
-- ❌ Ad-hoc `<h1>` — başlık `Page`'in işi.
-- ❌ Elimizde olmayan piyasa verisini uydurmak (§6).
+- ❌ Rakamı `tabular-nums`'suz yazmak — `.tabular`.
+- ❌ Etiket, rakam veya cümlede mono — `font-code` yalnızca gerçek kodda.
+- ❌ Tailwind varsayılan gölgesi (`shadow`, `shadow-lg`) veya koyu, dağınık gölge — §4.2.
+- ❌ Odakta dış parlama/halka ile alan vurgusu — kenar `border-primary` olur.
+- ❌ İkinci marka rengi; kobaltı uyarı, kâr/zarar ya da kategori anlamında kullanmak — §4.3.
+- ❌ Sayfada birden fazla dolu aksan bandı.
+- ❌ Logoyu `<img>` ile eklemek — `AssayMark`.
+- ❌ Sayfayı `Page` olmadan yazmak; ad-hoc `<h1>`.
+- ❌ Elimizde olmayan veriyi uydurmak (§6).
 - ❌ `window.confirm` — ortak `Modal`.
-- ❌ Mobilde 16px altı form alanı (iOS yakınlaştırır) — §5.2.
-- ❌ Mobilde kart içinde kart; rayda komşu kartın kenardan sızması — §5.7.
-- ❌ `transform`/animasyon taşıyan bir kabın içine `fixed` panel/modal koymak — portal kullan, §5.7.
+- ❌ Mobilde 16px altı auth alanı (iOS yakınlaştırır).
+- ❌ Kart içinde kart.
+- ❌ `transform`/animasyon taşıyan kabın içine `fixed` panel/modal — portal kullan.
+- ❌ Token'ı JS'te okuyup temaya bağlamamak — `useTheme().dark` bağımlılığı (§2.5).

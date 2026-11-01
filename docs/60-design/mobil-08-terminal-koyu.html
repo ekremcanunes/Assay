@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Assay Mobile - Midnight Luxe Evolved</title>
+<!-- Google Fonts: Plus Jakarta Sans & Geist -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container-high": "#262a34",
+            "primary-container": "#4d8eff",
+            "primary-fixed": "#d8e2ff",
+            "on-surface": "#dfe2ef",
+            "on-error-container": "#ffdad6",
+            "surface-container": "#1c1f29",
+            "on-tertiary-fixed": "#07006c",
+            "surface-variant": "#31353f",
+            "tertiary-fixed": "#e1e0ff",
+            "on-secondary-container": "#00311f",
+            "surface-tint": "#adc6ff",
+            "error": "#ffb4ab",
+            "on-primary-fixed-variant": "#004395",
+            "secondary-fixed-dim": "#4edea3",
+            "on-tertiary": "#1000a9",
+            "outline": "#8c909f",
+            "inverse-surface": "#dfe2ef",
+            "surface-bright": "#353943",
+            "secondary-fixed": "#6ffbbe",
+            "surface": "#0f131c",
+            "surface-container-lowest": "#0a0e17",
+            "primary-fixed-dim": "#adc6ff",
+            "tertiary": "#c0c1ff",
+            "on-secondary": "#003824",
+            "on-secondary-fixed-variant": "#005236",
+            "on-background": "#dfe2ef",
+            "on-primary-fixed": "#001a42",
+            "surface-dim": "#0f131c",
+            "inverse-primary": "#005ac2",
+            "outline-variant": "#424754",
+            "surface-container-highest": "#31353f",
+            "secondary-container": "#00a572",
+            "primary": "#adc6ff",
+            "surface-container-low": "#181b25",
+            "error-container": "#93000a",
+            "background": "#0f131c",
+            "tertiary-container": "#8083ff",
+            "on-primary-container": "#00285d",
+            "on-tertiary-fixed-variant": "#2f2ebe",
+            "inverse-on-surface": "#2c303a",
+            "tertiary-fixed-dim": "#c0c1ff",
+            "secondary": "#4edea3",
+            "on-error": "#690005",
+            "on-secondary-fixed": "#002113",
+            "on-primary": "#002e6a",
+            "on-surface-variant": "#c2c6d6",
+            "on-tertiary-container": "#0d0096"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "margin-md": "1.5rem",
+            "space-xs": "0.25rem",
+            "margin-lg": "2rem",
+            "space-sm": "0.5rem",
+            "margin": "1rem",
+            "space-lg": "1.5rem",
+            "space-xl": "2rem",
+            "gutter": "1rem",
+            "space-md": "1rem",
+            "gutter-lg": "1.5rem",
+            "space-2xl": "3rem"
+          },
+          "fontFamily": {
+            "body-sm": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "display-hero": ["Plus Jakarta Sans"],
+            "data-lg": ["Geist"],
+            "label-caps": ["Geist"],
+            "body-md": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "data-sm": ["Geist"],
+            "display-hero-mobile": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "data-md": ["Geist"],
+            "body-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "display-hero": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "data-lg": ["20px", { "lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "label-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "data-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "500" }],
+            "display-hero-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "data-md": ["14px", { "lineHeight": "18px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    /* Custom Micro-Glow and Glass Tokens */
+    .glow-emerald {
+      box-shadow: 0 0 20px -4px rgba(16, 185, 129, 0.4);
+    }
+    .glow-cobalt {
+      box-shadow: 0 0 20px -4px rgba(59, 130, 246, 0.45);
+    }
+    .glass-tier-1 {
+      background: rgba(13, 19, 34, 0.72);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-tier-2 {
+      background: rgba(19, 27, 46, 0.85);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.5);
+    }
+    .grid-lines-bg {
+      background-size: 24px 24px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    }
+    /* Hide scrollbars for clean terminal touch scrolling */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface font-body-md text-body-md antialiased min-h-screen selection:bg-primary selection:text-surface-container-lowest grid-lines-bg pb-24">
+<!-- ========================================== -->
+<!-- TOP APP BAR (Shared Component Anchor)       -->
+<!-- ========================================== -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-margin h-14 bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant/30 shadow-sm">
+<!-- Brand / Leading Item -->
+<div class="flex items-center space-x-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center border border-outline-variant/40 text-primary">
+<span class="material-symbols-outlined text-[18px]" data-icon="terminal">terminal</span>
+</div>
+<div>
+<div class="flex items-center space-x-1.5">
+<span class="font-headline-sm text-headline-sm tracking-tight font-bold text-on-surface">ASSAY</span>
+<span class="font-label-caps text-label-caps text-outline tracking-widest">// TERMINAL</span>
+</div>
+</div>
+</div>
+<!-- Right Controls: Telemetry Node & Notifs -->
+<div class="flex items-center space-x-2">
+<!-- Latency Telemetry Badge -->
+<div class="hidden xs:flex items-center space-x-1 px-2 py-0.5 rounded-full bg-surface-container-low border border-outline-variant/30 font-label-caps text-label-caps text-secondary">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+<span class="tracking-wider">0.8ms</span>
+</div>
+<!-- Live Ticker Chip -->
+<div class="flex items-center space-x-1.5 px-2 py-1 rounded bg-surface-container-high/60 border border-outline-variant/40">
+<span class="font-label-caps text-label-caps text-outline">BIST 100</span>
+<span class="font-data-sm text-data-sm text-secondary font-semibold">+%1,42</span>
+</div>
+<!-- Trailing Action: Notification -->
+<button class="relative w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-primary active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-secondary ring-2 ring-surface-container-lowest"></span>
+</button>
+</div>
+</header>
+<!-- ========================================== -->
+<!-- MAIN CANVASES & STREAM (High Density UI)   -->
+<!-- ========================================== -->
+<main class="pt-16 px-margin max-w-md mx-auto space-y-3.5">
+<!-- SUB-TELEMETRY TICKER BAR -->
+<div class="flex items-center justify-between text-outline font-label-caps text-label-caps py-1 px-1 border-b border-outline-variant/20">
+<div class="flex items-center space-x-2">
+<span class="text-secondary font-semibold">NODE 01-NY4</span>
+<span>•</span>
+<span class="text-on-surface-variant">0.8ms (LIVE)</span>
+</div>
+<div class="flex items-center space-x-1 text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span>SEANS AÇIK: 17:42:19</span>
+</div>
+</div>
+<!-- PRIMARY METRIC CARD: Borsa İstanbul BIST Canlı Endeks -->
+<section class="glass-tier-2 rounded-xl p-4 relative overflow-hidden">
+<!-- Glow ambient accent -->
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-secondary/10 rounded-full blur-3xl pointer-events-none"></div>
+<!-- Header: Title & Trend Pill -->
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center space-x-1.5">
+<span class="material-symbols-outlined text-secondary text-[16px]" data-icon="query_stats">query_stats</span>
+<h1 class="font-label-caps text-label-caps tracking-widest text-outline">BORSA İSTANBUL // BIST CANLI ENDEKS</h1>
+</div>
+<div class="px-2 py-0.5 rounded-full bg-secondary/15 border border-secondary/30 text-secondary font-label-caps text-label-caps flex items-center space-x-1">
+<span class="w-1 h-1 rounded-full bg-secondary"></span>
+<span>Boğa Eğilimi // Yüksek Likidite</span>
+</div>
+</div>
+<!-- Main Value Block -->
+<div class="flex items-baseline justify-between mt-1 mb-3">
+<div>
+<span class="font-display-hero-mobile text-display-hero-mobile tracking-tight font-bold text-on-surface">10.245,60</span>
+<span class="font-label-caps text-label-caps text-outline ml-1">TRY</span>
+</div>
+<div class="flex flex-col items-end">
+<div class="flex items-center space-x-1 px-2 py-0.5 rounded bg-secondary/15 border border-secondary/30 text-secondary font-data-sm text-data-sm font-semibold glow-emerald">
+<span class="material-symbols-outlined text-[14px]" data-icon="trending_up">trending_up</span>
+<span>+%1,42</span>
+</div>
+<span class="font-label-caps text-label-caps text-secondary/80 mt-1">+143,20 Puan</span>
+</div>
+</div>
+<!-- Timeframe Filter Buttons & Sparkline Momentum Curve -->
+<div class="relative py-2">
+<!-- SVG Momentum Curve Sparkline -->
+<div class="h-20 w-full relative">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 360 80">
+<defs>
+<lineargradient id="curveGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#4edea3" stop-opacity="0.25"></stop>
+<stop offset="100%" stop-color="#4edea3" stop-opacity="0.0"></stop>
+</lineargradient>
+</defs>
+<!-- Area under curve -->
+<path d="M 0,65 Q 40,58 80,62 T 160,42 T 240,48 T 300,22 T 360,10 L 360,80 L 0,80 Z" fill="url(#curveGradient)"></path>
+<!-- High density curve line -->
+<path d="M 0,65 Q 40,58 80,62 T 160,42 T 240,48 T 300,22 T 360,10" fill="none" stroke="#4edea3" stroke-linecap="round" stroke-width="2"></path>
+<!-- Live target pulse dot -->
+<circle class="animate-ping" cx="360" cy="10" fill="#4edea3" opacity="0.75" r="3"></circle>
+<circle cx="360" cy="10" fill="#4edea3" r="2.5"></circle>
+</svg>
+</div>
+<!-- Inline Timeframe Pills Floating Top-Right -->
+<div class="absolute top-1 right-0 flex items-center space-x-1 bg-surface-container-high/80 p-0.5 rounded-lg border border-outline-variant/40">
+<button class="px-2 py-0.5 rounded text-surface-container-lowest font-label-caps text-label-caps bg-primary font-semibold shadow">1G</button>
+<button class="px-2 py-0.5 rounded text-outline font-label-caps text-label-caps hover:text-on-surface">1H</button>
+<button class="px-2 py-0.5 rounded text-outline font-label-caps text-label-caps hover:text-on-surface">1A</button>
+</div>
+</div>
+<!-- Market Breadth / Distribution Bar -->
+<div class="mt-3 pt-3 border-t border-outline-variant/30 space-y-1.5">
+<div class="flex items-center justify-between font-label-caps text-label-caps">
+<span class="text-secondary font-semibold">312 Yükselen (%62)</span>
+<span class="text-outline">45 Nötr (%9)</span>
+<span class="text-error font-semibold">143 Düşen (%29)</span>
+</div>
+<!-- Progress Segment Multi-bar -->
+<div class="w-full h-1.5 rounded-full bg-surface-container-high overflow-hidden flex">
+<div class="h-full bg-secondary transition-all" style="width: 62%;"></div>
+<div class="h-full bg-outline-variant transition-all" style="width: 9%;"></div>
+<div class="h-full bg-error transition-all" style="width: 29%;"></div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- AI INTELLIGENCE & SENTIMENT ANALYSIS CARD  -->
+<!-- ========================================== -->
+<section class="glass-tier-1 rounded-xl p-4 border border-outline-variant/40 relative">
+<div class="flex items-center justify-between pb-2 mb-2.5 border-b border-outline-variant/20">
+<div class="flex items-center space-x-2">
+<div class="w-5 h-5 rounded bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[15px]" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<span class="font-label-caps text-label-caps tracking-widest text-primary font-bold">YAPAY ZEKÂ BORSA ÖZETİ &amp; DUYGU ANALİZİ</span>
+</div>
+<span class="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-label-caps text-label-caps">v4.2 PRO</span>
+</div>
+<!-- Institutional Narrative Text -->
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed mb-3">
+        BIST 100 genelinde <span class="text-secondary font-medium">bankacılık</span> ve <span class="text-secondary font-medium">havacılık</span> lokomotifliğinde agresif kurumsal para girişi teyit edildi. <span class="text-on-surface font-semibold">THYAO (+%3,8)</span> ve <span class="text-on-surface font-semibold">FROTO (+%2,9)</span> öncülüğünde yabancı takas payı 3 günlük tabandan çıkış sinyali üretiyor.
+      </p>
+<!-- Telemetry Mini-Cards Row -->
+<div class="grid grid-cols-3 gap-2">
+<div class="bg-surface-container-low/90 p-2 rounded-lg border border-outline-variant/30">
+<div class="font-label-caps text-label-caps text-outline truncate">Kurumsal Akış</div>
+<div class="font-data-sm text-data-sm text-secondary font-semibold mt-0.5 truncate">Güçlü Pozitif</div>
+</div>
+<div class="bg-surface-container-low/90 p-2 rounded-lg border border-outline-variant/30">
+<div class="font-label-caps text-label-caps text-outline truncate">Volatilite Risk</div>
+<div class="font-data-sm text-data-sm text-primary font-semibold mt-0.5 truncate">Düşük 2.4/10</div>
+</div>
+<div class="bg-surface-container-low/90 p-2 rounded-lg border border-outline-variant/30">
+<div class="font-label-caps text-label-caps text-outline truncate">Rotasyon</div>
+<div class="font-data-sm text-data-sm text-secondary-fixed font-semibold mt-0.5 truncate">Banka ➔ Oto</div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- MARKET LEADERS / ÖNE ÇIKAN HİSSELER        -->
+<!-- ========================================== -->
+<section class="glass-tier-1 rounded-xl p-4 border border-outline-variant/40">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center space-x-1.5">
+<span class="material-symbols-outlined text-outline text-[16px]" data-icon="candlestick_chart">candlestick_chart</span>
+<h2 class="font-label-caps text-label-caps tracking-widest text-outline">ÖNE ÇIKAN HİSSELER</h2>
+</div>
+<!-- Segmented Filtering Tabs -->
+<div class="flex items-center space-x-1 bg-surface-container-lowest p-0.5 rounded-lg border border-outline-variant/40">
+<button class="px-2 py-0.5 rounded bg-surface-container-high text-primary font-label-caps text-label-caps font-semibold">BIST 30</button>
+<button class="px-2 py-0.5 rounded text-outline font-label-caps text-label-caps hover:text-on-surface">BIST 100</button>
+<button class="px-2 py-0.5 rounded text-outline font-label-caps text-label-caps hover:text-on-surface">Hacim</button>
+</div>
+</div>
+<!-- Leaders List -->
+<div class="divide-y divide-outline-variant/20">
+<!-- Item 1: THYAO (Active State / Focus) -->
+<div class="py-2.5 flex items-center justify-between relative group hover:bg-surface-container/30 px-1 rounded transition-colors">
+<div class="flex items-center space-x-2.5">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-label-caps text-label-caps font-bold text-on-surface border border-outline-variant/50">
+              THY
+            </div>
+<div>
+<div class="flex items-center space-x-1.5">
+<span class="font-headline-sm text-[15px] font-bold text-on-surface">THYAO</span>
+<span class="px-1 py-0.2 rounded bg-secondary/15 text-secondary font-label-caps text-[9px] font-semibold border border-secondary/30">AKTİF</span>
+</div>
+<div class="font-label-caps text-label-caps text-outline">₺14,24 Mlyr Hacim</div>
+</div>
+</div>
+<!-- Micro Sparkline SVG -->
+<div class="w-14 h-6">
+<svg class="w-full h-full" viewbox="0 0 60 24">
+<path d="M 0,20 Q 15,18 25,12 T 45,6 T 60,2" fill="none" stroke="#4edea3" stroke-linecap="round" stroke-width="1.75"></path>
+</svg>
+</div>
+<!-- Price & Change -->
+<div class="text-right">
+<div class="font-data-md text-data-md font-bold text-on-surface">₺312,50</div>
+<div class="font-data-sm text-data-sm text-secondary font-semibold">+%3,80</div>
+</div>
+</div>
+<!-- Item 2: FROTO -->
+<div class="py-2.5 flex items-center justify-between hover:bg-surface-container/30 px-1 rounded transition-colors">
+<div class="flex items-center space-x-2.5">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-label-caps text-label-caps font-bold text-on-surface-variant border border-outline-variant/50">
+              FRO
+            </div>
+<div>
+<div class="flex items-center space-x-1.5">
+<span class="font-headline-sm text-[15px] font-bold text-on-surface">FROTO</span>
+</div>
+<div class="font-label-caps text-label-caps text-outline">₺8,12 Mlyr Hacim</div>
+</div>
+</div>
+<!-- Micro Sparkline SVG -->
+<div class="w-14 h-6">
+<svg class="w-full h-full" viewbox="0 0 60 24">
+<path d="M 0,18 Q 20,20 30,10 T 50,8 T 60,3" fill="none" stroke="#4edea3" stroke-linecap="round" stroke-width="1.75"></path>
+</svg>
+</div>
+<div class="text-right">
+<div class="font-data-md text-data-md font-bold text-on-surface">₺1.148,00</div>
+<div class="font-data-sm text-data-sm text-secondary font-semibold">+%2,90</div>
+</div>
+</div>
+<!-- Item 3: EREGL -->
+<div class="py-2.5 flex items-center justify-between hover:bg-surface-container/30 px-1 rounded transition-colors">
+<div class="flex items-center space-x-2.5">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-label-caps text-label-caps font-bold text-on-surface-variant border border-outline-variant/50">
+              ERE
+            </div>
+<div>
+<div class="flex items-center space-x-1.5">
+<span class="font-headline-sm text-[15px] font-bold text-on-surface">EREGL</span>
+</div>
+<div class="font-label-caps text-label-caps text-outline">₺5,60 Mlyr Hacim</div>
+</div>
+</div>
+<!-- Micro Sparkline Negative SVG -->
+<div class="w-14 h-6">
+<svg class="w-full h-full" viewbox="0 0 60 24">
+<path d="M 0,4 Q 20,6 30,14 T 48,16 T 60,22" fill="none" stroke="#ffb4ab" stroke-linecap="round" stroke-width="1.75"></path>
+</svg>
+</div>
+<div class="text-right">
+<div class="font-data-md text-data-md font-bold text-on-surface">₺48,22</div>
+<div class="font-data-sm text-data-sm text-error font-semibold">-%0,82</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- ACTIVE COCKPIT / VARLIK DENETLEYİCİSİ      -->
+<!-- ========================================== -->
+<section class="glass-tier-2 rounded-xl p-4 border border-outline-variant/50 relative glow-cobalt">
+<!-- Top Header Row -->
+<div class="flex items-center justify-between mb-3 pb-2 border-b border-outline-variant/30">
+<div class="flex items-center space-x-2">
+<div class="w-2 h-2 rounded-full bg-primary animate-ping"></div>
+<span class="font-label-caps text-label-caps tracking-widest text-primary font-bold">KOKPİT // VARLIK DENETLEYİCİSİ</span>
+</div>
+<div class="flex items-center space-x-1 bg-surface-container-lowest p-0.5 rounded-lg border border-outline-variant/40">
+<button class="px-2 py-0.5 rounded bg-primary-container text-on-primary-container font-label-caps text-label-caps font-semibold">Piyasa Verileri</button>
+<button class="px-2 py-0.5 rounded text-outline font-label-caps text-label-caps hover:text-on-surface">Portföyüm</button>
+</div>
+</div>
+<!-- Instrument Overview -->
+<div class="flex items-baseline justify-between mb-3">
+<div>
+<div class="flex items-center space-x-2">
+<h3 class="font-headline-lg text-headline-lg font-bold text-on-surface">THYAO</h3>
+<span class="font-body-sm text-body-sm text-outline">Türk Hava Yolları • Havacılık</span>
+</div>
+<div class="font-label-caps text-label-caps text-secondary mt-0.5">BIST 30 Endeks Ağırlığı: %9,4</div>
+</div>
+<div class="text-right">
+<div class="font-data-lg text-data-lg font-bold text-on-surface">₺312,50</div>
+<div class="font-label-caps text-label-caps text-secondary">+%3,80 Günlük</div>
+</div>
+</div>
+<!-- Daily Range / Gün İçi Aralık Slider -->
+<div class="bg-surface-container-low/80 p-3 rounded-lg border border-outline-variant/30 mb-3 space-y-2">
+<div class="flex items-center justify-between font-label-caps text-label-caps text-outline">
+<span>GÜN İÇİ ARALIK</span>
+<span class="text-on-surface font-semibold">₺308,00 - ₺315,50</span>
+</div>
+<!-- Range Visualizer -->
+<div class="relative w-full h-1.5 bg-surface-container-high rounded-full">
+<div class="absolute left-[30%] right-[20%] h-full bg-primary/40 rounded-full"></div>
+<!-- Current Pointer -->
+<div class="absolute left-[65%] top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-secondary ring-2 ring-surface border border-surface-container-lowest shadow"></div>
+</div>
+<div class="flex items-center justify-between font-label-caps text-label-caps text-outline pt-0.5">
+<span>52H Min: ₺204,10</span>
+<span class="text-secondary font-semibold">52H Aralık: %84 Zirveye Yakın</span>
+<span>52H Max: ₺335,00</span>
+</div>
+</div>
+<!-- Valuation Multiples Matrix -->
+<div class="grid grid-cols-2 gap-2 mb-3">
+<div class="bg-surface-container-low/70 p-2.5 rounded-lg border border-outline-variant/30">
+<div class="font-label-caps text-label-caps text-outline">F/K ORANI</div>
+<div class="flex items-baseline space-x-1.5 mt-0.5">
+<span class="font-data-md text-data-md font-bold text-on-surface">3,12</span>
+<span class="font-label-caps text-label-caps text-secondary">Sektör Altı</span>
+</div>
+</div>
+<div class="bg-surface-container-low/70 p-2.5 rounded-lg border border-outline-variant/30">
+<div class="font-label-caps text-label-caps text-outline">PD/DD</div>
+<div class="flex items-baseline space-x-1.5 mt-0.5">
+<span class="font-data-md text-data-md font-bold text-on-surface">0,88</span>
+<span class="font-label-caps text-label-caps text-primary">İskontolu</span>
+</div>
+</div>
+</div>
+<!-- 5-Level Depth Book Mini Bar (Kademe Derinliği) -->
+<div class="bg-surface-container-low/70 p-2.5 rounded-lg border border-outline-variant/30 mb-3 space-y-1.5">
+<div class="flex items-center justify-between font-label-caps text-label-caps">
+<span class="text-outline">5 KADEME DERİNLİK</span>
+<span class="text-secondary font-semibold">Alıcılar Üstün (%64)</span>
+</div>
+<div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden flex">
+<div class="h-full bg-secondary transition-all" style="width: 64%;"></div>
+<div class="h-full bg-error transition-all" style="width: 36%;"></div>
+</div>
+<div class="flex items-center justify-between font-label-caps text-label-caps text-outline text-[10px]">
+<span>Toplam Alış: 1.428.190 Lot</span>
+<span>Toplam Satış: 803.410 Lot</span>
+</div>
+</div>
+<!-- Prominent Neon Action Execution Button -->
+<button class="w-full py-3 px-4 rounded-xl bg-secondary hover:bg-secondary/90 active:scale-[0.98] transition-all duration-150 flex items-center justify-center space-x-2 text-on-secondary font-headline-sm text-headline-sm font-bold glow-emerald">
+<span class="material-symbols-outlined text-[20px]" data-icon="shopping_cart">shopping_cart</span>
+<span>Alım Emri Gönder</span>
+</button>
+</section>
+</main>
+<!-- ========================================== -->
+<!-- BOTTOM NAVIGATION BAR (Shared Anchor)      -->
+<!-- ========================================== -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex items-center justify-around px-gutter py-2 bg-surface-container-lowest/85 backdrop-blur-xl border-t border-outline-variant/30 shadow-2xl">
+<!-- Tab 1: Özet (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant py-1.5 px-3 hover:text-primary transition-colors duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="grid_view">grid_view</span>
+<span class="font-label-caps text-label-caps tracking-wider uppercase mt-1">Özet</span>
+</a>
+<!-- Tab 2: Piyasalar (ACTIVE Destination according to screen context) -->
+<a class="flex flex-col items-center justify-center text-primary py-1.5 px-3 rounded-lg bg-surface-container-high/60 hover:text-primary transition-colors duration-150 active:scale-95 shadow-sm" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="candlestick_chart">candlestick_chart</span>
+<span class="font-label-caps text-label-caps tracking-wider uppercase mt-1">Piyasalar</span>
+</a>
+<!-- Tab 3: Kokpit (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant py-1.5 px-3 hover:text-primary transition-colors duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="query_stats">query_stats</span>
+<span class="font-label-caps text-label-caps tracking-wider uppercase mt-1">Kokpit</span>
+</a>
+<!-- Tab 4: Portföy (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant py-1.5 px-3 hover:text-primary transition-colors duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-caps text-label-caps tracking-wider uppercase mt-1">Portföy</span>
+</a>
+</nav>
+<!-- Interactive Terminal Feedback Script -->
+<script>
+    // Micro interaction: instantaneous flash update simulate when order cleared
+    document.addEventListener('DOMContentLoaded', () => {
+      const orderBtn = document.querySelector('button.glow-emerald');
+      if (orderBtn) {
+        orderBtn.addEventListener('click', () => {
+          orderBtn.classList.add('scale-95', 'opacity-80');
+          setTimeout(() => {
+            orderBtn.classList.remove('scale-95', 'opacity-80');
+          }, 150);
+        });
+      }
+    });
+  </script>
+</body></html>

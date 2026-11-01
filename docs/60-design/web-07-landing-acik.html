@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+
+<html class="light" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ASSAY // TERMINAL — Hisse, Altın ve Döviz Defteri</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=Hanken+Grotesk:wght@500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary": "#004ac6",
+            "tertiary": "#005a89",
+            "outline": "#737686",
+            "on-surface-variant": "#434655",
+            "on-secondary-fixed-variant": "#005137",
+            "surface-container-lowest": "#ffffff",
+            "inverse-primary": "#b4c5ff",
+            "on-secondary-fixed": "#002114",
+            "on-error-container": "#93000a",
+            "on-tertiary-fixed-variant": "#004b73",
+            "error": "#ba1a1a",
+            "on-primary-fixed-variant": "#003ea8",
+            "on-primary-fixed": "#00174b",
+            "secondary-fixed-dim": "#68dba9",
+            "on-error": "#ffffff",
+            "primary-fixed": "#dbe1ff",
+            "surface-container-highest": "#dae2fd",
+            "surface-dim": "#d2d9f4",
+            "inverse-surface": "#283044",
+            "on-tertiary-fixed": "#001d31",
+            "on-tertiary-container": "#e7f2ff",
+            "surface-container-low": "#f2f3ff",
+            "secondary-fixed": "#85f8c4",
+            "surface-container-high": "#e2e7ff",
+            "surface-tint": "#0053db",
+            "on-surface": "#131b2e",
+            "on-primary-container": "#eeefff",
+            "tertiary-fixed-dim": "#93ccff",
+            "primary-container": "#2563eb",
+            "primary-fixed-dim": "#b4c5ff",
+            "tertiary-container": "#0073ae",
+            "surface": "#faf8ff",
+            "on-tertiary": "#ffffff",
+            "surface-variant": "#dae2fd",
+            "tertiary-fixed": "#cce5ff",
+            "on-background": "#131b2e",
+            "outline-variant": "#c3c6d7",
+            "secondary": "#006c4a",
+            "background": "#faf8ff",
+            "on-secondary-container": "#00714e",
+            "on-secondary": "#ffffff",
+            "secondary-container": "#82f5c1",
+            "on-primary": "#ffffff",
+            "error-container": "#ffdad6",
+            "surface-bright": "#faf8ff",
+            "inverse-on-surface": "#eef0ff",
+            "surface-container": "#eaedff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "margin": "1rem",
+            "space-lg": "1rem",
+            "gutter": "1rem",
+            "space-xs": "0.25rem",
+            "space-xl": "1.5rem",
+            "gutter-desktop": "1.25rem",
+            "space-sm": "0.5rem",
+            "space-md": "0.75rem",
+            "margin-desktop": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-md": ["Hanken Grotesk"],
+            "mono-data-md": ["JetBrains Mono"],
+            "mono-data-lg": ["JetBrains Mono"],
+            "headline-sm": ["Hanken Grotesk"],
+            "label-caps": ["JetBrains Mono"],
+            "headline-lg": ["Hanken Grotesk"],
+            "mono-data-sm": ["JetBrains Mono"],
+            "body-md": ["Geist"],
+            "display-lg": ["Hanken Grotesk"],
+            "display-lg-mobile": ["Hanken Grotesk"],
+            "body-sm": ["Geist"],
+            "body-lg": ["Geist"]
+          },
+          "fontSize": {
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "mono-data-md": ["13px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "mono-data-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+            "headline-sm": ["16px", { "lineHeight": "22px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-caps": ["10px", { "lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "mono-data-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.03em", "fontWeight": "600" }],
+            "display-lg-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-lg": ["15px", { "lineHeight": "22px", "letterSpacing": "-0.005em", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .grid-mesh {
+      background-image: linear-gradient(to right, rgba(195, 198, 215, 0.22) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(195, 198, 215, 0.22) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+    .hairline-b { border-bottom: 1px solid rgba(195, 198, 215, 0.45); }
+    .hairline-r { border-right: 1px solid rgba(195, 198, 215, 0.45); }
+    .hairline-t { border-top: 1px solid rgba(195, 198, 215, 0.45); }
+    .hairline-all { border: 1px solid rgba(195, 198, 215, 0.5); }
+  </style>
+</head>
+<body class="bg-[#f8fafc] text-on-surface antialiased selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- Top Navigation (Executing TopNavBar tokens & requested nodes) -->
+<header class="flex justify-between items-center w-full px-4 lg:px-8 h-14 z-50 sticky top-0 bg-surface-container-lowest/95 backdrop-blur-md hairline-b">
+<div class="flex items-center gap-6">
+<a class="flex items-center gap-2" href="#">
+<span class="w-2.5 h-2.5 bg-secondary rounded-none"></span>
+<span class="text-headline-sm font-headline-sm font-bold tracking-tight text-primary">ASSAY // TERMINAL</span>
+</a>
+<div class="hidden xl:flex items-center gap-2 px-2.5 py-1 bg-surface-container-low rounded hairline-all">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+<span class="text-label-caps font-label-caps text-on-surface-variant font-medium tracking-wider">NODE 01-NY4 • 0.8ms LIVE</span>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="hidden md:flex items-center gap-6 h-full">
+<a class="text-on-surface-variant hover:text-on-surface font-body-md text-body-md transition-colors flex items-center h-full border-b-2 border-transparent hover:border-outline-variant" href="#features">Ne yapıyor</a>
+<a class="text-primary font-body-md text-body-md border-b-2 border-primary font-medium flex items-center h-full" href="#stream">İstek akışı</a>
+<a class="text-on-surface-variant hover:text-on-surface font-body-md text-body-md transition-colors flex items-center h-full border-b-2 border-transparent hover:border-outline-variant" href="#architecture">Entegrasyonlar</a>
+<a class="text-on-surface-variant hover:text-on-surface font-body-md text-body-md transition-colors flex items-center h-full border-b-2 border-transparent hover:border-outline-variant" href="#tradeoffs">Bilinçli Ödünler</a>
+<a class="text-on-surface-variant hover:text-on-surface font-body-md text-body-md transition-colors flex items-center h-full border-b-2 border-transparent hover:border-outline-variant" href="#docs">Docs</a>
+</nav>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-3">
+<div class="hidden sm:flex items-center gap-1.5 text-on-surface-variant text-label-caps font-label-caps bg-surface-container-low px-2 py-1 hairline-all">
+<span class="material-symbols-outlined text-sm" data-icon="terminal">terminal</span>
+<span>v1.24-RELEASE</span>
+</div>
+<button class="px-3 py-1.5 text-body-sm font-body-sm font-medium text-on-surface hover:bg-surface-container hairline-all rounded-lg transition-colors">
+        Giriş yap
+      </button>
+<button class="px-3.5 py-1.5 text-body-sm font-body-sm font-medium bg-primary text-on-primary hover:bg-primary-container rounded-lg shadow-sm transition-all duration-150 active:scale-[0.98]">
+        Kayıt Ol
+      </button>
+</div>
+</header>
+<!-- Hero Section with Titanium Daylight Grid -->
+<main class="relative grid-mesh pt-12 pb-20 px-4 lg:px-8 border-b border-outline-variant/40 overflow-hidden">
+<!-- Ambient daylight glow accents -->
+<div class="absolute top-0 right-1/4 w-96 h-96 bg-secondary-fixed/20 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<div class="absolute top-1/3 left-10 w-80 h-80 bg-primary-fixed/30 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<div class="max-w-7xl mx-auto">
+<!-- Top Micro Badge -->
+<div class="inline-flex items-center gap-2 px-3 py-1 bg-surface-container-lowest rounded-full hairline-all mb-6 shadow-sm">
+<span class="px-1.5 py-0.5 rounded text-label-caps font-label-caps bg-secondary/10 text-secondary border border-secondary/20">AÇIK MOD</span>
+<span class="text-mono-data-sm font-mono-data-sm text-on-surface-variant">Kurumsal mimari &amp; Daylight hassasiyeti</span>
+<span class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="arrow_forward">arrow_forward</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- Hero Text -->
+<div class="lg:col-span-6 space-y-5">
+<h1 class="text-display-lg-mobile md:text-display-lg font-display-lg text-on-surface tracking-tight font-bold">
+            Hisse, altın ve döviz.<br/>
+<span class="text-secondary font-extrabold underline decoration-secondary-fixed decoration-4 underline-offset-4">Hepsi tek defterde.</span>
+</h1>
+<p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl leading-relaxed">
+            Yatırımlarımı tuttuğum bu uygulamayı, modern bir yazılımın nasıl kurulduğunu öğrenirken yazdım. Nasıl yapıldığı da burada.
+          </p>
+<div class="pt-2 flex flex-wrap items-center gap-3">
+<a class="inline-flex items-center gap-2 px-4 py-2.5 bg-secondary text-on-secondary rounded-lg font-body-md text-body-md font-semibold hover:bg-secondary/90 transition-all shadow-sm" href="#simulator">
+<span class="material-symbols-outlined text-base" data-icon="play_circle">play_circle</span>
+              Simülatörü Dene
+            </a>
+<a class="inline-flex items-center gap-2 px-4 py-2.5 bg-surface-container-lowest text-on-surface hairline-all rounded-lg font-body-md text-body-md font-medium hover:bg-surface-container-low transition-colors shadow-sm" href="#architecture">
+<span class="material-symbols-outlined text-base" data-icon="account_tree">account_tree</span>
+              Mimari Şeması
+            </a>
+</div>
+<!-- Proof Quote / Author Note -->
+<div class="p-3.5 bg-surface-container-lowest/80 hairline-all rounded-lg max-w-xl flex items-start gap-3">
+<span class="material-symbols-outlined text-secondary text-lg mt-0.5" data-icon="verified_user">verified_user</span>
+<div>
+<p class="text-mono-data-sm font-mono-data-sm text-on-surface-variant">
+                "Hiçbir ticari hedef gütmeyen, mikrosaniye hassasiyetli .NET tabanlı açık defter altyapısı."
+              </p>
+<span class="text-label-caps font-label-caps text-outline mt-1 block">MÜHENDİSLİK GÜNLÜĞÜ // İSTANBUL-NEW YORK</span>
+</div>
+</div>
+</div>
+<!-- Hero Simulator Card (Interactive Simulation) -->
+<div class="lg:col-span-6 bg-surface-container-lowest hairline-all rounded-xl p-5 shadow-sm space-y-4" id="simulator">
+<div class="flex items-center justify-between pb-3 hairline-b">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>
+<span class="text-headline-sm font-headline-sm font-semibold">Canlı İstek Simülatörü</span>
+</div>
+<span class="text-label-caps font-label-caps text-on-surface-variant bg-surface-container-low px-2 py-0.5 rounded">TELEMETRİ V3</span>
+</div>
+<div class="space-y-3">
+<label class="text-label-caps font-label-caps text-on-surface-variant block">Bir fiyat iste, nereden geldiğini gör:</label>
+<div class="grid grid-cols-3 gap-2">
+<button class="sim-btn active px-3 py-2 text-left bg-surface-container-low border-2 border-primary rounded-lg transition-all" id="btn-thyao" onclick="simulateAsset('THYAO', 'BIST', '18ms', 'POPULATED', 'Twelve Data Direct', '₺284.50')">
+<span class="text-label-caps font-label-caps text-on-surface-variant block">HİSSE SENEDİ</span>
+<span class="text-headline-sm font-headline-sm text-on-surface font-bold">THYAO</span>
+</button>
+<button class="sim-btn px-3 py-2 text-left bg-surface-container-lowest hairline-all hover:bg-surface-container-low rounded-lg transition-all" id="btn-gram" onclick="simulateAsset('GRAM', 'EMTIA', '4ms', 'CACHE HIT', 'Redis Replica :6379', '₺2,488.10')">
+<span class="text-label-caps font-label-caps text-on-surface-variant block">KIYMETLİ MADEN</span>
+<span class="text-headline-sm font-headline-sm text-on-surface font-bold">GRAM</span>
+</button>
+<button class="sim-btn px-3 py-2 text-left bg-surface-container-lowest hairline-all hover:bg-surface-container-low rounded-lg transition-all" id="btn-usd" onclick="simulateAsset('USD/TRY', 'FX', '82ms', 'CACHE MISS', 'Yahoo Finance API', '₺32.84')">
+<span class="text-label-caps font-label-caps text-on-surface-variant block">DÖVİZ PARİTESİ</span>
+<span class="text-headline-sm font-headline-sm text-on-surface font-bold">USD</span>
+</button>
+</div>
+</div>
+<!-- Flow Pipeline Visualization -->
+<div class="p-3.5 bg-[#f8fafc] hairline-all rounded-lg space-y-3 font-mono-data-sm text-mono-data-sm">
+<div class="flex items-center justify-between text-label-caps font-label-caps text-outline pb-1 border-b border-outline-variant/30">
+<span>İSTEK ROTASI</span>
+<span class="text-secondary font-bold" id="sim-status">● BAĞLANTI AKTİF</span>
+</div>
+<!-- Route Nodes -->
+<div class="grid grid-cols-3 gap-2 text-center pt-1">
+<div class="p-2 bg-surface-container-lowest hairline-all rounded">
+<span class="text-label-caps font-label-caps text-outline block">İSTEMCİ</span>
+<span class="font-bold text-on-surface">Sen (Browser)</span>
+</div>
+<div class="p-2 bg-surface-container-lowest hairline-all rounded relative">
+<span class="text-label-caps font-label-caps text-primary block">ARABİRİM</span>
+<span class="font-bold text-primary">Assay :80</span>
+<span class="material-symbols-outlined text-xs absolute -left-2 top-4 bg-[#f8fafc] text-outline" data-icon="chevron_right">chevron_right</span>
+<span class="material-symbols-outlined text-xs absolute -right-2 top-4 bg-[#f8fafc] text-outline" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="p-2 bg-surface-container-lowest hairline-all rounded">
+<span class="text-label-caps font-label-caps text-outline block">KAYNAK</span>
+<span class="font-bold text-secondary" id="sim-source">Twelve Data</span>
+</div>
+</div>
+<!-- Dynamic Result readout -->
+<div class="mt-2 pt-2 hairline-t flex items-center justify-between">
+<div>
+<span class="text-label-caps font-label-caps text-on-surface-variant">ÖNBELLEK DURUMU:</span>
+<span class="ml-1.5 px-2 py-0.5 rounded text-label-caps font-label-caps bg-secondary/10 text-secondary border border-secondary/30 font-semibold" id="sim-badge">CACHE POPULATED</span>
+</div>
+<div class="text-right">
+<span class="text-label-caps font-label-caps text-outline">GECİKME:</span>
+<span class="font-bold text-on-surface ml-1" id="sim-latency">18ms</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-2.5 hairline-all rounded flex justify-between items-center">
+<div>
+<span class="text-label-caps font-label-caps text-outline block">SON DÖNEN VERİ:</span>
+<span class="text-headline-md font-mono-data-lg font-bold text-on-surface" id="sim-price">₺284.50</span>
+</div>
+<div class="text-right">
+<span class="text-label-caps font-label-caps text-secondary block">STATUS 200 OK</span>
+<span class="text-mono-data-sm text-outline">application/json</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 4 High-Density Telemetry Metrics -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 pt-8 hairline-t">
+<div class="p-4 bg-surface-container-lowest hairline-all rounded-lg shadow-sm">
+<div class="flex items-center justify-between mb-1">
+<span class="text-label-caps font-label-caps text-on-surface-variant">DOCKER ORCHESTRATION</span>
+<span class="material-symbols-outlined text-primary text-base" data-icon="inventory_2">inventory_2</span>
+</div>
+<div class="text-headline-lg font-headline-lg font-bold text-on-surface">6 Container</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">İzole Nginx, API, Worker ve DB katmanları</p>
+</div>
+<div class="p-4 bg-surface-container-lowest hairline-all rounded-lg shadow-sm">
+<div class="flex items-center justify-between mb-1">
+<span class="text-label-caps font-label-caps text-on-surface-variant">BACKEND MOTORU</span>
+<span class="material-symbols-outlined text-secondary text-base" data-icon="memory">memory</span>
+</div>
+<div class="text-headline-lg font-headline-lg font-bold text-on-surface">2 .NET Servisi</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">C# Minimal API + Asenkron Market Worker</p>
+</div>
+<div class="p-4 bg-surface-container-lowest hairline-all rounded-lg shadow-sm">
+<div class="flex items-center justify-between mb-1">
+<span class="text-label-caps font-label-caps text-on-surface-variant">AKICI AKIŞ</span>
+<span class="material-symbols-outlined text-tertiary text-base" data-icon="hub">hub</span>
+</div>
+<div class="text-headline-lg font-headline-lg font-bold text-on-surface">3 Veri Kaynağı</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">Yahoo Finance, Twelve Data, TCMB Kur</p>
+</div>
+<div class="p-4 bg-surface-container-lowest hairline-all rounded-lg shadow-sm">
+<div class="flex items-center justify-between mb-1">
+<span class="text-label-caps font-label-caps text-on-surface-variant">MEMORİZE EŞİĞİ</span>
+<span class="material-symbols-outlined text-primary text-base" data-icon="timer">timer</span>
+</div>
+<div class="text-headline-lg font-headline-lg font-bold text-on-surface">5dk Cache Ömrü</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">Redis TTL ile limit aşımını engelleyen mimari</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Section 01: Defterin Tuttukları (Module Feature Cards) -->
+<section class="py-16 px-4 lg:px-8 max-w-7xl mx-auto" id="features">
+<div class="flex items-center justify-between mb-8 pb-4 hairline-b">
+<div>
+<span class="text-label-caps font-label-caps text-secondary font-bold tracking-wider">BÖLÜM 01</span>
+<h2 class="text-headline-lg font-headline-lg text-on-surface font-bold tracking-tight">Defterin Tuttukları</h2>
+</div>
+<span class="text-mono-data-sm font-mono-data-sm text-outline hidden sm:block">FONKSİYONEL YETENEKLER // 4 MODÜL</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+<!-- Card 1: Varlık Takibi -->
+<div class="bg-surface-container-lowest hairline-all rounded-xl p-5 shadow-sm hover:border-primary/50 transition-all flex flex-col justify-between">
+<div>
+<div class="w-9 h-9 rounded bg-surface-container-low hairline-all flex items-center justify-center text-primary mb-4">
+<span class="material-symbols-outlined" data-icon="pie_chart">pie_chart</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm font-semibold mb-2">Varlık Takibi</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+            Hisse, gram altın ve döviz pozisyonlarının ağırlıklı ortalama maliyet (WAC) hesabı ve anlık net kâr/zarar dökümü.
+          </p>
+</div>
+<div class="mt-6 pt-3 hairline-t flex items-center justify-between text-mono-data-sm font-mono-data-sm">
+<span class="text-outline">HESAP MOTORU</span>
+<span class="text-secondary font-medium">FIFO &amp; WAC</span>
+</div>
+</div>
+<!-- Card 2: Piyasa Sayfaları -->
+<div class="bg-surface-container-lowest hairline-all rounded-xl p-5 shadow-sm hover:border-secondary/50 transition-all flex flex-col justify-between">
+<div>
+<div class="w-9 h-9 rounded bg-secondary-fixed/30 hairline-all flex items-center justify-center text-secondary mb-4">
+<span class="material-symbols-outlined" data-icon="monitoring">monitoring</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm font-semibold mb-2">Piyasa Sayfaları</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+            BIST 30 endeks ağırlıkları, serbest piyasa altın kurları ve TCMB gösterge kurlarının gecikmesiz senkronizasyonu.
+          </p>
+</div>
+<div class="mt-6 pt-3 hairline-t flex items-center justify-between text-mono-data-sm font-mono-data-sm">
+<span class="text-outline">GÜNCELLEME</span>
+<span class="text-on-surface font-medium">HER 300 SN</span>
+</div>
+</div>
+<!-- Card 3: İşlem Defteri -->
+<div class="bg-surface-container-lowest hairline-all rounded-xl p-5 shadow-sm hover:border-primary/50 transition-all flex flex-col justify-between">
+<div>
+<div class="w-9 h-9 rounded bg-surface-container-low hairline-all flex items-center justify-center text-primary mb-4">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm font-semibold mb-2">İşlem Defteri</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+            Komisyon kesintileri, temettü kayıtları ve sermaye artırımı bölünmelerini geriye dönük hatasız kaydeden işlem kaydı.
+          </p>
+</div>
+<div class="mt-6 pt-3 hairline-t flex items-center justify-between text-mono-data-sm font-mono-data-sm">
+<span class="text-outline">DEPOLAMA</span>
+<span class="text-primary font-medium">PostgreSQL 16</span>
+</div>
+</div>
+<!-- Card 4: Sembol Arama -->
+<div class="bg-surface-container-lowest hairline-all rounded-xl p-5 shadow-sm hover:border-tertiary/50 transition-all flex flex-col justify-between">
+<div>
+<div class="w-9 h-9 rounded bg-surface-container-low hairline-all flex items-center justify-center text-tertiary mb-4">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm font-semibold mb-2">Sembol Arama</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+            Debounce kontrollü, anlık ticker eşleşmesi. BIST sembolleri için lokal cache indisi ve anında filtreleme.
+          </p>
+</div>
+<div class="mt-6 pt-3 hairline-t flex items-center justify-between text-mono-data-sm font-mono-data-sm">
+<span class="text-outline">DEBOUNCE</span>
+<span class="text-secondary font-medium">150ms TRIE</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 02: Mimari - Bir Fiyat İsteği Nereden Geçiyor -->
+<section class="py-16 bg-surface-container-low/40 hairline-t hairline-b" id="stream">
+<div class="max-w-7xl mx-auto px-4 lg:px-8 space-y-10">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<span class="text-label-caps font-label-caps text-secondary font-bold tracking-wider">BÖLÜM 02 // MİMARİ İZLEME</span>
+<h2 class="text-headline-lg font-headline-lg text-on-surface font-bold">Bir Fiyat İsteği Nereden Geçiyor?</h2>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-2xl mt-1">
+            İstemciden harici finans API'larına uzanan akış, hiçbir gereksiz veritabanı yazma işlemine takılmadan Redis bellek katmanında süzülür.
+          </p>
+</div>
+<div class="text-mono-data-sm font-mono-data-sm text-outline">
+          TOPLAM HOP ADEDİ: <span class="text-primary font-bold">4 DÜĞÜM</span>
+</div>
+</div>
+<!-- Architectural Data Flow Diagram (Pure Daylight Canvas) -->
+<div class="bg-surface-container-lowest hairline-all rounded-xl p-6 shadow-sm overflow-x-auto">
+<div class="min-w-[760px] flex items-stretch justify-between gap-3 text-center">
+<!-- Step 1: React 19 Client -->
+<div class="flex-1 p-4 bg-surface-container-lowest hairline-all rounded-lg">
+<span class="text-label-caps font-label-caps text-outline block mb-1">01. CLIENT UI</span>
+<div class="font-headline-sm font-semibold text-on-surface">React 19</div>
+<p class="text-mono-data-sm text-on-surface-variant mt-1">TanStack Query v5</p>
+<div class="mt-4 px-2 py-1 bg-surface-container-low rounded text-label-caps text-primary font-medium">
+              GET /api/quote?s=THYAO
+            </div>
+</div>
+<div class="flex items-center text-outline">
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</div>
+<!-- Step 2: Nginx Reverse Proxy -->
+<div class="flex-1 p-4 bg-surface-container-lowest hairline-all rounded-lg">
+<span class="text-label-caps font-label-caps text-outline block mb-1">02. REVERSE PROXY</span>
+<div class="font-headline-sm font-semibold text-on-surface">nginx :80</div>
+<p class="text-mono-data-sm text-on-surface-variant mt-1">Port Yönlendirme</p>
+<div class="mt-4 px-2 py-1 bg-surface-container-low rounded text-label-caps text-secondary font-medium">
+              proxy_pass :5000
+            </div>
+</div>
+<div class="flex items-center text-outline">
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</div>
+<!-- Step 3: .NET Core Market Service -->
+<div class="flex-1 p-4 bg-surface-container-lowest hairline-all border-2 border-primary rounded-lg shadow-sm">
+<span class="text-label-caps font-label-caps text-primary font-bold block mb-1">03. ORKESTRASYON</span>
+<div class="font-headline-sm font-semibold text-primary">market-service</div>
+<p class="text-mono-data-sm text-on-surface-variant mt-1">.NET 8 Minimal API</p>
+<div class="mt-4 px-2 py-1 bg-primary/10 rounded text-label-caps text-primary font-semibold">
+              TTL Kontrolü (Memory)
+            </div>
+</div>
+<div class="flex items-center text-outline">
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</div>
+<!-- Step 4: Storage / External Split -->
+<div class="flex-1 p-4 bg-surface-container-lowest hairline-all rounded-lg flex flex-col justify-between">
+<div>
+<span class="text-label-caps font-label-caps text-outline block mb-1">04. ÇİFT KATMAN</span>
+<div class="font-headline-sm font-semibold text-secondary">Redis / Provider</div>
+<p class="text-mono-data-sm text-on-surface-variant mt-1">Bellek ya da API</p>
+</div>
+<div class="mt-4 space-y-1">
+<div class="px-2 py-0.5 bg-secondary-fixed/40 rounded text-label-caps text-secondary font-medium">
+                HIT: Redis (2ms)
+              </div>
+<div class="px-2 py-0.5 bg-surface-container-low rounded text-label-caps text-outline font-medium">
+                MISS: Yahoo / Twelve
+              </div>
+</div>
+</div>
+</div>
+</div>
+<!-- Docker-compose Code Terminal Box & Technical Notes -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Terminal code box -->
+<div class="lg:col-span-7 bg-[#ffffff] hairline-all rounded-xl p-4 shadow-sm font-mono-data-sm">
+<div class="flex items-center justify-between pb-3 hairline-b mb-3">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-outline-variant/60"></span>
+<span class="w-3 h-3 rounded-full bg-outline-variant/60"></span>
+<span class="w-3 h-3 rounded-full bg-outline-variant/60"></span>
+<span class="text-label-caps font-label-caps text-outline ml-2">docker-compose.yml — ASSAY NODE STACK</span>
+</div>
+<span class="text-label-caps font-label-caps text-secondary">YAML VALID</span>
+</div>
+<pre class="text-on-surface overflow-x-auto leading-relaxed text-xs"><span class="text-outline">version:</span> <span class="text-primary">'3.9'</span>
+<span class="text-outline">services:</span>
+  <span class="text-secondary font-semibold">gateway:</span>
+    <span class="text-outline">image:</span> nginx:alpine-slim
+    <span class="text-outline">ports:</span> [<span class="text-primary">"80:80"</span>]
+    <span class="text-outline">depends_on:</span> [web, market-service]
+
+  <span class="text-secondary font-semibold">market-service:</span>
+    <span class="text-outline">build:</span> ./src/Services/MarketService
+    <span class="text-outline">environment:</span>
+      - <span class="text-on-surface-variant">ASPNETCORE_ENVIRONMENT=Production</span>
+      - <span class="text-on-surface-variant">REDIS_HOST=cache:6379</span>
+      - <span class="text-on-surface-variant">CACHE_TTL_MINUTES=5</span>
+
+  <span class="text-secondary font-semibold">cache:</span>
+    <span class="text-outline">image:</span> redis:7-alpine
+    <span class="text-outline">command:</span> redis-server --save "" --appendonly no</pre>
+</div>
+<!-- Architectural Notes -->
+<div class="lg:col-span-5 space-y-4">
+<div class="p-4 bg-surface-container-lowest hairline-all rounded-xl shadow-sm">
+<div class="flex items-center gap-2 text-primary font-headline-sm font-semibold mb-1">
+<span class="material-symbols-outlined text-lg" data-icon="speed">speed</span>
+              Gecikme İzolasyonu
+            </div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+              Kullanıcı arayüzü asla doğrudan Yahoo Finance veya TCMB API'larına bağlanmaz. Bütün dış istekler .NET Worker tarafından yönetilir ve Redis üzerinde normalize edilir.
+            </p>
+</div>
+<div class="p-4 bg-surface-container-lowest hairline-all rounded-xl shadow-sm">
+<div class="flex items-center gap-2 text-secondary font-headline-sm font-semibold mb-1">
+<span class="material-symbols-outlined text-lg" data-icon="lock_clock">lock_clock</span>
+              Rate-Limit Kalkanı
+            </div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+              Ücretsiz tier limitleri (Twelve Data 8 req/min) aşılmaması için istekler tek bir dağıtıcı kuyrukta toplanır; 100 kullanıcı aynı anda THYAO sorgulasa bile sağlayıcıya yalnızca tek bir istek düşer.
+            </p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 03: Gerekçe - Her Teknoloji Neden Burada -->
+<section class="py-16 px-4 lg:px-8 max-w-7xl mx-auto space-y-10" id="architecture">
+<div>
+<span class="text-label-caps font-label-caps text-secondary font-bold tracking-wider">BÖLÜM 03</span>
+<h2 class="text-headline-lg font-headline-lg text-on-surface font-bold">Gerekçe: Her Teknoloji Neden Burada?</h2>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-2xl mt-1">
+        Popüler olduğu için değil, bu defterin mimari sınırlarını çözdüğü için seçilen bileşenler.
+      </p>
+</div>
+<!-- Tech rationale grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="p-5 bg-surface-container-lowest hairline-all rounded-xl">
+<span class="text-label-caps font-label-caps text-primary block mb-1">FRONTEND RUNTIME</span>
+<h4 class="text-headline-sm font-headline-sm font-bold text-on-surface mb-2">React 19 &amp; Vite</h4>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-4">
+          SSR karmaşası olmadan, saf SPA mantığıyla çalışan ultra hafif statik bundle. Nginx üzerinden doğrudan mikrosaniyede servis edilir.
+        </p>
+<span class="inline-block px-2 py-0.5 bg-surface-container-low text-on-surface font-mono-data-sm rounded">42KB Gzipped Core</span>
+</div>
+<div class="p-5 bg-surface-container-lowest hairline-all rounded-xl">
+<span class="text-label-caps font-label-caps text-secondary block mb-1">CORE BACKEND</span>
+<h4 class="text-headline-sm font-headline-sm font-bold text-on-surface mb-2">.NET 8 C# Minimal API</h4>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-4">
+          Yüksek tip güvenliği, sıfır overhead bellek yönetimi ve sistem kaynaklarını asgari seviyede tüketen senkronizasyon yeteneği.
+        </p>
+<span class="inline-block px-2 py-0.5 bg-secondary-fixed/30 text-secondary font-mono-data-sm rounded">&lt;15MB RAM Tüketimi</span>
+</div>
+<div class="p-5 bg-surface-container-lowest hairline-all rounded-xl">
+<span class="text-label-caps font-label-caps text-tertiary block mb-1">TRANSACTIONAL DB</span>
+<h4 class="text-headline-sm font-headline-sm font-bold text-on-surface mb-2">PostgreSQL 16</h4>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-4">
+          ACID uyumluluğu ile portföy alış/satış girdilerinin bütünlüğünü garantiye alan değişmez finansal defter çekirdeği.
+        </p>
+<span class="inline-block px-2 py-0.5 bg-surface-container-low text-tertiary font-mono-data-sm rounded">WAL Koruma Katmanı</span>
+</div>
+</div>
+<!-- Nginx Config Deep Dive & proxy_pass Table -->
+<div class="bg-surface-container-lowest hairline-all rounded-xl p-6 shadow-sm space-y-6">
+<div class="flex items-center justify-between pb-3 hairline-b">
+<div>
+<h3 class="text-headline-sm font-headline-sm font-bold text-on-surface">nginx.conf Yapılandırması &amp; Rotalama</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Tüm mikro-servis trafiğini izole eden tekil giriş kapısı (Reverse Proxy)</p>
+</div>
+<span class="text-label-caps font-label-caps text-outline bg-surface-container-low px-2.5 py-1 rounded">PORT 80 BINDING</span>
+</div>
+<!-- proxy_pass Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left font-mono-data-sm text-mono-data-sm">
+<thead>
+<tr class="bg-surface-container-low/60 text-outline text-label-caps font-label-caps hairline-b">
+<th class="py-2.5 px-4">ENDPOINT PATTERN</th>
+<th class="py-2.5 px-4">HEDEF CONTAINER (PROXY_PASS)</th>
+<th class="py-2.5 px-4">ÖNBELLEK STRATEJİSİ</th>
+<th class="py-2.5 px-4 text-right">TIMEOUT</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/20">
+<tr class="hover:bg-surface-container-low/30">
+<td class="py-2.5 px-4 font-bold text-primary">/api/market/*</td>
+<td class="py-2.5 px-4 text-on-surface">http://market-service:5000</td>
+<td class="py-2.5 px-4 text-secondary">Redis Distributed TTL 300s</td>
+<td class="py-2.5 px-4 text-right text-outline">5000ms</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30">
+<td class="py-2.5 px-4 font-bold text-primary">/api/portfolio/*</td>
+<td class="py-2.5 px-4 text-on-surface">http://portfolio-service:5001</td>
+<td class="py-2.5 px-4 text-outline">No-Cache (Strict ACID DB)</td>
+<td class="py-2.5 px-4 text-right text-outline">3000ms</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30">
+<td class="py-2.5 px-4 font-bold text-primary">/* (Static SPA)</td>
+<td class="py-2.5 px-4 text-on-surface">/usr/share/nginx/html</td>
+<td class="py-2.5 px-4 text-outline">Static Immutable ETag</td>
+<td class="py-2.5 px-4 text-right text-outline">500ms</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- Section 04: Bilinçli Ödünler (Intentional Trade-offs) -->
+<section class="py-16 bg-[#ffffff] hairline-t hairline-b" id="tradeoffs">
+<div class="max-w-7xl mx-auto px-4 lg:px-8 space-y-10">
+<div class="flex items-center justify-between pb-4 hairline-b">
+<div>
+<span class="text-label-caps font-label-caps text-secondary font-bold tracking-wider">BÖLÜM 04</span>
+<h2 class="text-headline-lg font-headline-lg text-on-surface font-bold">Bilinçli Ödünler (Architectural Trade-offs)</h2>
+</div>
+<span class="text-label-caps font-label-caps text-outline hidden sm:block">PRAGMATİK KARARLAR</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Trade-off 1 -->
+<div class="p-5 bg-surface-container-lowest hairline-all rounded-xl space-y-2 border-l-4 border-l-primary">
+<div class="flex items-center justify-between">
+<h4 class="text-headline-sm font-headline-sm font-bold text-on-surface">Postgres'te Fiyat Tutulmuyor</h4>
+<span class="text-label-caps font-label-caps px-2 py-0.5 bg-surface-container-low text-primary rounded">VERİ TABANI</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+            Hisse senedi ve kur verileri PostgreSQL tablolarına yazılmaz. Fiyatlar volatil ve geçicidir; bu veriler sadece Redis'te 5 dakika yaşar. Disk I/O tükenmez, veritabanı şişmez.
+          </p>
+</div>
+<!-- Trade-off 2 -->
+<div class="p-5 bg-surface-container-lowest hairline-all rounded-xl space-y-2 border-l-4 border-l-secondary">
+<div class="flex items-center justify-between">
+<h4 class="text-headline-sm font-headline-sm font-bold text-on-surface">BIST 30 Client-Side Filtreleniyor</h4>
+<span class="text-label-caps font-label-caps px-2 py-0.5 bg-secondary-fixed/40 text-secondary rounded">İSTEMCİ PERFORMANSI</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+            30 hisseden oluşan liste için backend'e her tuş vuruşunda arama isteği göndermek israftır. Liste tarayıcı hafızasında tutulur; arama mikrosaniyede sıfır ağ maliyetiyle biter.
+          </p>
+</div>
+<!-- Trade-off 3 -->
+<div class="p-5 bg-surface-container-lowest hairline-all rounded-xl space-y-2 border-l-4 border-l-error">
+<div class="flex items-center justify-between">
+<h4 class="text-headline-sm font-headline-sm font-bold text-on-surface">Elde Olmayan Veri Uydurulmuyor</h4>
+<span class="text-label-caps font-label-caps px-2 py-0.5 bg-error-container text-error rounded">TUTARLILIK</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+            Bir sağlayıcı yanıt vermezse varsayılan veya tahmin edilen sahte değerler basılmaz. UI net bir "Sağlayıcı Verisi Yok" uyarısıyla dürüst kalır.
+          </p>
+</div>
+<!-- Trade-off 4 -->
+<div class="p-5 bg-surface-container-lowest hairline-all rounded-xl space-y-2 border-l-4 border-l-tertiary">
+<div class="flex items-center justify-between">
+<h4 class="text-headline-sm font-headline-sm font-bold text-on-surface">Lightweight Charts Tercihi</h4>
+<span class="text-label-caps font-label-caps px-2 py-0.5 bg-surface-container-low text-tertiary rounded">GRAFİK MOTORU</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+            Ağır Chart.js ya da D3 kütüphaneleri yerine TradingView'ın Lightweight Charts kütüphanesi seçildi. Saf Canvas render'ı ile 60fps akıcılık korunur.
+          </p>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 05: Manifesto & Action Card -->
+<section class="py-20 px-4 lg:px-8 max-w-5xl mx-auto">
+<div class="bg-surface-container-lowest hairline-all rounded-2xl p-8 md:p-12 shadow-sm relative overflow-hidden text-center space-y-6">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary-fixed/30 text-secondary border border-secondary/20">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="text-label-caps font-label-caps font-semibold">GELİŞTİRİCİ NOTU // AÇIK KAYNAK</span>
+</div>
+<h2 class="text-headline-lg md:text-display-lg font-headline-lg md:font-display-lg font-bold text-on-surface max-w-2xl mx-auto leading-tight">
+        "Bitmiş bir ürün değil, süren bir defter."
+      </h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
+        Bu sistem, finansal verilerimi karmaşık arayüzlerden kurtarıp doğrudan saf bir mühendislik mimarisiyle izlemek için doğdu. Mimariyi inceleyebilir veya kendi sunucunuzda ayağa kaldırabilirsiniz.
+      </p>
+<div class="pt-4 flex flex-wrap items-center justify-center gap-4">
+<a class="px-6 py-3 bg-secondary text-on-secondary rounded-lg font-body-md text-body-md font-semibold hover:bg-secondary/90 transition-all shadow-sm flex items-center gap-2" href="#simulator">
+<span class="material-symbols-outlined text-base" data-icon="terminal">terminal</span>
+          Terminali Keşfet
+        </a>
+<a class="px-6 py-3 bg-surface-container-lowest text-on-surface hairline-all rounded-lg font-body-md text-body-md font-medium hover:bg-surface-container-low transition-colors shadow-sm flex items-center gap-2" href="#docs">
+<span class="material-symbols-outlined text-base" data-icon="menu_book">menu_book</span>
+          Mimari Dokümantasyon
+        </a>
+</div>
+</div>
+</section>
+<!-- Technical Footer (Terminal Layout) -->
+<footer class="bg-surface-container-lowest hairline-t py-12 px-4 lg:px-8" id="docs">
+<div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-10 text-body-sm font-body-sm">
+<div class="space-y-3">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-secondary"></span>
+<span class="text-headline-sm font-headline-sm font-bold text-primary">ASSAY // TERMINAL</span>
+</div>
+<p class="text-on-surface-variant text-body-sm leading-relaxed">
+          Daylight-optimized, yüksek veri yoğunluklu kişisel yatırım kayıt defteri ve mühendislik platformu.
+        </p>
+<span class="text-label-caps font-label-caps text-outline block">STABLE CLUSTER NY4 // 2025</span>
+</div>
+<div class="space-y-2">
+<span class="text-label-caps font-label-caps text-on-surface font-semibold block mb-2">NAVİGASYON</span>
+<a class="block text-on-surface-variant hover:text-primary transition-colors" href="#features">Ne Yapıyor</a>
+<a class="block text-on-surface-variant hover:text-primary transition-colors" href="#stream">İstek Akışı</a>
+<a class="block text-on-surface-variant hover:text-primary transition-colors" href="#architecture">Entegrasyonlar</a>
+<a class="block text-on-surface-variant hover:text-primary transition-colors" href="#tradeoffs">Bilinçli Ödünler</a>
+</div>
+<div class="space-y-2">
+<span class="text-label-caps font-label-caps text-on-surface font-semibold block mb-2">VERİ SAĞLAYICILAR</span>
+<span class="block text-on-surface-variant">Twelve Data API (BIST Gecikmesiz)</span>
+<span class="block text-on-surface-variant">Yahoo Finance (Küresel Emtia &amp; FX)</span>
+<span class="block text-on-surface-variant">TCMB EVDS XML Servisleri</span>
+<span class="block text-on-surface-variant">Redis In-Memory Key-Value</span>
+</div>
+<div class="space-y-2">
+<span class="text-label-caps font-label-caps text-on-surface font-semibold block mb-2">SİSTEM DURUMU</span>
+<div class="flex items-center gap-2 text-secondary font-mono-data-sm">
+<span class="w-2 h-2 rounded-full bg-secondary animate-ping"></span>
+          Tüm Konteynerler Aktif
+        </div>
+<span class="block text-mono-data-sm text-outline">HTTP 200 Gateway OK</span>
+<span class="block text-mono-data-sm text-outline">Ortalama Yanıt: 24ms</span>
+</div>
+</div>
+<div class="max-w-7xl mx-auto pt-6 hairline-t flex flex-col sm:flex-row items-center justify-between gap-4 text-mono-data-sm text-mono-data-sm text-outline">
+<div>
+        ASSAY // PRECISION RUNTIME ENGINE — TÜM HAKLARI AÇIKTIR.
+      </div>
+<div class="flex items-center gap-4">
+<span>LIGHT LUXE DAYLIGHT MODE</span>
+<span>LATENCY: 0.8MS</span>
+</div>
+</div>
+</footer>
+<!-- Micro-interaction script for Simulator -->
+<script>
+    function simulateAsset(name, type, latency, cache, source, price) {
+      // Button states
+      document.querySelectorAll('.sim-btn').forEach(btn => {
+        btn.classList.remove('border-2', 'border-primary', 'bg-surface-container-low');
+        btn.classList.add('hairline-all', 'bg-surface-container-lowest');
+      });
+
+      const activeBtn = event.currentTarget;
+      activeBtn.classList.add('border-2', 'border-primary', 'bg-surface-container-low');
+      activeBtn.classList.remove('hairline-all', 'bg-surface-container-lowest');
+
+      // Update readouts
+      document.getElementById('sim-source').textContent = source;
+      document.getElementById('sim-latency').textContent = latency;
+      document.getElementById('sim-price').textContent = price;
+
+      const badge = document.getElementById('sim-badge');
+      badge.textContent = cache;
+      if (cache.includes('HIT')) {
+        badge.className = 'ml-1.5 px-2 py-0.5 rounded text-label-caps font-label-caps bg-secondary/10 text-secondary border border-secondary/30 font-semibold';
+      } else if (cache.includes('POPULATED')) {
+        badge.className = 'ml-1.5 px-2 py-0.5 rounded text-label-caps font-label-caps bg-primary/10 text-primary border border-primary/30 font-semibold';
+      } else {
+        badge.className = 'ml-1.5 px-2 py-0.5 rounded text-label-caps font-label-caps bg-error-container text-error border border-error/20 font-semibold';
+      }
+    }
+  </script>
+</body></html>

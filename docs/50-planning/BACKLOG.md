@@ -4,6 +4,18 @@ Sonraya bırakılan işler. Her madde: sorun, neden önemli, seçenekler, öneri
 
 ---
 
+## Prod deploy: durum şeridi için ortam değişkenleri
+
+*Eklendi: 2026-10-31 · Bağlam: Piyasa ekranı / durum şeridi*
+
+**Durum.** `/api/system/status` ortamı ve bölgeyi `DEPLOY_ENV` / `DEPLOY_REGION` env'lerinden okur (`docker-compose.yml`, portfolio-service). Local'de `local` ve boş gelir. Sürüm `APP_VERSION=${IMAGE_TAG}` — prod'da zaten commit SHA, ek iş yok.
+
+**Yapılacak.** `deploy/scripts/deploy.sh` compose'u çalıştırmadan önce `DEPLOY_ENV=prod` ve `DEPLOY_REGION=$AWS_REGION` export etsin. Yapılmazsa prod şeridi "local" der (yanlış ama zararsız). Pipeline işi olduğu için `PIPELINE-SECURITY.md` okunarak, öğrenme modunda adım adım.
+
+**Not — seans tatilleri.** BIST açık/kapalı Yahoo'nun `currentTradingPeriod` alanından türetiliyor; hafta sonunu doğru yakaladığı görüldü (2026-10-31). Resmî tatil gününde nasıl davrandığı henüz doğrulanmadı — ilk tatilde kontrol edilmeli, yanlışsa tatil takvimi eklenir.
+
+---
+
 ## Kayıtta hesap, e-posta kodu girilmeden oluşuyor
 
 *Eklendi: 2026-10-04 · Bağlam: OTP/2FA işi (`feat/otp-2fa`)*

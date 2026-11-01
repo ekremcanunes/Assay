@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Giriş Yap — ASSAY Web Terminal</title>
+<!-- Google Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            obsidian: {
+              950: '#06090e',
+              900: '#0a0e17',
+              850: '#0f1422',
+              800: '#151c2e',
+              700: '#1e293b',
+            },
+            terminal: {
+              emerald: '#10b981',
+              emeraldGlow: '#059669',
+              crimson: '#ef4444',
+              accent: '#38bdf8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Styles -->
+<style data-purpose="background-and-effects">
+    body {
+      background-color: #0a0e17;
+      color: #f1f5f9;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+    
+    /* Technical Micro-Grid Pattern */
+    .bg-tech-grid {
+      background-size: 32px 32px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    }
+
+    /* Ambient atmospheric glow */
+    .ambient-glow-emerald {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
+      filter: blur(60px);
+      pointer-events: none;
+    }
+
+    .ambient-glow-cobalt {
+      position: absolute;
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.06) 0%, transparent 70%);
+      filter: blur(80px);
+      pointer-events: none;
+    }
+
+    /* Glassmorphism styling */
+    .glass-card {
+      background: rgba(15, 20, 34, 0.72);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    /* Subtle Candlestick Animations */
+    @keyframes subtlePulse {
+      0%, 100% { opacity: 0.95; }
+      50% { opacity: 0.75; }
+    }
+    .candlestick-glow {
+      filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.25));
+    }
+  </style>
+<!-- END: Custom Styles -->
+</head>
+<body class="relative min-h-screen bg-obsidian-900 bg-tech-grid flex flex-col justify-between selection:bg-terminal-emerald selection:text-black">
+<!-- Ambient Light Orbs -->
+<div class="ambient-glow-emerald top-[-100px] right-[10%]"></div>
+<div class="ambient-glow-cobalt bottom-[-150px] left-[5%]"></div>
+<!-- BEGIN: Top Bar Navigation -->
+<header class="relative z-20 w-full px-6 py-4 flex items-center justify-between border-b border-white/5 bg-obsidian-950/40 backdrop-blur-md">
+<!-- Brand Title & Tagline -->
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-700 flex items-center justify-center font-mono font-bold text-black text-sm shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+        A
+      </div>
+<div class="flex items-baseline space-x-2">
+<span class="font-mono tracking-widest font-semibold text-sm text-white">ASSAY</span>
+<span class="text-xs font-mono text-emerald-400/80 font-medium">// WEB TERMINAL</span>
+</div>
+</div>
+<!-- System Telemetry & Status Badges -->
+<div class="flex items-center space-x-3">
+<div class="hidden sm:flex items-center space-x-2 bg-obsidian-850 border border-white/10 px-2.5 py-1 rounded-full text-xs font-mono">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+</span>
+<span class="text-gray-300">NODE 01-NY4</span>
+<span class="text-white/20">•</span>
+<span class="text-emerald-400 font-semibold">0.8ms</span>
+<span class="text-emerald-400/60 uppercase text-[10px] tracking-wider">LIVE</span>
+</div>
+<div class="bg-white/5 border border-white/10 text-gray-400 text-xs px-2.5 py-1 rounded-full font-mono font-medium">
+        v4.2 PRO
+      </div>
+</div>
+</header>
+<!-- END: Top Bar Navigation -->
+<!-- BEGIN: Main Terminal Viewport -->
+<main class="relative z-10 flex-1 flex items-center justify-center lg:justify-between px-6 lg:px-16 xl:px-24 py-8 max-w-[1720px] mx-auto w-full">
+<!-- BEGIN: Left Glassmorphic Login Card -->
+<div class="w-full max-w-[440px] z-20" data-purpose="login-container">
+<div class="glass-card rounded-2xl p-7 sm:p-9 relative overflow-hidden transition-all duration-300">
+<!-- Left vertical accent strip reminiscent of reference -->
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-emerald-500 via-teal-500 to-transparent"></div>
+<!-- Card Header & Monogram -->
+<div class="mb-7">
+<div class="w-10 h-10 rounded-xl bg-obsidian-800 border border-emerald-500/30 flex items-center justify-center font-mono font-bold text-lg text-emerald-400 shadow-inner mb-4">
+            A
+          </div>
+<h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2">
+            Giriş Yap
+          </h1>
+<p class="text-xs sm:text-sm text-gray-400 mt-1.5 font-normal leading-relaxed">
+            Assay — Hesabınıza giriş yapın / Portföy ve terminal erişimi
+          </p>
+</div>
+<!-- Form Element -->
+<form class="space-y-4" data-purpose="auth-form" onsubmit="event.preventDefault();">
+<!-- E-posta Input -->
+<div>
+<label class="block text-[11px] font-mono tracking-wider text-gray-400 uppercase font-semibold mb-1.5" for="email">
+              E-POSTA
+            </label>
+<div class="relative">
+<input class="w-full bg-obsidian-950/80 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/80 focus:border-emerald-500/80 transition-all font-mono" id="email" name="email" placeholder="ornek@assay.finance" required="" type="email"/>
+</div>
+</div>
+<!-- Şifre Input -->
+<div>
+<div class="flex items-center justify-between mb-1.5">
+<label class="block text-[11px] font-mono tracking-wider text-gray-400 uppercase font-semibold" for="password">
+                ŞİFRE
+              </label>
+<a class="text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors" href="#">
+                Şifremi unuttum?
+              </a>
+</div>
+<div class="relative">
+<input class="w-full bg-obsidian-950/80 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/80 focus:border-emerald-500/80 transition-all font-mono pr-16" id="password" name="password" placeholder="••••••••••••" required="" type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-gray-400 hover:text-gray-200 transition-colors px-1 py-0.5" data-purpose="password-visibility-toggle" id="togglePassword" type="button">
+                Göster
+              </button>
+</div>
+</div>
+<!-- Remember Me Checkbox -->
+<div class="flex items-center pt-1 pb-1">
+<input class="w-4 h-4 rounded bg-obsidian-950 border-white/20 text-emerald-500 focus:ring-emerald-500/40 focus:ring-offset-0 cursor-pointer" id="remember" type="checkbox"/>
+<label class="ml-2 text-xs text-gray-300 select-none cursor-pointer" for="remember">
+              Beni hatırla <span class="text-gray-500 font-mono">(30 gün)</span>
+</label>
+</div>
+<!-- Primary Submit Button -->
+<button class="w-full mt-2 relative group overflow-hidden bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-obsidian-950 font-semibold py-3 px-4 rounded-xl text-sm transition-all duration-200 shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_4px_28px_rgba(16,185,129,0.5)] active:scale-[0.99] flex items-center justify-center gap-2 font-mono" type="submit">
+<span>Giriş Yap</span>
+<svg class="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+</button>
+</form>
+<!-- Divider with Text -->
+<div class="relative my-6 text-center">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-white/10"></div>
+</div>
+<span class="relative bg-obsidian-850 px-3 text-[11px] font-mono uppercase text-gray-500 tracking-wider">
+            VEYA
+          </span>
+</div>
+<!-- Quick Access / Hardware Key Logins -->
+<div class="space-y-2 font-mono">
+<button class="w-full bg-obsidian-950/60 hover:bg-obsidian-800/80 border border-white/10 hover:border-white/20 text-gray-300 hover:text-white py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all" type="button">
+<svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Kurumsal Anahtar (API Key) ile Giriş</span>
+</button>
+<button class="w-full bg-obsidian-950/60 hover:bg-obsidian-800/80 border border-white/10 hover:border-white/20 text-gray-300 hover:text-white py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all" type="button">
+<svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Donanım Anahtarı (Passkey)</span>
+</button>
+</div>
+<!-- Card Footer Links -->
+<div class="mt-6 pt-5 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-400 gap-2">
+<span>
+            Hesabınız yok mu? 
+            <a class="text-white hover:text-emerald-400 font-semibold underline underline-offset-4 decoration-emerald-500/40 ml-1 transition-colors" href="#">
+              Hesap oluşturun
+            </a>
+</span>
+<a class="text-gray-500 hover:text-gray-300 flex items-center gap-1 transition-colors" href="#">
+<span>← Assay nedir?</span>
+</a>
+</div>
+</div>
+</div>
+<!-- END: Left Glassmorphic Login Card -->
+<!-- BEGIN: Candlestick Quant Chart Background/Illustration -->
+<div class="hidden lg:block relative flex-1 h-[680px] max-w-[950px] ml-12 candlestick-glow" data-purpose="candlestick-chart-visualization">
+<!-- Chart Decorative Metric Chips -->
+<div class="absolute top-2 right-8 flex items-center space-x-4 text-xs font-mono z-10 bg-obsidian-950/70 border border-white/10 px-4 py-2 rounded-xl backdrop-blur-md">
+<div class="flex items-center space-x-1.5">
+<span class="text-gray-500">PARITE:</span>
+<span class="text-white font-medium">ASSAY / USD</span>
+</div>
+<div class="h-3 w-px bg-white/10"></div>
+<div class="flex items-center space-x-1.5">
+<span class="text-gray-500">24S DEĞİŞİM:</span>
+<span class="text-emerald-400 font-semibold">+18.42%</span>
+</div>
+<div class="h-3 w-px bg-white/10"></div>
+<div class="flex items-center space-x-1.5">
+<span class="text-gray-500">EMA(21):</span>
+<span class="text-rose-400 font-medium">4,281.90</span>
+</div>
+</div>
+<!-- High Precision SVG Candlestick Trend -->
+<svg class="w-full h-full" fill="none" viewbox="0 0 950 680" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<!-- Candlestick Glow Filters -->
+<filter height="140%" id="bullish-glow" width="140%" x="-20%" y="-20%">
+<fegaussianblur result="blur" stddeviation="3"></fegaussianblur>
+<fecomposite in="SourceGraphic" in2="blur" operator="over"></fecomposite>
+</filter>
+<!-- Gradient for Volume Bars -->
+<lineargradient id="volGreen" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#10b981" stop-opacity="0.3"></stop>
+<stop offset="100%" stop-color="#10b981" stop-opacity="0.02"></stop>
+</lineargradient>
+<lineargradient id="volRed" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#ef4444" stop-opacity="0.25"></stop>
+<stop offset="100%" stop-color="#ef4444" stop-opacity="0.02"></stop>
+</lineargradient>
+</defs>
+<!-- Technical Horizontal Grid lines -->
+<g stroke="rgba(255,255,255,0.04)" stroke-width="1">
+<line stroke-dasharray="4 4" x1="20" x2="930" y1="120" y2="120"></line>
+<line stroke-dasharray="4 4" x1="20" x2="930" y1="220" y2="220"></line>
+<line stroke-dasharray="4 4" x1="20" x2="930" y1="320" y2="320"></line>
+<line stroke-dasharray="4 4" x1="20" x2="930" y1="420" y2="420"></line>
+<line stroke-dasharray="4 4" x1="20" x2="930" y1="520" y2="520"></line>
+</g>
+<!-- Technical Vertical Time Grid lines -->
+<g stroke="rgba(255,255,255,0.03)" stroke-width="1">
+<line x1="150" x2="150" y1="60" y2="600"></line>
+<line x1="320" x2="320" y1="60" y2="600"></line>
+<line x1="490" x2="490" y1="60" y2="600"></line>
+<line x1="660" x2="660" y1="60" y2="600"></line>
+<line x1="830" x2="830" y1="60" y2="600"></line>
+</g>
+<!-- Lower Volume Bars -->
+<g>
+<rect fill="url(#volRed)" height="25" rx="1" width="14" x="55" y="580"></rect>
+<rect fill="url(#volRed)" height="40" rx="1" width="14" x="90" y="565"></rect>
+<rect fill="url(#volGreen)" height="20" rx="1" width="14" x="125" y="585"></rect>
+<rect fill="url(#volRed)" height="30" rx="1" width="14" x="160" y="575"></rect>
+<rect fill="url(#volGreen)" height="35" rx="1" width="14" x="195" y="570"></rect>
+<rect fill="url(#volGreen)" height="25" rx="1" width="14" x="230" y="580"></rect>
+<rect fill="url(#volRed)" height="15" rx="1" width="14" x="265" y="590"></rect>
+<rect fill="url(#volRed)" height="30" rx="1" width="14" x="300" y="575"></rect>
+<rect fill="url(#volRed)" height="45" rx="1" width="14" x="335" y="560"></rect>
+<rect fill="url(#volGreen)" height="25" rx="1" width="14" x="370" y="580"></rect>
+<rect fill="url(#volGreen)" height="55" rx="1" width="14" x="405" y="550"></rect>
+<rect fill="url(#volGreen)" height="40" rx="1" width="14" x="440" y="565"></rect>
+<rect fill="url(#volGreen)" height="75" rx="1" width="14" x="475" y="530"></rect>
+<rect fill="url(#volGreen)" height="60" rx="1" width="14" x="510" y="545"></rect>
+<rect fill="url(#volGreen)" height="95" rx="1" width="14" x="545" y="510"></rect>
+<rect fill="url(#volGreen)" height="105" rx="1" width="14" x="580" y="500"></rect>
+<rect fill="url(#volGreen)" height="120" rx="1" width="14" x="615" y="485"></rect>
+<rect fill="url(#volRed)" height="90" rx="1" width="14" x="650" y="515"></rect>
+<rect fill="url(#volRed)" height="70" rx="1" width="14" x="685" y="535"></rect>
+<rect fill="url(#volRed)" height="65" rx="1" width="14" x="720" y="540"></rect>
+<rect fill="url(#volGreen)" height="115" rx="1" width="14" x="755" y="490"></rect>
+<rect fill="url(#volGreen)" height="130" rx="1" width="14" x="790" y="475"></rect>
+<rect fill="url(#volGreen)" height="145" rx="1" width="14" x="825" y="460"></rect>
+<rect fill="url(#volGreen)" height="135" rx="1" width="14" x="860" y="470"></rect>
+<rect fill="url(#volRed)" height="85" rx="1" width="14" x="895" y="520"></rect>
+</g>
+<!-- Candlesticks Sequence (Accurately re-modeled with radiant neon aesthetics) -->
+<g stroke-linecap="round">
+<!-- 1: Red Candle (Bottom Left) -->
+<line stroke="#ef4444" stroke-width="1.8" x1="62" x2="62" y1="420" y2="475"></line>
+<rect fill="#dc2626" height="35" rx="1.5" width="16" x="54" y="435"></rect>
+<!-- 2: Red Candle -->
+<line stroke="#ef4444" stroke-width="1.8" x1="97" x2="97" y1="440" y2="505"></line>
+<rect fill="#dc2626" height="30" rx="1.5" width="14" x="90" y="460"></rect>
+<!-- 3: Small Green -->
+<line stroke="#10b981" stroke-width="1.8" x1="132" x2="132" y1="465" y2="505"></line>
+<rect fill="#10b981" height="15" rx="1.5" width="14" x="125" y="472"></rect>
+<!-- 4: Red Candle -->
+<line stroke="#ef4444" stroke-width="1.8" x1="167" x2="167" y1="470" y2="515"></line>
+<rect fill="#ef4444" height="25" rx="1.5" width="14" x="160" y="480"></rect>
+<!-- 5: Green Candle -->
+<line stroke="#10b981" stroke-width="1.8" x1="202" x2="202" y1="460" y2="515"></line>
+<rect fill="#10b981" height="30" rx="1.5" width="14" x="195" y="470"></rect>
+<!-- 6: Small Green Doji/Body -->
+<line stroke="#10b981" stroke-width="1.8" x1="237" x2="237" y1="465" y2="500"></line>
+<rect fill="#10b981" height="15" rx="1.5" width="14" x="230" y="475"></rect>
+<!-- 7: Neutral/Red Body -->
+<line stroke="#ef4444" stroke-width="1.8" x1="272" x2="272" y1="465" y2="510"></line>
+<rect fill="#ef4444" height="18" rx="1.5" width="14" x="265" y="478"></rect>
+<!-- 8: Red Drop -->
+<line stroke="#ef4444" stroke-width="1.8" x1="307" x2="307" y1="475" y2="530"></line>
+<rect fill="#ef4444" height="22" rx="1.5" width="14" x="300" y="485"></rect>
+<!-- 9: Deep Red Bottom (Dip) -->
+<line stroke="#ef4444" stroke-width="1.8" x1="342" x2="342" y1="490" y2="550"></line>
+<rect fill="#ef4444" height="30" rx="1.5" width="14" x="335" y="500"></rect>
+<!-- 10: Pivot Green -->
+<line stroke="#10b981" stroke-width="1.8" x1="377" x2="377" y1="475" y2="540"></line>
+<rect fill="#10b981" height="15" rx="1.5" width="14" x="370" y="520"></rect>
+<!-- 11: Strong Green Rebound -->
+<line stroke="#10b981" stroke-width="1.8" x1="412" x2="412" y1="465" y2="535"></line>
+<rect fill="#10b981" filter="url(#bullish-glow)" height="40" rx="1.5" width="16" x="404" y="480"></rect>
+<!-- 12: Retrace Red -->
+<line stroke="#ef4444" stroke-width="1.8" x1="447" x2="447" y1="460" y2="530"></line>
+<rect fill="#ef4444" height="30" rx="1.5" width="14" x="440" y="480"></rect>
+<!-- 13: Green Impulse -->
+<line stroke="#10b981" stroke-width="1.8" x1="482" x2="482" y1="450" y2="515"></line>
+<rect fill="#10b981" filter="url(#bullish-glow)" height="38" rx="1.5" width="14" x="475" y="468"></rect>
+<!-- 14: Bullish Expansion 1 -->
+<line stroke="#10b981" stroke-width="1.8" x1="517" x2="517" y1="410" y2="495"></line>
+<rect fill="#10b981" filter="url(#bullish-glow)" height="45" rx="1.5" width="14" x="510" y="425"></rect>
+<!-- 15: Minor Red Pause -->
+<line stroke="#ef4444" stroke-width="1.8" x1="552" x2="552" y1="415" y2="455"></line>
+<rect fill="#ef4444" height="15" rx="1.5" width="14" x="545" y="422"></rect>
+<!-- 16: Massive Green Candle -->
+<line stroke="#10b981" stroke-width="1.8" x1="587" x2="587" y1="365" y2="445"></line>
+<rect fill="#10b981" filter="url(#bullish-glow)" height="45" rx="1.5" width="16" x="579" y="380"></rect>
+<!-- 17: Trend Continuation Green -->
+<line stroke="#10b981" stroke-width="1.8" x1="622" x2="622" y1="315" y2="395"></line>
+<rect fill="#10b981" filter="url(#bullish-glow)" height="48" rx="1.5" width="16" x="614" y="330"></rect>
+<!-- 18: Extension Green -->
+<line stroke="#10b981" stroke-width="1.8" x1="657" x2="657" y1="285" y2="365"></line>
+<rect fill="#10b981" height="26" rx="1.5" width="14" x="650" y="300"></rect>
+<!-- 19: High Bullish Push -->
+<line stroke="#10b981" stroke-width="1.8" x1="692" x2="692" y1="240" y2="340"></line>
+<rect fill="#10b981" filter="url(#bullish-glow)" height="40" rx="1.5" width="16" x="684" y="260"></rect>
+<!-- 20: Climax Consolidation Green -->
+<line stroke="#10b981" stroke-width="1.8" x1="727" x2="727" y1="225" y2="310"></line>
+<rect fill="#10b981" filter="url(#bullish-glow)" height="35" rx="1.5" width="16" x="719" y="240"></rect>
+<!-- 21: Red Upper Exhaustion -->
+<line stroke="#ef4444" stroke-width="1.8" x1="762" x2="762" y1="225" y2="310"></line>
+<rect fill="#dc2626" height="30" rx="1.5" width="16" x="754" y="240"></rect>
+<!-- 22: Red Reversal Pullback -->
+<line stroke="#ef4444" stroke-width="1.8" x1="797" x2="797" y1="260" y2="315"></line>
+<rect fill="#dc2626" height="22" rx="1.5" width="14" x="790" y="268"></rect>
+<!-- 23: Doji Rebound -->
+<line stroke="#ef4444" stroke-width="1.8" x1="832" x2="832" y1="265" y2="315"></line>
+<rect fill="#dc2626" height="10" rx="1.5" width="14" x="825" y="278"></rect>
+<!-- 24: Continuation Green Jump -->
+<line stroke="#10b981" stroke-width="1.8" x1="867" x2="867" y1="200" y2="290"></line>
+<rect fill="#10b981" filter="url(#bullish-glow)" height="60" rx="1.5" width="16" x="859" y="220"></rect>
+<!-- 25: All-Time High Bullish Candle -->
+<line stroke="#10b981" stroke-width="1.8" x1="902" x2="902" y1="150" y2="245"></line>
+<rect fill="#10b981" filter="url(#bullish-glow)" height="42" rx="1.5" width="16" x="894" y="170"></rect>
+<!-- 26: Top Pivot Red Candle (Highest Peak) -->
+<line stroke="#ef4444" stroke-width="1.8" x1="937" x2="937" y1="145" y2="230"></line>
+<rect fill="#dc2626" height="25" rx="1.5" width="16" x="929" y="170"></rect>
+</g>
+<!-- Crimson Dotted EMA Exponential Moving Average Line (Matching Reference Exactly) -->
+<path d="M 60 480 
+             C 180 485, 280 500, 350 515 
+             C 420 530, 480 520, 530 480 
+             C 600 420, 640 330, 710 270 
+             C 760 230, 830 280, 880 230 
+             C 910 200, 930 180, 945 190" fill="none" opacity="0.9" stroke="#f43f5e" stroke-dasharray="6 6" stroke-linecap="round" stroke-width="3"></path>
+<!-- Pulsing Indicator Ring on Current Price Node -->
+<circle cx="937" cy="170" fill="#ef4444" r="5"></circle>
+<circle class="animate-ping" cx="937" cy="170" opacity="0.6" r="10" stroke="#ef4444" stroke-width="1.5"></circle>
+</svg>
+<!-- Subtle Floating Quant Data Label on Chart -->
+<div class="absolute bottom-6 left-12 flex items-center space-x-3 text-[11px] font-mono text-gray-400 bg-obsidian-950/80 px-3.5 py-1.5 rounded-lg border border-white/10 backdrop-blur-sm">
+<span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+<span>ALGORİTMİK EMİR AKIŞI: AKTİF</span>
+<span class="text-white/20">|</span>
+<span class="text-emerald-400">LIQUIDITY DEPTH: 99.4%</span>
+</div>
+</div>
+<!-- END: Candlestick Quant Chart Background/Illustration -->
+</main>
+<!-- END: Main Terminal Viewport -->
+<!-- BEGIN: Minimalist Footer -->
+<footer class="relative z-10 w-full px-6 py-4 border-t border-white/5 bg-obsidian-950/60 backdrop-blur-sm text-center sm:text-left flex flex-col sm:flex-row items-center justify-between text-xs text-gray-400 font-mono">
+<div class="flex items-center space-x-4 mb-2 sm:mb-0">
+<span>© 2025 Assay Financial Technologies Inc.</span>
+<span class="hidden md:inline text-white/10">•</span>
+<span class="hidden md:inline">256-bit AES Terminal Şifreleme</span>
+</div>
+<div class="flex items-center space-x-6 text-gray-400">
+<a class="hover:text-emerald-400 transition-colors" href="#">Kullanım Şartları</a>
+<a class="hover:text-emerald-400 transition-colors" href="#">Gizlilik Politikası</a>
+<a class="hover:text-emerald-400 transition-colors" href="#">Sistem Durumu</a>
+</div>
+</footer>
+<!-- END: Minimalist Footer -->
+<!-- BEGIN: Interactive Logic Scripts -->
+<script data-purpose="form-interactions">
+    // Toggle Password Visibility
+    const toggleBtn = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+
+    if (toggleBtn && passwordInput) {
+      toggleBtn.addEventListener('click', () => {
+        const isPassword = passwordInput.getAttribute('type') === 'password';
+        passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+        toggleBtn.textContent = isPassword ? 'Gizle' : 'Göster';
+      });
+    }
+  </script>
+<!-- END: Interactive Logic Scripts -->
+</body></html>

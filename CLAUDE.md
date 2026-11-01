@@ -5,14 +5,15 @@
 > Tüm dokümanlar `docs/` altında, numaralı kategori klasörlerinde durur. Tam indeks ve şema: `docs/README.md`.
 
 - `docs/10-standards/` — bağlayıcı standartlar; ilgili alanda kod yazmadan önce oku:
-  - `DESIGN.md` — **VOLTAJ** tasarım sistemi (üç renk, tip ölçeği, voltaj doz kuralı, bileşen anatomisi, veri dürüstlüğü). Landing, auth ve panel için tek standart. UI değişikliğinden önce oku; ad-hoc renk/tip boyutu ve gölge yasak. Tasarımı değiştirmeden önce canlı referans `/landing`'de dene.
+  - `DESIGN.md` — **Warm Editorial** tasarım sistemi (açık + koyu tema token'ları, tek kobalt aksan, tip ölçeği, köşe/gölge kademeleri, bileşen anatomisi, veri dürüstlüğü). Landing, auth ve panel için tek standart. UI değişikliğinden önce oku; ad-hoc renk/tip boyutu ve token dışı gölge yasak. Canlı referans `/landing`.
   - `DATA-FETCHING.md` — React Query veri çekme kuralları.
   - `PIPELINE-SECURITY.md` — pipeline güvenlik standardı (planlama aşamasında; CI/CD veya güvenlik işine dokunmadan önce oku).
   - `LOGGING.md` — loglama standardı (Serilog, stdout+JSON, seviye politikası, hassas veri yasağı, docker rotasyonu, AWS maliyet kontrolü). Log yazmadan veya log altyapısına dokunmadan önce oku.
 - `docs/20-modules/` — modül tasarımları (`GOLD-MODULE.md` — altın modülü).
 - `docs/30-operations/` — operasyon (`COMMANDS.md` — Docker, Redis, Kratos, psql, EF Core, hata ayıklama sırası).
 - `docs/40-learning/` — öğrenme notları (bağlayıcı değil).
-- `docs/50-planning/` — planlama (`BACKLOG.md` — sonraya bırakılan işler ve seçenekleri).
+- `docs/50-planning/` — planlama (`BACKLOG.md` — sonraya bırakılan işler ve seçenekleri; `PLATFORM-ROADMAP.md` — vizyon, ilkeler ve aşama sırası, **yeni iş seçmeden önce oku**).
+- `docs/60-design/` — tasarım girdileri, tek klasör (ad öneki `mobil-` / `web-`): kullanıcının verdiği mockup ve UI aracı çıktıları. Bağlayıcı standart yine `DESIGN.md`.
 - `docs/superpowers/` — geçmiş plan/spec/verification arşivi (tarihsel kayıt; içindeki eski dosya yolları güncel olmayabilir).
 - Yeni doküman → `docs/` altında kategorisine uygun klasöre; `docs/README.md` indeksi de güncellenir. Kök dizine veya servis klasörlerine doküman konmaz.
 

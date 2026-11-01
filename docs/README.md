@@ -11,11 +11,12 @@ Proje dokümanları bu klasörde, numaralı kategori klasörleri altında tutulu
 | `30-operations/` | Operasyon (komutlar, çalıştırma) | Servis ayağa kaldırırken, sorun giderirken |
 | `40-learning/` | Öğrenme notları | Referans; bağlayıcı değildir |
 | `50-planning/` | Planlama (backlog) | Yeni işe başlamadan, ertelenen işleri hatırlamak için |
+| `60-design/` | Tasarım girdileri (mockup, ekran görüntüsü, UI aracı çıktısı) — tek klasör, ad öneki `mobil-` / `web-` | Ekranı kodlamadan önce; bağlayıcı olan yine `10-standards/DESIGN.md` |
 | `superpowers/` | Plan/spec/verification arşivi | Tarihsel kayıt; içindeki eski dosya yolları güncel olmayabilir |
 
 ## Dokümanlar
 
-- [10-standards/DESIGN.md](10-standards/DESIGN.md) — **VOLTAJ** tasarım sistemi: üç renk, 8 basamaklı tip ölçeği, voltaj doz kuralı, bileşen anatomisi, veri dürüstlüğü. Landing + auth + panel için tek standart. **UI değişikliğinden önce zorunlu okuma.** Canlı referans: `/landing`.
+- [10-standards/DESIGN.md](10-standards/DESIGN.md) — **Warm Editorial** tasarım sistemi: açık + koyu token'lar, tek kobalt aksan, 8 basamaklı tip ölçeği, köşe/gölge kademeleri, bileşen anatomisi, veri dürüstlüğü. Landing + auth + panel için tek standart. **UI değişikliğinden önce zorunlu okuma.** Canlı referans: `/landing`.
 - [10-standards/DATA-FETCHING.md](10-standards/DATA-FETCHING.md) — React Query veri çekme kuralları. **Web'de veri çeken kod yazmadan önce zorunlu okuma.**
 - [10-standards/PIPELINE-SECURITY.md](10-standards/PIPELINE-SECURITY.md) — Pipeline güvenlik standardı (planlama): kod hangi analiz istasyonlarından geçer, araç seçimi, GitHub Actions/CodePipeline sorumluluk ayrımı, öncelik sırası.
 - [10-standards/LOGGING.md](10-standards/LOGGING.md) — Loglama standardı: stdout+JSON kuralı, seviye politikası, ne loglanmaz, docker rotasyonu, AWS'ye geçiş adımları. **Log yazan veya log altyapısına dokunan değişikliklerde zorunlu okuma.**
@@ -27,6 +28,7 @@ Proje dokümanları bu klasörde, numaralı kategori klasörleri altında tutulu
 - [40-learning/PROD-PIPELINE-GUNLUGU.md](40-learning/PROD-PIPELINE-GUNLUGU.md) — Prod pipeline günlüğü (2026-09-26/27): Kratos sırları, compose image/build ayrımı, deploy.sh tasarımı, OIDC `sub` olayı, pipeline tetikleme sorunu ve "deploy birimi" kök nedeni.
 - [40-learning/PLAYWRIGHT-LEARNING.md](40-learning/PLAYWRIGHT-LEARNING.md) — Playwright & render notları: projede client/server ayrımı (SSR yok, CSR), Playwright'ın katkısı, Claude uygulaması karşılaştırması, npm/npx, MCP kapsamı.
 - [50-planning/BACKLOG.md](50-planning/BACKLOG.md) — Sonraya bırakılan işler: sorun, seçenekler, öneri (ilk madde: kayıtta hesabın OTP'den önce oluşması).
+- [50-planning/PLATFORM-ROADMAP.md](50-planning/PLATFORM-ROADMAP.md) — Platform yol haritası: vizyon (Assay anlatır, karar vermez), ilkeler (hesap kodda, yorum LLM'de), aşamalar (Assay toparlama → Insight/LLM → bildirim → platform katmanı → yeni bacaklar) ve her aşamanın öğrettiği altyapı. **Yeni iş seçmeden önce oku.**
 - [40-learning/NGINX-LEARNING.md](40-learning/NGINX-LEARNING.md) — Nginx & reverse proxy notları: nginx.conf satır satır, `proxy_pass` sondaki `/` kuralı, Compose DNS, session cookie akışı, rebuild gerekliliği, proxy atlamayı engelleme.
 
 ## Kurallar

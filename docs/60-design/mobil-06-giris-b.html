@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+<html lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>Assay Terminal - Giriş Yap</title>
+<!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            porcelain: {
+              50: '#faf8ff',
+              100: '#f8fafc',
+              200: '#f1f5f9',
+              300: '#e2e8f0',
+            },
+            emerald: {
+              400: '#10b981',
+              500: '#059669',
+              600: '#047857',
+              accent: '#00d688',
+            },
+            ruby: {
+              500: '#f43f5e',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          boxShadow: {
+            'glow-emerald': '0 10px 25px -5px rgba(5, 150, 105, 0.35)',
+            'card-luxe': '0 20px 45px -10px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.03)',
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Styles -->
+<style data-purpose="custom-grid-and-chart">
+    /* Subtle financial grid pattern for light mode */
+    .bg-grid-pattern {
+      background-size: 28px 28px;
+      background-image: 
+        linear-gradient(to right, rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(15, 23, 42, 0.035) 1px, transparent 1px);
+    }
+
+    /* iOS safe areas */
+    .pt-safe {
+      padding-top: max(env(safe-area-inset-top), 16px);
+    }
+    .pb-safe {
+      padding-bottom: max(env(safe-area-inset-bottom), 20px);
+    }
+  </style>
+<style data-purpose="interactive-elements">
+    /* Input focus custom glowing rings */
+    .input-terminal:focus-within {
+      border-color: #059669;
+      box-shadow: 0 0 0 1px #059669, 0 0 16px -3px rgba(5, 150, 105, 0.2);
+    }
+  </style>
+<!-- END: Custom Styles -->
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex justify-center items-center select-none antialiased">
+<!-- BEGIN: Mobile Device Frame Container -->
+<div class="relative w-full max-w-[412px] min-h-screen sm:min-h-[852px] sm:max-h-[880px] bg-porcelain-50 sm:rounded-[44px] overflow-hidden flex flex-col justify-between border-0 sm:border sm:border-slate-200/90 shadow-2xl bg-grid-pattern" data-purpose="mobile-viewport">
+<!-- BEGIN: Atmospheric Candlestick Wave Graphic -->
+<!-- Stylized ambient candlestick & curve chart flowing diagonally in the backdrop -->
+<div class="absolute inset-0 pointer-events-none overflow-hidden z-0 opacity-45" data-purpose="chart-background-glow">
+<svg class="w-full h-full" fill="none" viewbox="0 0 400 800" xmlns="http://www.w3.org/2000/svg">
+<!-- Radial atmosphere glow -->
+<circle cx="280" cy="220" fill="#10b981" fill-opacity="0.1" filter="blur(65px)" r="180"></circle>
+<circle cx="90" cy="540" fill="#f43f5e" fill-opacity="0.06" filter="blur(70px)" r="160"></circle>
+<!-- Candlestick elements replicating desktop flow in daytime tone -->
+<g opacity="0.45" stroke-linecap="round">
+<!-- Bearish group low left -->
+<line stroke="#f43f5e" stroke-width="1.2" x1="42" x2="42" y1="120" y2="165"></line>
+<rect fill="#f43f5e" height="22" rx="1" width="6" x="39" y="132"></rect>
+<line stroke="#f43f5e" stroke-width="1.2" x1="78" x2="78" y1="150" y2="198"></line>
+<rect fill="#f43f5e" height="26" rx="1" width="6" x="75" y="160"></rect>
+<line stroke="#059669" stroke-width="1.2" x1="114" x2="114" y1="170" y2="212"></line>
+<rect fill="#059669" height="18" rx="1" width="6" x="111" y="178"></rect>
+<!-- Turning point & ascending run -->
+<line stroke="#059669" stroke-width="1.2" x1="150" x2="150" y1="155" y2="202"></line>
+<rect fill="#059669" height="28" rx="1" width="6" x="147" y="162"></rect>
+<line stroke="#059669" stroke-width="1.2" x1="186" x2="186" y1="130" y2="185"></line>
+<rect fill="#059669" height="32" rx="1" width="6" x="183" y="140"></rect>
+<line stroke="#059669" stroke-width="1.2" x1="222" x2="222" y1="110" y2="160"></line>
+<rect fill="#059669" height="30" rx="1" width="6" x="219" y="118"></rect>
+<line stroke="#059669" stroke-width="1.2" x1="258" x2="258" y1="80" y2="135"></line>
+<rect fill="#059669" height="34" rx="1" width="6" x="255" y="90"></rect>
+<line stroke="#f43f5e" stroke-width="1.2" x1="294" x2="294" y1="70" y2="122"></line>
+<rect fill="#f43f5e" height="24" rx="1" width="6" x="291" y="78"></rect>
+<line stroke="#059669" stroke-width="1.2" x1="330" x2="330" y1="52" y2="108"></line>
+<rect fill="#059669" height="32" rx="1" width="6" x="327" y="60"></rect>
+<line stroke="#059669" stroke-width="1.2" x1="366" x2="366" y1="38" y2="92"></line>
+<rect fill="#059669" height="28" rx="1" width="6" x="363" y="46"></rect>
+</g>
+<!-- Dashed moving average curve -->
+<path d="M 20 185 C 90 200, 130 195, 175 160 C 220 120, 270 95, 320 85 C 355 78, 385 62, 400 50" opacity="0.45" stroke="#e11d48" stroke-dasharray="5 5" stroke-width="2.2"></path>
+</svg>
+</div>
+<!-- END: Atmospheric Candlestick Wave Graphic -->
+<!-- BEGIN: Top Bar & Telemetry Indicator -->
+<header class="relative z-10 pt-safe px-6 pb-2">
+<!-- iOS Status notch spacer -->
+<div class="flex items-center justify-between py-2 text-xs font-mono text-slate-500">
+<!-- Logo and terminal name -->
+<div class="flex items-center space-x-2">
+<div class="w-6 h-6 rounded-md bg-emerald-50 border border-emerald-300 flex items-center justify-center shadow-xs">
+<span class="text-xs font-bold text-emerald-600">A</span>
+</div>
+<span class="tracking-widest text-[11px] font-semibold text-slate-800">ASSAY <span class="text-slate-400">//</span> TERMINAL</span>
+</div>
+<!-- Latency / Live ticker status -->
+<div class="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-white/90 border border-emerald-200/80 shadow-xs backdrop-blur-md">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+</span>
+<span class="text-[10px] tracking-wide text-emerald-700 font-semibold">0.8ms CANLI</span>
+</div>
+</div>
+</header>
+<!-- END: Top Bar & Telemetry Indicator -->
+<!-- BEGIN: Main Login Section -->
+<main class="relative z-10 px-6 py-4 flex-1 flex flex-col justify-center">
+<!-- Luxe Daylight Card Wrapper -->
+<div class="w-full bg-white/95 backdrop-blur-xl border border-slate-200/90 rounded-3xl p-6 sm:p-7 shadow-card-luxe relative" data-purpose="login-card">
+<!-- Subtle Top Edge Highlight -->
+<div class="absolute top-0 inset-x-8 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/35 to-transparent"></div>
+<!-- Brand Icon & Welcome Title -->
+<div class="mb-6">
+<div class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-50/80 border border-emerald-200/70 mb-4 shadow-sm">
+<svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M3 3v18h18"></path>
+<path d="m19 9-5 5-4-4-3 3"></path>
+</svg>
+</div>
+<h1 class="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+            Giriş Yap
+          </h1>
+<p class="text-xs text-slate-500 mt-1 font-normal">
+            Portföyüne ve kurumsal piyasa verilerine eriş
+          </p>
+</div>
+<!-- Form Elements -->
+<form class="space-y-4" onsubmit="event.preventDefault();">
+<!-- Email Input Group -->
+<div class="space-y-1.5">
+<label class="block text-[11px] font-mono font-medium text-slate-600 tracking-wider" for="email">
+              E-POSTA
+            </label>
+<div class="input-terminal relative rounded-xl border border-slate-200 bg-slate-50/70 transition-all duration-200">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+<svg class="h-4 w-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.206" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+</div>
+<input autocomplete="email" class="w-full bg-transparent pl-10 pr-4 py-3 text-sm text-slate-900 placeholder-slate-400 border-none focus:outline-none focus:ring-0 font-sans" id="email" name="email" placeholder="ornek@assay.finance" required="" type="email"/>
+</div>
+</div>
+<!-- Password Input Group -->
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<label class="block text-[11px] font-mono font-medium text-slate-600 tracking-wider" for="password">
+                ŞİFRE
+              </label>
+</div>
+<div class="input-terminal relative rounded-xl border border-slate-200 bg-slate-50/70 transition-all duration-200">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+<svg class="h-4 w-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+</div>
+<input autocomplete="current-password" class="w-full bg-transparent pl-10 pr-16 py-3 text-sm text-slate-900 placeholder-slate-400 border-none focus:outline-none focus:ring-0 font-mono" id="password" name="password" placeholder="••••••••••••" required="" type="password"/>
+<!-- Toggle Visibility Button -->
+<button class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs font-mono font-medium text-slate-500 hover:text-emerald-600 transition-colors focus:outline-none" data-purpose="password-toggle" id="togglePassword" type="button">
+                Göster
+              </button>
+</div>
+</div>
+<!-- Forgot Password Link -->
+<div class="flex justify-end pt-0.5">
+<a class="text-xs font-medium text-slate-500 hover:text-emerald-600 transition-colors" href="#">
+              Şifremi unuttum?
+            </a>
+</div>
+<!-- Primary CTA Button (Emerald Daytime High Contrast Style) -->
+<div class="pt-2">
+<button class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-700 text-white font-bold text-sm tracking-wide shadow-glow-emerald hover:brightness-105 active:scale-[0.985] transition-all duration-150 flex items-center justify-center gap-2" data-purpose="primary-submit-button" type="submit">
+<span>Giriş Yap</span>
+<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+<!-- Divider -->
+<div class="relative flex items-center justify-center py-2">
+<div class="border-t border-slate-200 w-full"></div>
+<span class="bg-white px-2.5 text-[10px] uppercase font-mono tracking-widest text-slate-400">veya</span>
+</div>
+<!-- Biometric Face ID / Fingerprint Fast Login (Daylight Style) -->
+<button class="w-full py-3 px-4 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/90 text-slate-700 hover:text-slate-900 text-xs font-medium tracking-wide transition-all active:scale-[0.985] flex items-center justify-center gap-2.5 shadow-xs group" data-purpose="biometric-login-button" type="button">
+<!-- Face ID / Biometric SVG Vector -->
+<svg class="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="1.8" viewbox="0 0 24 24">
+<path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3M9 9h.01M15 9h.01M9 15c1 1 2 1.5 3 1.5s2-.5 3-1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span>Face ID / Biyometrik ile Giriş Yap</span>
+</button>
+</form>
+</div>
+</main>
+<!-- END: Main Login Section -->
+<!-- BEGIN: Footer Security & Signup Prompt -->
+<footer class="relative z-10 px-6 pb-safe pt-2 text-center">
+<!-- Signup Prompt -->
+<p class="text-xs text-slate-600 font-normal">
+        Hesabın yok mu? 
+        <a class="text-emerald-600 hover:text-emerald-700 hover:underline font-semibold ml-1 inline-flex items-center" href="#">
+          Hesap oluştur
+        </a>
+</p>
+<!-- Institutional Grade Security Badging -->
+<div class="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-slate-500 font-mono">
+<svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<rect height="11" rx="2" ry="2" width="18" x="3" y="11"></rect>
+<path d="M7 11V7a5 5 0 0110 0v4"></path>
+</svg>
+<span>256-bit Uçtan Uca Şifreleme</span>
+</div>
+<!-- iOS Home Bar Indicator -->
+<div class="mx-auto w-32 h-1 bg-slate-300 rounded-full mt-5 mb-1.5"></div>
+</footer>
+<!-- END: Footer Security & Signup Prompt -->
+</div>
+<!-- END: Mobile Device Frame Container -->
+<!-- BEGIN: Interactive Logic Scripts -->
+<script data-purpose="toggle-password-interactivity">
+    // Password visibility toggle handler
+    const passwordInput = document.getElementById('password');
+    const toggleButton = document.getElementById('togglePassword');
+
+    if (toggleButton && passwordInput) {
+      toggleButton.addEventListener('click', () => {
+        const isPassword = passwordInput.getAttribute('type') === 'password';
+        passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+        toggleButton.textContent = isPassword ? 'Gizle' : 'Göster';
+      });
+    }
+  </script>
+<!-- END: Interactive Logic Scripts -->
+</body></html>
