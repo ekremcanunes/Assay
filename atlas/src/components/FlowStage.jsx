@@ -18,7 +18,8 @@ export default function FlowStage({ flow, stepIndex, onSelect }) {
 
   return (
     <div className="stage">
-      <svg viewBox={`0 0 ${VIEW_W} ${viewHeight(flow)}`} role="img" aria-label={flow.title.replace(/\*/g, '')}>
+      {/* role="group": "img" içindeki düğme düğümleri ekran okuyucudan gizlenir */}
+      <svg viewBox={`0 0 ${VIEW_W} ${viewHeight(flow)}`} role="group" aria-label={flow.title.replace(/\*/g, '')}>
         <defs>
           {/* userSpaceOnUse: dikey (genişliği sıfır) çizgide de gradyan çizilsin */}
           <linearGradient id="gEdge" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2={VIEW_W} y2="0">
@@ -58,7 +59,9 @@ export default function FlowStage({ flow, stepIndex, onSelect }) {
               className={`node ${nodeState(n.id)} tone-${tone}${select ? ' clickable' : ''}`}
               transform={`translate(${x - NODE_W / 2} ${y - NODE_H / 2})`}
               onClick={select}
-              onKeyDown={select ? (ev) => ev.key === 'Enter' && select() : undefined}
+              onKeyDown={select ? (ev) => {
+                if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); select() }
+              } : undefined}
               role={select ? 'button' : undefined}
               tabIndex={select ? 0 : undefined}
               aria-label={select ? `Adım ${idx + 1}: ${n.title}` : undefined}

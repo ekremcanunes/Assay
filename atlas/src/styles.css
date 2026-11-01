@@ -244,7 +244,7 @@ code {
 /* ---------- Kontroller ---------- */
 .ctrl { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; }
 .dots { display: flex; gap: 2px; }
-.dots button { display: grid; place-items: center; height: 44px; padding: 0 3px; border: 0; background: none; cursor: pointer; }
+.dots button { display: grid; place-items: center; min-width: 44px; height: 44px; padding: 0; border: 0; background: none; cursor: pointer; }
 .dots i { display: block; width: 28px; height: 4px; border-radius: 4px; background: var(--line2); transition: .3s; }
 .dots button.on i { width: 44px; background: var(--cob); }
 .dots button.done i { background: var(--done); }
@@ -411,7 +411,7 @@ code {
   .col p { font-size: 14px; }
   .term-win pre { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 0; }
   .term .tip { display: none; }
-  .term button { min-height: 36px; }
+  .term button { min-height: 44px; }
   .kbd { display: none; }
   .ctrl {
     position: sticky;

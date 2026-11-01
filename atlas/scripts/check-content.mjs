@@ -10,8 +10,11 @@ const repoRoot = path.resolve(atlasDir, '..')
 const contentDir = path.join(atlasDir, 'content')
 const flowsDir = path.join(contentDir, 'flows')
 
-const FLOW_FIELDS = ['id', 'no', 'title', 'lanes', 'nodes', 'edges', 'steps']
+const FLOW_FIELDS = ['id', 'no', 'group', 'eyebrow', 'title', 'lanes', 'nodes', 'edges', 'steps']
+const NODE_FIELDS = ['id', 'lane', 'col', 'title', 'sub', 'icon']
 const STEP_FIELDS = ['node', 'title', 'what', 'why', 'cost', 'terms', 'file', 'code']
+const GROUPS = new Set(['altyapi', 'veri'])
+const TONES = new Set(['gh', 'aws', 'ec2'])
 const SECRET_PATTERNS = [
   [/\b\d{12}\b/, '12 haneli sayı (AWS hesap ID\'si olabilir)'],
   [/arn:aws/, 'arn:aws'],
@@ -55,7 +58,14 @@ for (const f of flowFiles) {
   const checkNode = (id, ctx) => { if (!nodeIds.has(id)) err(where, `${ctx}: bilinmeyen düğüm: ${id}`) }
   const checkEdge = (e, ctx) => { if (!Array.isArray(e) || e.length !== 2) err(where, `${ctx}: bağlantı [a, b] olmalı`); else e.forEach((id) => checkNode(id, ctx)) }
 
-  for (const n of flow.nodes) if (!laneIds.has(n.lane)) err(where, `düğüm ${n.id}: bilinmeyen şerit: ${n.lane}`)
+  if (!GROUPS.has(flow.group)) err(where, `bilinmeyen grup: ${flow.group} (altyapi | veri)`)
+  for (const l of flow.lanes) if (!TONES.has(l.tone)) err(where, `şerit ${l.id}: bilinmeyen ton: ${l.tone} (gh | aws | ec2)`)
+  for (const n of flow.nodes) {
+    const miss = NODE_FIELDS.filter((k) => n?.[k] == null)
+    if (miss.length) err(where, `düğüm ${n?.id}: eksik alan: ${miss.join(', ')}`)
+    if (!Number.isInteger(n.col) || n.col < 0) err(where, `düğüm ${n.id}: col 0 veya pozitif tam sayı olmalı`)
+    if (!laneIds.has(n.lane)) err(where, `düğüm ${n.id}: bilinmeyen şerit: ${n.lane}`)
+  }
   flow.edges.forEach((e) => checkEdge(e, 'edges'))
 
   flow.steps.forEach((s, i) => {

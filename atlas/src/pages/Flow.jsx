@@ -47,11 +47,14 @@ function FlowView({ flow }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [next, prev])
 
-  const onTouchStart = (e) => { touchX.current = e.touches[0].clientX }
+  // Yalnız yatay ağırlıklı kaydırma adım değiştirir; okurken yapılan dikey/çapraz kaydırma değiştirmez.
+  const onTouchStart = (e) => { touchX.current = { x: e.touches[0].clientX, y: e.touches[0].clientY } }
   const onTouchEnd = (e) => {
     if (touchX.current == null) return
-    const dx = e.changedTouches[0].clientX - touchX.current
+    const dx = e.changedTouches[0].clientX - touchX.current.x
+    const dy = e.changedTouches[0].clientY - touchX.current.y
     touchX.current = null
+    if (Math.abs(dx) <= Math.abs(dy)) return
     if (dx <= -SWIPE_PX) next()
     if (dx >= SWIPE_PX) prev()
   }
