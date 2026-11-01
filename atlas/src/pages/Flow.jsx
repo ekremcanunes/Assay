@@ -16,7 +16,7 @@ const SWIPE_PX = 50
 export default function Flow() {
   const { id } = useParams()
   const flow = getFlow(id)
-  if (!flow) return <NotFound />
+  if (!flow) return <NotFound kind="flow" />
   return <FlowView key={flow.id} flow={flow} />
 }
 
@@ -40,6 +40,9 @@ function FlowView({ flow }) {
 
   useEffect(() => {
     const onKey = (e) => {
+      // Alt+← (tarayıcı geri) gibi kısayollar ve yazı alanları etkilenmesin.
+      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
+      if (e.target.closest?.('input, textarea, [contenteditable="true"]')) return
       if (e.key === 'ArrowRight') next()
       if (e.key === 'ArrowLeft') prev()
     }
@@ -81,6 +84,8 @@ function FlowView({ flow }) {
 
       <div className="only-desktop"><FlowStage flow={flow} stepIndex={index} onSelect={go} /></div>
       <div className="only-mobile"><FlowChain flow={flow} stepIndex={index} onSelect={go} /></div>
+
+      <p className="sr-only" aria-live="polite">Adım {index + 1} / {total}: {step.title}</p>
 
       <div className="deck" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <StepPanel step={step} index={index} total={total} />

@@ -16,11 +16,14 @@ export default function FlowChain({ flow, stepIndex, onSelect }) {
         const n = nodeOf(s.node)
         const state = nodeState(s.node)
         const linkIn = i > 0 && (i === stepIndex && step.edge ? 'on' : i <= stepIndex ? 'done' : '')
+        // Zincir adımları sırayla dizer; gerçek bağlantı bir önceki adımdan gelmiyorsa kaynağını yaz.
+        const from = s.edge && i > 0 && s.edge[0] !== flow.steps[i - 1].node ? nodeOf(s.edge[0]).title : null
         return (
           <li key={i}>
             {i > 0 && (
-              <div className={`chain-link ${linkIn}`} aria-hidden="true">
-                {linkIn === 'on' && !reduced && <span className="chain-packet" key={stepIndex} />}
+              <div className={`chain-link ${linkIn}`}>
+                {linkIn === 'on' && !reduced && <span className="chain-packet" key={stepIndex} aria-hidden="true" />}
+                {from && <span className="chain-from">↳ kaynak: {from}</span>}
               </div>
             )}
             <button
