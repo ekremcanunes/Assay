@@ -19,4 +19,4 @@ Durum: **taslak.** Aşağıdaki ham notlar `DESIGN.md`'den olduğu gibi taşınd
 ## Ham notlar (DESIGN.md §6'dan)
 
 - BIST 30 içi arama **client-side filtredir**; boş dönerse `/market/search` ile tüm BIST evreni önerilir.
-- Piyasa sembolleri Postgres'te tutulmaz; DB yalnızca portföy ve işlemler içindir.
+- Enstrüman listesi (BIST ve US hisse/ETF: sembol, ad, borsa, para birimi) market DB'sinde `Instruments` tablosundadır. Kaynağı Twelve Data; `InstrumentSyncJob` günlük senkronlar. Fiyat DB'de tutulmaz; Redis'te cache'lenir. Portföy DB'si yalnız `Assets` ve `Transactions` tutar.
