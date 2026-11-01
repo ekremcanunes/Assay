@@ -1,0 +1,142 @@
+id: cache
+no: "07"
+group: veri
+eyebrow: "Akış 07 · Cache · Redis"
+title: "Veri *ne kadar* taze?"
+lede: >-
+  Her veri türünün kendi ömrü var: anlık fiyat 5 dakika, geçmiş kapanış 30 gün.
+  Ömür tek yerde tanımlanır ve Redis'ten tarayıcıya kadar taşınır.
+stats:
+  - { n: 4, l: "süre sınıfı" }
+  - { n: 5, l: "dk anlık fiyat" }
+  - { n: 30, l: "gün geçmiş kapanış" }
+  - { n: 1, l: "tanım yeri" }
+
+lanes:
+  - { id: client, label: "İSTEMCİ", tone: client }
+  - { id: app, label: "SERVİSLER", tone: app }
+  - { id: data, label: "CACHE · KAYNAK", tone: data }
+
+nodes:
+  - { id: rq, lane: client, col: 0, title: "React Query", sub: "staleTime", icon: browser }
+  - { id: portfolio, lane: app, col: 0, title: "portfolio-service", sub: "en erken bitiş", icon: server }
+  - { id: market, lane: app, col: 1, title: "market-service", sub: "CacheStore", icon: server }
+  - { id: redis, lane: data, col: 1, title: "Redis", sub: "değer + bitiş anı", icon: bolt }
+  - { id: source, lane: data, col: 2, title: "Yahoo · Frankfurter", sub: "kaynak", icon: globe }
+
+edges:
+  - [rq, portfolio]
+  - [portfolio, market]
+  - [market, redis]
+  - [market, source]
+
+steps:
+  - node: market
+    edge: null
+    title: "Anahtar: tür, pazar, sembol"
+    what: >-
+      Her kayıt parçaları `:` ile birleşen bir anahtar taşır. Ör. fiyat `stock:BIST:THYAO`,
+      grafik `history:stock:BIST:THYAO:1y`, tarihli fiyat `priceon:...:2026-08-21`, mini grafik `spark:USD`.
+    why: >-
+      Anahtar veriyi tekil tanımlar. Aynı soruyu soran her kullanıcı aynı kaydı okur.
+    cost: >-
+      Anahtar biçimi değişirse eski kayıtlar okunmaz ve süreleri dolana kadar Redis'te boşuna durur.
+    terms: [cache-key]
+    file: market-service/Caching/CacheKeys.cs
+    code: |
+      public static string Price(string assetType, string market, string symbol) =>
+          Build(assetType.ToLowerInvariant(), market, symbol);
+
+      public static string History(...) =>
+          Build("history", assetType.ToLowerInvariant(), market, symbol, range.ToLowerInvariant());
+
+      private static string Build(params string[] parts) =>
+          string.Join(':', parts.Where(p => p.Length > 0));
+
+  - node: redis
+    edge: [market, redis]
+    title: "Kayıt bitiş anıyla saklanır"
+    what: >-
+      Değer, bitiş anıyla birlikte bir zarf içinde yazılır. Okuyan taraf kalan süreyi bu zarftan hesaplar.
+    why: >-
+      .NET'in `IDistributedCache` arayüzü bir kaydın kalan süresini veremez. Zarf bu eksiği kapatır.
+    cost: >-
+      Eski biçimde (zarfsız) kalan kayıt boş okunur ve kaynaktan yeniden çekilir.
+    terms: [ttl]
+    file: market-service/Caching/CacheStore.cs
+    code: |
+      # Kayıt bitiş anıyla birlikte saklanır,
+      # çünkü IDistributedCache bir kaydın kalan süresini veremez.
+      await cache.SetStringAsync(key, JsonSerializer.Serialize(new Entry<T>(value, expiresAt)), ...);
+
+      # fetch null dönerse cache'e yazılmaz (bir sonraki istek yeniden dener).
+
+  - node: source
+    edge: [market, source]
+    title: "Süre verinin türüne göre seçilir"
+    what: >-
+      Dört süre sınıfı var. Anlık fiyat, endeks ve gün içi grafik 5 dk. Günlük grafik ve mini seriler 1 saat.
+      Geçmiş günün kapanışı 30 gün. Başarısız cevap 5 dk.
+    why: >-
+      Değişmeyen veri (dünün kapanışı) uzun, sık değişen veri kısa tutulur. Dış kaynağa giden istek sayısı azalır.
+    cost: >-
+      Anlık fiyat en fazla 5 dakika eskidir. Ekran bunu "Fiyatlar 18:10 itibarıyla" diye açıkça yazar.
+    terms: [ttl]
+    file: market-service/Caching/CacheTtl.cs
+    code: |
+      public static readonly TimeSpan Live = TimeSpan.FromMinutes(5);       # anlık fiyat, endeks, gün içi grafik
+      public static readonly TimeSpan Daily = TimeSpan.FromHours(1);        # günlük grafik, sparkline serileri
+      public static readonly TimeSpan Permanent = TimeSpan.FromDays(30);    # geçmiş günün kapanışı
+      public static readonly TimeSpan Failure = TimeSpan.FromMinutes(5);    # başarısız cevap
+
+  - node: market
+    edge: [market, redis]
+    title: "Başarısızlık da cache'lenir, ama kısa"
+    what: >-
+      Tarihli fiyat bulunamazsa sonuç `Failure` süresiyle yazılır. Bulunduysa `Permanent` süresiyle yazılır.
+    why: >-
+      Olmayan bir veri için her istekte dış kaynağa gidilmez. 5 dakika sonra yeniden denenir.
+    cost: >-
+      Kaynak düzelse bile o 5 dakika boyunca "fiyat yok" gösterilir.
+    terms: [negative-cache]
+    file: market-service/Services/PriceOnDateService.cs
+    code: |
+      r => r.Available ? CacheTtl.Permanent : CacheTtl.Failure
+
+  - node: portfolio
+    edge: [portfolio, market]
+    title: "En erken bitiş yukarı taşınır"
+    what: >-
+      Bir istekte okunan her kaydın bitişi `CacheLifetime`'a bildirilir; en erkeni tutulur.
+      Kalan saniye `X-Cache-Expires-In` başlığına yazılır. portfolio-service aynısını kendi cevabına taşır.
+    why: >-
+      Portföy cevabı birçok fiyat içerir. En erken biten fiyat, cevabın tamamının ne zaman bayatlayacağını belirler.
+    cost: >-
+      Mutlak saat değil kalan saniye gönderilir; sunucu ile tarayıcı saati farklı olsa da sonuç doğrudur.
+    terms: [http-header]
+    file: market-service/Caching/CacheLifetime.cs
+    code: |
+      public void Report(DateTimeOffset expiresAt)
+      {
+          lock (_lock)
+          {
+              if (_earliest is null || expiresAt < _earliest) _earliest = expiresAt;
+          }
+      }
+      # Saat farkı sorununu önlemek için mutlak zaman değil, kalan saniye verilir.
+
+  - node: rq
+    edge: [rq, portfolio]
+    title: "Tarayıcı aynı süreyi kullanır"
+    what: >-
+      React Query veriyi başlıktaki süre kadar taze sayar. Süre dolmadan aynı veri için istek atmaz.
+    why: >-
+      Süreler yalnız backend'de (`CacheTtl`) tanımlıdır. Frontend'de tek bir süre sayısı yoktur.
+    cost: >-
+      Başlık gelmezse veri hemen bayat sayılır ve bir sonraki ihtiyaçta yeniden istenir.
+    terms: [stale-time]
+    file: web/src/hooks/queries.js
+    code: |
+      # React Query veriyi tam o süre taze sayar: Redis kaydı dolmadan boşa istek atılmaz.
+      # Süreler yalnızca backend'de (CacheTtl) tutulur, burada sayı yoktur.
+      const EXPIRES_HEADER = 'x-cache-expires-in'

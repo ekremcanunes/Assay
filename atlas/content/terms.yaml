@@ -47,3 +47,156 @@
 - id: override-file
   term: override dosyası
   def: Compose'un otomatik okuduğu ikinci dosya. Assay'da dev ortamının farklarını taşır.
+- id: same-origin
+  term: same-origin
+  def: Şema, alan adı ve portun aynı olması. Aynı origin'deki istekte tarayıcı CORS kontrolü yapmaz.
+- id: cookie
+  term: cookie
+  def: Sunucunun tarayıcıda sakladığı küçük veri. Tarayıcı onu aynı siteye giden her isteğe ekler.
+- id: reverse-proxy
+  term: reverse proxy
+  def: İstemcinin önünde değil sunucunun önünde duran aracı. İsteği karşılar, arkadaki servise iletir.
+- id: tls-termination
+  term: TLS sonlandırma
+  def: Şifreli HTTPS bağlantısının çözüldüğü nokta. Sonrasında istek açık veya yeniden şifreli iletilir.
+- id: origin-cert
+  term: Origin sertifikası
+  def: Cloudflare'in yalnız kendisi ile sunucu arasındaki bağlantı için verdiği TLS sertifikası.
+- id: real-ip
+  term: real_ip
+  def: nginx'in, proxy arkasındaki gerçek ziyaretçi adresini güvendiği bir başlıktan okuması.
+- id: rate-limit
+  term: rate limit
+  def: Bir kaynaktan gelen istek sayısını zaman başına sınırlamak. Aşan istek reddedilir (429).
+- id: service-dns
+  term: servis DNS'i
+  def: Docker Compose ağında her servis adı bir alan adı gibi çözülür. Ör. `portfolio-service:5001`.
+- id: expose
+  term: expose
+  def: Portu yalnız Docker ağı içine açar. `ports` ise portu sunucunun dışına açar.
+- id: session
+  term: session
+  def: Kullanıcının giriş yapmış olduğunu gösteren, sunucuda tutulan ve cookie ile eşleşen kayıt.
+- id: aal
+  term: AAL
+  def: Authenticator Assurance Level. AAL1 tek adımlı giriş (şifre), AAL2 ikinci adım tamamlanmış giriş.
+- id: http-client
+  term: HttpClient
+  def: .NET'te başka bir servise HTTP isteği atan sınıf. `AddHttpClient` ile tipli ve yönetilen olarak kaydedilir.
+- id: cache-aside
+  term: cache-aside
+  def: Önce cache'e bakılır; yoksa kaynaktan çekilip cache'e yazılır. Cache'i uygulama kodu yönetir.
+- id: ttl
+  term: TTL
+  def: Time to live. Bir kaydın cache'te ne kadar süre geçerli kalacağı.
+- id: self-service-flow
+  term: self-service akışı
+  def: Kratos'un giriş, kayıt, doğrulama gibi işlemler için açtığı, süreli ve kimlikli form durumu.
+- id: csrf
+  term: CSRF
+  def: Başka bir sitenin, kullanıcının cookie'siyle onun adına istek göndermesi. Form başına tek kullanımlık token ile önlenir.
+- id: mfa
+  term: MFA / 2FA
+  def: Girişte şifreye ek ikinci bir kanıt istemek. Assay'da ikinci kanıt e-postaya gelen koddur.
+- id: otp
+  term: OTP
+  def: One-time password. Bir kez ve kısa süre geçerli kod.
+- id: courier
+  term: courier
+  def: Kratos'un e-posta gönderen bileşeni. Kodları ve doğrulama maillerini SMTP ile yollar.
+- id: migration
+  term: migration
+  def: Veritabanı şemasını sürümlü, sıralı ve tekrar çalıştırılabilir adımlarla değiştiren betik.
+- id: depends-on
+  term: depends_on
+  def: Compose'da bir servisin başka bir servisten sonra başlamasını sağlayan ayar. Koşul eklenebilir.
+- id: env-var
+  term: ortam değişkeni
+  def: Process'e dışarıdan verilen ad-değer çifti. Ayar ve gizli bilgi koda yazılmadan böyle verilir.
+- id: volume
+  term: volume
+  def: Container silinse de kalan disk alanı. Volume'suz container'ın yazdığı her şey yeniden başlatmada kaybolur.
+- id: managed-db
+  term: yönetilen veritabanı
+  def: Kurulum, yedek ve yükseltmesi sağlayıcıda olan veritabanı hizmeti. Assay'da Neon Postgres.
+- id: restart-policy
+  term: restart politikası
+  def: Container durunca Docker'ın ne yapacağı. `no` (varsayılan), `on-failure`, `unless-stopped`, `always`.
+- id: bind-mount
+  term: bind mount
+  def: Sunucudaki bir dosya veya klasörün container içine doğrudan bağlanması.
+- id: structured-logging
+  term: yapılandırılmış log
+  def: Mesaj metni yerine adlı alanlar taşıyan log. Alanlara göre süzülür ve sorgulanır.
+- id: log-level
+  term: log seviyesi
+  def: Bir log satırının önemi (Debug, Information, Warning, Error). Eşiğin altındakiler yazılmaz.
+- id: twelve-factor
+  term: 12-Factor
+  def: "Taşınabilir web servisleri için 12 ilke. XI. ilke: uygulama logu dosyaya değil olay akışı olarak stdout'a yazar."
+- id: stdout
+  term: stdout
+  def: Bir programın standart çıktı akışı. Docker container'ın stdout'unu yakalar.
+- id: log-rotation
+  term: log rotasyonu
+  def: Log dosyası belli boyuta gelince kapatılıp yenisinin açılması ve eskilerin silinmesi.
+- id: yaml-anchor
+  term: YAML anchor
+  def: YAML'da bir bloğu `&ad` ile işaretleyip `*ad` ile tekrar kullanmak.
+- id: jq
+  term: jq
+  def: Komut satırında JSON okuyan, biçimleyen ve süzen araç.
+- id: unofficial-api
+  term: resmî olmayan API
+  def: Sağlayıcının belgelemediği ve destek vermediği uç. Haber verilmeden değişebilir veya kapanabilir.
+- id: ohlc
+  term: OHLC (mum)
+  def: Bir zaman aralığının açılış, en yüksek, en düşük ve kapanış fiyatı. Mum grafiğin bir mumu.
+- id: api-key
+  term: API anahtarı
+  def: Bir servisin, isteği kimin attığını ve kotasını bilmesi için verdiği gizli değer.
+- id: reference-rate
+  term: referans kur
+  def: Merkez bankasının günde bir yayımladığı resmî kur. Gün içinde değişmez.
+- id: troy-ounce
+  term: ons (troy)
+  def: Değerli metallerde kullanılan ağırlık birimi. 1 ons = 31,1034768 gram.
+- id: normalization
+  term: normalize etme
+  def: Karşılaştırmadan önce metni ortak biçime çevirmek. Ör. aksanları atıp küçük harfe çevirmek.
+- id: cache-key
+  term: cache anahtarı
+  def: Bir cache kaydını tekil tanımlayan ad. Aynı anahtar aynı veriyi okur.
+- id: negative-cache
+  term: negatif cache
+  def: Başarısız veya boş sonucu da kısa süre saklamak. Olmayan veri için kaynağa tekrar tekrar gidilmez.
+- id: http-header
+  term: HTTP başlığı
+  def: İstek veya cevabın gövdesi dışında taşınan ad-değer bilgisi. Ör. `X-Cache-Expires-In`.
+- id: cron
+  term: cron ifadesi
+  def: Bir işin ne zaman çalışacağını dakika, saat, gün, ay, haftanın günü alanlarıyla yazan biçim. `0 6 * * *` her gün 06:00.
+- id: hosted-service
+  term: hosted service
+  def: .NET'te web isteğinden bağımsız, servisle birlikte başlayıp arka planda çalışan iş.
+- id: upsert
+  term: upsert
+  def: Kayıt yoksa ekle, varsa güncelle.
+- id: soft-delete
+  term: soft delete
+  def: Satırı silmek yerine pasif diye işaretlemek. Geçmiş ve ona bağlı kayıtlar korunur.
+- id: in-memory
+  term: bellekte tutma
+  def: Veriyi servisin RAM'inde saklamak. Okuma çok hızlıdır; servis yeniden başlarsa yeniden yüklenir.
+- id: weighted-average
+  term: ağırlıklı ortalama maliyet
+  def: Her alımın birim fiyatını alınan miktarla tartarak bulunan ortalama. (eski miktar × eski maliyet + yeni miktar × yeni fiyat) ÷ toplam miktar.
+- id: unrealized-pl
+  term: gerçekleşmemiş K/Z
+  def: Henüz satılmamış varlığın güncel fiyatla maliyeti arasındaki fark. Satılınca gerçekleşmiş K/Z olur.
+- id: pure-function
+  term: saf fonksiyon
+  def: Aynı girdiye her zaman aynı çıktıyı veren, dışarıyı değiştirmeyen fonksiyon. Kolay test edilir ve taşınır.
+- id: stale-time
+  term: staleTime
+  def: React Query'de verinin "taze" sayıldığı süre. Bu süre içinde aynı veri için yeni istek atılmaz.

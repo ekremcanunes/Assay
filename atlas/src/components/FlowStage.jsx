@@ -3,6 +3,9 @@ import { NODE_H, NODE_W, VIEW_W, edgePath, laneTop, nodePos, stepState, viewHeig
 import { NodeIcon } from './Icons'
 import useReducedMotion from '../lib/useReducedMotion'
 
+// 10px, 0.16em aralıklı büyük harf için yaklaşık genişlik (+ iç boşluk)
+const labelWidth = (text) => Math.round(text.length * 8.4 + 16)
+
 // Masaüstü sahne: şeritler, düğümler, bağlantılar ve aktif bağlantıda akan paket.
 export default function FlowStage({ flow, stepIndex, onSelect }) {
   const step = flow.steps[stepIndex]
@@ -40,12 +43,19 @@ export default function FlowStage({ flow, stepIndex, onSelect }) {
         {flow.lanes.map((lane, i) => (
           <g key={lane.id} className={`lane tone-${lane.tone}`}>
             <rect x="14" y={laneTop(i)} width={VIEW_W - 28} height="108" rx="14" />
-            <text x="30" y={laneTop(i) + 16}>{lane.label}</text>
           </g>
         ))}
 
         {flow.edges.map((e) => (
           <path key={e.join('>')} d={edgePath(flow, ...e)} className={`edge ${edgeState(e)}`} />
+        ))}
+
+        {/* Etiketler bağlantılardan sonra, opak hap üstünde çizilir: geçen çizgi hapın altında kalır */}
+        {flow.lanes.map((lane, i) => (
+          <g key={lane.id} className={`lane-label tone-${lane.tone}`}>
+            <rect x="22" y={laneTop(i) + 5} width={labelWidth(lane.label)} height="16" rx="8" />
+            <text x="30" y={laneTop(i) + 16}>{lane.label}</text>
+          </g>
         ))}
 
         {flow.nodes.map((n) => {
@@ -66,12 +76,16 @@ export default function FlowStage({ flow, stepIndex, onSelect }) {
               tabIndex={select ? 0 : undefined}
               aria-label={select ? `Adım ${idx + 1}: ${n.title}` : undefined}
             >
+              {select && <rect className="focus-ring" x="-6" y="-6" width={NODE_W + 12} height={NODE_H + 12} rx="18" />}
               <rect className="box" width={NODE_W} height={NODE_H} rx="14" />
               <g className="ico" transform={`translate(30 ${NODE_H / 2})`}><NodeIcon name={n.icon} /></g>
               <text className="ttl" x="54" y="28">{n.title}</text>
               <text className="sub" x="54" y="46">{n.sub}</text>
               {idx >= 0 && (
-                <text className="stepnum" x={NODE_W - 14} y="20" textAnchor="end">{String(idx + 1).padStart(2, '0')}</text>
+                <g className="stepbadge" transform={`translate(${NODE_W - 38} -9)`}>
+                  <rect width="28" height="18" rx="9" />
+                  <text className="stepnum" x="14" y="13" textAnchor="middle">{String(idx + 1).padStart(2, '0')}</text>
+                </g>
               )}
             </g>
           )

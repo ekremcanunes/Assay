@@ -1,0 +1,209 @@
+id: istek-yolu
+no: "01"
+group: altyapi
+eyebrow: "Akış 01 · İstek yolu · Ağ"
+title: "Bir istek *nereden geçer?*"
+lede: >-
+  Tarayıcıda "Portföy" açıldığında giden tek bir `/api` isteğinin yolu.
+  Cloudflare, nginx, iki .NET servisi, Kratos, Postgres, Redis ve Yahoo: sekiz adım.
+stats:
+  - { n: 8, l: "adım" }
+  - { n: 2, l: "rate limit" }
+  - { n: 2, l: "açık port" }
+  - { n: 1, l: "origin" }
+
+lanes:
+  - { id: client, label: "İSTEMCİ", tone: client }
+  - { id: edge, label: "CLOUDFLARE", tone: edge }
+  - { id: app, label: "EC2 · DOCKER AĞI", tone: app }
+  - { id: data, label: "DESTEK SERVİSLERİ · VERİ · DIŞ KAYNAK", tone: data }
+
+nodes:
+  - { id: browser, lane: client, col: 0, title: "Tarayıcı", sub: "React · axios", icon: browser }
+  - { id: cf, lane: edge, col: 0, title: "Cloudflare", sub: "DNS proxy · TLS", icon: cloud }
+  - { id: nginx, lane: app, col: 0, title: "nginx (web)", sub: ":443 · rate limit", icon: shield }
+  - { id: portfolio, lane: app, col: 1, title: "portfolio-service", sub: ":5001 · .NET", icon: server }
+  - { id: market, lane: app, col: 2, title: "market-service", sub: ":5002 · .NET", icon: server }
+  - { id: kratos, lane: data, col: 0, title: "Kratos", sub: "/sessions/whoami", icon: user }
+  - { id: pg, lane: data, col: 1, title: "Postgres", sub: "Assets · Transactions", icon: db }
+  - { id: redis, lane: data, col: 2, title: "Redis", sub: "cache · TTL", icon: bolt }
+  - { id: yahoo, lane: data, col: 3, title: "Yahoo Finance", sub: "fiyat · geçmiş", icon: globe }
+
+edges:
+  - [browser, cf]
+  - [cf, nginx]
+  - [nginx, portfolio]
+  - [portfolio, kratos]
+  - [portfolio, pg]
+  - [portfolio, market]
+  - [market, redis]
+  - [market, yahoo]
+
+steps:
+  - node: browser
+    edge: null
+    title: "Tarayıcı isteği aynı adrese atar"
+    what: >-
+      React uygulaması `/api/...` isteğini `withCredentials: true` ile atar. Oturum cookie'si isteğe kendiliğinden eklenir.
+    why: >-
+      Frontend ve API aynı origin'de. Bu yüzden CORS ayarı ve token taşıma kodu gerekmez.
+    cost: >-
+      Frontend ayrı bir alan adına taşınırsa CORS ve cookie ayarları yeniden yapılır.
+    terms: [same-origin, cookie]
+    file: web/src/services/api.js
+    code: |
+      const api = axios.create({ baseURL: '', withCredentials: true })
+
+      # 403 aal2_required → kullanıcı kod adımına gönderilir
+      if (error.response?.status === 403 && error.response.data?.error === 'aal2_required') {
+        window.location.assign('/login?aal2=1')
+      }
+
+  - node: cf
+    edge: [browser, cf]
+    title: "Cloudflare isteği karşılar"
+    what: >-
+      Alan adının DNS kaydı Cloudflare'de ve proxy açık. Tarayıcının TLS bağlantısı Cloudflare'de biter.
+      Cloudflare isteği sunucuya yeniden şifreleyerek iletir.
+    why: >-
+      Sunucunun gerçek adresi dışarıdan görünmez. DDoS koruması ücretsiz gelir.
+      Sunucu, Cloudflare'in verdiği Origin sertifikasını kullanır.
+    cost: >-
+      nginx'e gelen bağlantının adresi Cloudflare'in adresidir. Gerçek ziyaretçi adresi için ayrı ayar gerekir (sonraki adım).
+    terms: [reverse-proxy, tls-termination, origin-cert]
+    file: web/nginx.prod.conf
+    code: |
+      server {
+          listen 443 ssl;
+          http2 on;
+          ssl_certificate     /etc/nginx/certs/origin.pem;
+          ssl_certificate_key /etc/nginx/certs/origin.key;
+      }
+      # certs/ dosyalarını deploy.sh Secrets Manager'dan yazar
+
+  - node: nginx
+    edge: [cf, nginx]
+    title: "nginx gerçek IP'yi bulur, limit uygular"
+    what: >-
+      nginx gerçek ziyaretçi adresini `CF-Connecting-IP` başlığından alır. Sonra IP başına limit uygular:
+      `/api` saniyede 20, giriş/kayıt dakikada 10. Aşılırsa 429 döner.
+    why: >-
+      Giriş uçları şifre deneme saldırısının hedefidir. Bu yüzden ayrı ve daha sıkı bir limit taşır.
+    cost: >-
+      `real_ip` ayarı olmasaydı tüm ziyaretçiler tek adres (Cloudflare) sayılır ve hep birlikte limitlenirdi.
+    terms: [real-ip, rate-limit]
+    file: web/nginx.prod.conf
+    code: |
+      set_real_ip_from <Cloudflare IP aralıkları>;
+      real_ip_header CF-Connecting-IP;
+
+      limit_req_zone $binary_remote_addr zone=auth:10m rate=10r/m;
+      limit_req_zone $binary_remote_addr zone=api:10m  rate=20r/s;
+      limit_req_status 429;
+
+  - node: portfolio
+    edge: [nginx, portfolio]
+    title: "nginx isteği servise yönlendirir"
+    what: >-
+      `/api/` → `portfolio-service:5001`, `/.ory/` → `kratos:4433`. Diğer her şey React'in `index.html`'ine düşer.
+    why: >-
+      Dışarıya yalnız nginx açık (80 ve 443). Servisler `expose` ile yalnız iç Docker ağında görünür.
+      Servis adı aynı zamanda ağ içindeki DNS adıdır.
+    cost: >-
+      Yeni bir dış uç için nginx'e yeni `location` eklenir ve image yeniden build edilir.
+    terms: [service-dns, expose]
+    file: web/nginx.prod.conf
+    code: |
+      location /api/ {
+          limit_req zone=api burst=40 nodelay;
+          proxy_pass http://portfolio-service:5001;
+          proxy_set_header Cookie $http_cookie;
+      }
+      location /.ory/self-service/ {
+          limit_req zone=auth burst=10 nodelay;
+          proxy_pass http://kratos:4433/self-service/;
+      }
+
+  - node: kratos
+    edge: [portfolio, kratos]
+    title: "Servis oturumu Kratos'a sorar"
+    what: >-
+      `KratosMiddleware` her istekte cookie'yi Kratos'a `/sessions/whoami` ile sorar.
+      Oturum yoksa 401 döner. 2FA isteniyor ama oturum AAL1 ise 403 `aal2_required` döner.
+    why: >-
+      Oturumun tek doğruluk kaynağı Kratos'tur. Servis kendi oturum tablosunu tutmaz.
+    cost: >-
+      Her istek Kratos'a bir tur daha atar. Kratos durursa API de durur.
+    terms: [session, aal]
+    file: portfolio-service/Middleware/KratosMiddleware.cs
+    code: |
+      var request = new HttpRequestMessage(HttpMethod.Get, $"{kratosUrl}/sessions/whoami");
+      request.Headers.Add("Cookie", cookieHeader);
+
+      if (authOptions.Value.MfaRequired && session.Aal != "aal2")
+      {
+          context.Response.StatusCode = 403;
+          await context.Response.WriteAsJsonAsync(new { error = "aal2_required" });
+      }
+
+  - node: market
+    edge: [portfolio, market]
+    aux: [pg]
+    auxEdges: [[portfolio, pg]]
+    title: "Portföy DB'den, fiyat market-service'ten"
+    what: >-
+      Varlık ve işlemler portfolio-service'in Postgres'inden gelir. Fiyat için market-service çağrılır;
+      kullanıcının cookie'si bu çağrıya da eklenir.
+    why: >-
+      Fiyat bilgisi tek serviste toplanır. market-service de kendi `KratosMiddleware`'i ile cookie'yi doğrular.
+    cost: >-
+      Bir sayfa açılışında Kratos'a iki tur atılır: biri portfolio-service'ten, biri market-service'ten.
+    terms: [http-client]
+    file: portfolio-service/Clients/MarketServiceClient.cs
+    code: |
+      # Tüm market-service çağrılarının tek yolu
+      var cookieHeader = httpContextAccessor.HttpContext?.Request.Headers["Cookie"].ToString();
+      if (!string.IsNullOrEmpty(cookieHeader))
+          request.Headers.Add("Cookie", cookieHeader);
+
+  - node: redis
+    edge: [market, redis]
+    aux: [yahoo]
+    auxEdges: [[market, yahoo]]
+    title: "Önce Redis, yoksa Yahoo"
+    what: >-
+      `CacheStore` önce Redis'e bakar. Kayıt yoksa Yahoo'dan çeker ve bitiş anıyla birlikte Redis'e yazar.
+    why: >-
+      Yahoo'ya her istekte gidilmez. Cevap hızlanır, dış kaynağın limitine takılma riski azalır.
+    cost: >-
+      Gösterilen veri en fazla TTL kadar eskidir. Anlık fiyat için bu süre 5 dakika.
+    terms: [cache-aside, ttl]
+    file: market-service/Caching/CacheStore.cs
+    code: |
+      # "Cache'e bak, yoksa çek, yaz" akışının tek uygulaması
+      public async Task<T?> GetOrSetAsync<T>(string key, Func<Task<T?>> fetch, Func<T, TimeSpan> ttl)
+      {
+          var cached = await cache.GetStringAsync(key);
+          ...
+          await cache.SetStringAsync(key, JsonSerializer.Serialize(new Entry<T>(value, expiresAt)), ...);
+      }
+
+  - node: browser
+    edge: null
+    title: "Cevap, kalan cache ömrüyle döner"
+    what: >-
+      market-service, verinin Redis'teki kalan ömrünü `X-Cache-Expires-In` başlığıyla gönderir.
+      portfolio-service en erken biteni tarayıcıya iletir. React Query veriyi tam o süre taze sayar.
+    why: >-
+      Tarayıcı, Redis kaydı tazelenmeden aynı veriyi tekrar istemez. Süreler yalnız backend'de tutulur.
+    cost: >-
+      Başlık gelmezse (ör. fiyat alınamadı) veri hemen bayat sayılır ve bir sonraki ihtiyaçta yeniden istenir.
+    terms: [stale-time]
+    file: web/src/hooks/queries.js
+    code: |
+      const EXPIRES_HEADER = 'x-cache-expires-in'
+
+      staleTime: (query) => {
+        const expiresAt = query.state.data?.expiresAt
+        return expiresAt ? Math.max(0, expiresAt - Date.now()) : 0
+      },

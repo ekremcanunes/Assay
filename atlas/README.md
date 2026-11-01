@@ -14,7 +14,8 @@ npm run build   # check + üretim derlemesi (dist/)
 
 ## İçerik
 
-- Akışlar `content/flows/*.yaml`, sözlük `content/terms.yaml`.
+- Akışlar `content/flows/*.yaml`, sözlük `content/terms.yaml`, ekran → veri sayfası `content/screens.yaml` (`/ekran-veri`).
+- Ekran öğesinin `source` alanı: `db` (olduğu gibi), `server` (serviste hesap), `client` (tarayıcıda hesap), `external` (dış kaynaktan olduğu gibi).
 - Her adımın `file` alanı repoda gerçek bir dosyayı gösterir. Dosya yoksa build düşer.
 - Metin `docs/10-standards/WRITING.md` (`YZ-01`–`YZ-08`) kurallarına uyar.
 - **Yasak:** AWS hesap ID'si, `arn:aws`, IP adresi, bucket adı, secret adı veya değeri. Yer tutucu kullan: `<deploy rolü>`, `$REG`.
@@ -23,6 +24,7 @@ npm run build   # check + üretim derlemesi (dist/)
 
 - Yalnız koyu tema. Token'lar `src/styles.css`'te.
 - Aksan `--cob`. Adım paneli renkleri: Ne oluyor `--cob2`, Neden böyle `--em`, Bedeli `--amb`.
-- Şerit tonları: GitHub `--lane-gh`, AWS `--lane-aws`, EC2 `--lane-ec2`.
+- Şerit tonları (`tone`): `gh` GitHub, `aws` AWS, `ec2` EC2, `client` istemci, `edge` Cloudflare, `app` uygulama servisleri, `data` veri, `ext` dış kaynak.
+- Şerit etiketleri YAML'da büyük harfle yazılır (CSS çevirmez; `tr` dilinde "i" → "İ" olur).
 - Mobil (`max-width: 767px`): sahne dikey zincire döner, yatay taşma yok, dokunma alanı ≥ 44px.
 - `prefers-reduced-motion`: paket, akan çizgi ve otomatik oynatma kapalı.

@@ -9,10 +9,12 @@ import Home from './pages/Home'
 import Flow from './pages/Flow'
 import NotFound from './pages/NotFound'
 import Glossary from './pages/Glossary'
+import Screens from './pages/Screens'
 
 const router = createBrowserRouter([
   { path: '/', element: <Home /> },
   { path: '/flow/:id', element: <Flow /> },
+  { path: '/ekran-veri', element: <Screens /> },
   { path: '/terms', element: <Glossary /> },
   { path: '*', element: <NotFound /> },
 ])

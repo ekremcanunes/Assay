@@ -1,0 +1,201 @@
+# Akış 10 · Ekran → veri. Her ekran öğesi: veri nereden, hangi yoldan, nerede hesaplanıyor, neden bu gösterim.
+# source: db (veritabanından olduğu gibi) | server (sunucuda hesaplanır) | client (tarayıcıda hesaplanır) | external (dış kaynaktan, olduğu gibi)
+no: "10"
+id: ekran-veri
+eyebrow: "Akış 10 · Ekran → veri · Soy ağacı"
+title: "Ekrandaki sayı *nereden* geliyor?"
+lede: >-
+  Assay'ın beş ekranındaki on iki öğe. Bir öğeye dokun: verinin kaynağını, geçtiği yolu,
+  nerede hesaplandığını ve neden böyle gösterildiğini gör.
+
+screens:
+  - id: ozet
+    title: "Özet"
+    route: "/"
+    blocks:
+      - id: networth
+        label: "Net varlık"
+        h: 2
+        source: server
+        hook: "useDashboard"
+        endpoint: "GET /api/dashboard"
+        chain:
+          - { label: "Overview.jsx · useDashboard", icon: browser }
+          - { label: "GET /api/dashboard", icon: shield }
+          - { label: "AssetService.GetDashboardAsync", icon: calc }
+          - { label: "Postgres · Assets (miktar)", icon: db }
+          - { label: "market-service /prices → Redis → Yahoo · Frankfurter", icon: bolt }
+        calc: "Toplam = Σ (miktar × güncel TL fiyatı). Sunucuda toplanır."
+        why: "Tek büyük sayı. Fiyat eşlemesi sunucuda yapıldığı için toplam da orada alınır."
+        file: portfolio-service/Services/AssetService.cs
+      - id: allocation
+        label: "Dağılım çubuğu"
+        h: 1
+        source: client
+        hook: "useDashboard"
+        endpoint: "GET /api/dashboard"
+        chain:
+          - { label: "Overview.jsx", icon: browser }
+          - { label: "GET /api/dashboard → hisse ve nakit toplamı", icon: shield }
+          - { label: "Tarayıcı: altın = toplam − hisse − nakit", icon: calc }
+        calc: "Hisse ve nakit toplamı sunucudan gelir. Altın ayrı gelmez; tarayıcı kalan olarak hesaplar. Pay = tür ÷ toplam."
+        why: "Segment çubuğu oranı tek bakışta gösterir. Renkler kategori token'larıdır, kâr/zarar anlamı taşımaz."
+        file: web/src/pages/Overview.jsx
+
+  - id: portfoy
+    title: "Portföy"
+    route: "/assets"
+    blocks:
+      - id: total
+        label: "Toplam ve K/Z %"
+        h: 1
+        source: client
+        hook: "usePortfolioSummary"
+        endpoint: "GET /api/assets"
+        chain:
+          - { label: "Assets.jsx · usePortfolioSummary", icon: browser }
+          - { label: "GET /api/assets (varlık listesi)", icon: shield }
+          - { label: "summarizeCategories(..., ['All'])", icon: calc }
+        calc: "Yüzde = (Σ değer − Σ maliyet) ÷ Σ maliyet. Tüm varlıklar tek kategori sayılarak tarayıcıda hesaplanır."
+        why: "Kategori kartlarıyla aynı fonksiyon kullanılır; şerit ile kartlar asla çelişmez."
+        file: web/src/hooks/usePortfolioSummary.js
+      - id: category
+        label: "Kategori kartları + mini grafik"
+        h: 3
+        source: client
+        hook: "usePortfolioSummary · usePriceHistory('1y')"
+        endpoint: "GET /api/assets · GET /api/market/history/{symbol}"
+        chain:
+          - { label: "CategoryCard.jsx", icon: browser }
+          - { label: "summarizeCategories → değer, K/Z %", icon: calc }
+          - { label: "Mini grafik: temsilci seri (BIST 100 · USD/TRY · gram altın)", icon: chart }
+          - { label: "market-service /history → Redis (1 sa) → Yahoo", icon: bolt }
+        calc: "Kart değeri ve yüzdesi tarayıcıda toplanır. Mini grafik portföy değeri değildir; kategorinin temsilci serisidir."
+        why: "Kullanıcı kategorinin piyasada nasıl gittiğini görür. Grafiğin altında hangi seri olduğu yazar (veri dürüstlüğü)."
+        file: web/src/lib/portfolioCategories.js
+      - id: holding
+        label: "Varlık satırı K/Z"
+        h: 2
+        source: server
+        hook: "useHoldings"
+        endpoint: "GET /api/assets"
+        chain:
+          - { label: "HoldingsList.jsx", icon: browser }
+          - { label: "GET /api/assets", icon: shield }
+          - { label: "AssetService.MapToHolding", icon: calc }
+          - { label: "Postgres · AvgCostBasis + market-service fiyatı", icon: db }
+        calc: "K/Z = (güncel fiyat − ortalama maliyet) × miktar, alış para biriminde."
+        why: "USD ile alınan hisse USD fiyatla karşılaştırılır; kur etkisi hisse performansına karışmaz."
+        file: portfolio-service/Services/AssetService.cs
+
+  - id: piyasa
+    title: "Piyasa"
+    route: "/market"
+    blocks:
+      - id: pulse
+        label: "Nabız kartı"
+        h: 2
+        source: client
+        hook: "useMarketOverview"
+        endpoint: "GET /api/market/overview"
+        chain:
+          - { label: "Market.jsx · useMarketOverview", icon: browser }
+          - { label: "GET /api/market/overview", icon: shield }
+          - { label: "market-service MarketOverviewService → Redis (5 dk) → Yahoo", icon: bolt }
+          - { label: "pulse(stocks): yükselen / düşen / sabit, ruh hali", icon: calc }
+        calc: "BIST 30 hisselerinin günlük değişiminden sayılar ve ağırlıksız ortalama. ±0,05 altı sabit sayılır."
+        why: "30 satır okumadan piyasanın yönü görülür. Rakam tek başına bırakılmaz; yorum cümlesi eşlik eder."
+        file: web/src/lib/marketPulse.js
+      - id: bist30
+        label: "BIST 30 tablosu"
+        h: 3
+        source: external
+        hook: "useMarketOverview"
+        endpoint: "GET /api/market/overview"
+        chain:
+          - { label: "Market.jsx", icon: browser }
+          - { label: "GET /api/market/overview", icon: shield }
+          - { label: "BIST 30 bileşenleri: kodda elle tutulan liste", icon: code }
+          - { label: "Yahoo quote → Redis (5 dk)", icon: globe }
+        calc: "Fiyat, değişim, gün aralığı ve 52 haftalık konum Yahoo'dan olduğu gibi gelir. Sıralama ve arama tarayıcıda."
+        why: "Endeks üyeliğini hiçbir ücretsiz API vermiyor. Liste elle tutulur ve üç ayda bir gözden geçirilmelidir."
+        file: market-service/Services/MarketOverviewService.cs
+      - id: chart
+        label: "Hisse detay grafiği"
+        h: 2
+        source: external
+        hook: "usePriceHistory('BIST', symbol, 'Stock', '1y')"
+        endpoint: "GET /api/market/history/{symbol}"
+        chain:
+          - { label: "StockDetail.jsx · PriceChart (lightweight-charts)", icon: chart }
+          - { label: "GET /api/market/history/{symbol}?range=1y", icon: shield }
+          - { label: "PriceHistoryService: aralık beyaz listesi", icon: gear }
+          - { label: "Yahoo mumları → Redis (gün içi 5 dk, günlük 1 sa)", icon: globe }
+        calc: "Mumlar Yahoo'dan olduğu gibi gelir. Aralık beyaz listeyle Yahoo'nun range/interval değerine çevrilir."
+        why: "Mum grafiği kâr/zarar renkleriyle (`up`/`down`) çizilir; ayrı grafik rengi yoktur."
+        file: market-service/Services/PriceHistoryService.cs
+
+  - id: alim
+    title: "Alım"
+    route: "/assets/buy"
+    blocks:
+      - id: calendar
+        label: "Fiyatlı takvim"
+        h: 3
+        source: client
+        hook: "usePriceHistory('1y') · usePriceOnDate"
+        endpoint: "GET /api/market/history · GET /api/market/price-on"
+        chain:
+          - { label: "PriceCalendar.jsx", icon: browser }
+          - { label: "1 yıllık günlük kapanışlar", icon: shield }
+          - { label: "heatTier: ay içinde en ucuz 0, en pahalı 4", icon: calc }
+          - { label: "1 yıldan eski gün: price-on ile tek tek", icon: bolt }
+        calc: "Her hücre o günün kapanışını taşır. Renk tonu ay içindeki göreli sırasıdır (5 kademe), mutlak fiyat değildir."
+        why: "Kullanıcı tarih seçerken o ayın ucuz ve pahalı günlerini görür."
+        file: web/src/lib/heat.js
+      - id: deviation
+        label: "O gün / bugün + sapma uyarısı"
+        h: 2
+        source: server
+        hook: "usePriceOnDate"
+        endpoint: "GET /api/market/price-on/{symbol}?date="
+        chain:
+          - { label: "AddAsset.jsx · usePriceOnDate", icon: browser }
+          - { label: "GET /api/market/price-on/{symbol}", icon: shield }
+          - { label: "PriceOnDateService → Redis (30 gün; yoksa 5 dk)", icon: bolt }
+          - { label: "deviationOf: %5 uyarı, %20 onay", icon: calc }
+        calc: "O günün gerçek fiyatı sunucudan gelir. Girilen fiyatla sapma tarayıcıda hesaplanır."
+        why: "Yanlış girilen fiyat portföy maliyetini kalıcı bozar. Eşik gürültünün (~%0,5) 10 katı; boşuna uyarmaz."
+        file: market-service/Services/PriceOnDateService.cs
+
+  - id: durum
+    title: "Durum şeridi"
+    route: "(her panel sayfası, md+)"
+    blocks:
+      - id: session
+        label: "BIST açık/kapalı · fiyat saati"
+        h: 1
+        source: client
+        hook: "useMarketOverview"
+        endpoint: "GET /api/market/overview"
+        chain:
+          - { label: "StatusBar.jsx", icon: browser }
+          - { label: "overview: sessionStart / sessionEnd / asOf (Yahoo)", icon: shield }
+          - { label: "sessionOf(index, now): anlık saatle hüküm", icon: clock }
+        calc: "Seans sınırları Yahoo'dan gelir. Açık/kapalı hükmü tarayıcıda, şimdiki saatle verilir."
+        why: "Overview 5 dk cache'te kalır. Hüküm sunucuda verilseydi kapanıştan sonra da 'açık' görünebilirdi."
+        file: web/src/lib/marketSession.js
+      - id: system
+        label: "Ortam · bölge · DB ping · sürüm"
+        h: 1
+        source: server
+        hook: "useSystemStatus"
+        endpoint: "GET /api/system/status"
+        chain:
+          - { label: "StatusBar.jsx · useSystemStatus", icon: browser }
+          - { label: "GET /api/system/status", icon: shield }
+          - { label: "SystemController: DEPLOY_ENV, DEPLOY_REGION, APP_VERSION", icon: gear }
+          - { label: "Postgres: SELECT 1 süresi (ms)", icon: db }
+        calc: "Ortam ve sürüm ortam değişkenlerinden okunur; sürüm image tag'i (commit SHA). DB süresi `SELECT 1` ile ölçülür."
+        why: "Hepsi gerçek veri. Uydurma 'canlı' gösterge yerine sistemin kendi ölçümü gösterilir."
+        file: portfolio-service/Controllers/SystemController.cs

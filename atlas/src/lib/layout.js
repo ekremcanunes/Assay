@@ -1,5 +1,5 @@
 // Masaüstü sahne geometrisi. Koordinatlar mockup'la (flow-style-v2) aynı.
-export const NODE_W = 200
+export const NODE_W = 220
 export const NODE_H = 64
 export const VIEW_W = 1180
 const LANE_H = 124

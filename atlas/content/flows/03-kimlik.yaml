@@ -1,0 +1,190 @@
+id: kimlik
+no: "03"
+group: altyapi
+eyebrow: "Akış 03 · Kimlik · Ory Kratos"
+title: "Giriş *iki adımda* nasıl olur?"
+lede: >-
+  Şifre, e-posta kodu ve oturum. Kimlik işini Assay'ın kendi kodu değil, Ory Kratos yapar.
+  Frontend formu çizer, backend oturumu Kratos'a sorar.
+stats:
+  - { n: 7, l: "adım" }
+  - { n: 2, l: "faktör" }
+  - { n: 8, l: "saat oturum" }
+  - { n: 10, l: "dk kod ömrü" }
+
+lanes:
+  - { id: client, label: "İSTEMCİ", tone: client }
+  - { id: app, label: "EC2 · DOCKER AĞI", tone: app }
+  - { id: data, label: "VERİ · E-POSTA", tone: data }
+
+nodes:
+  - { id: login, lane: client, col: 0, title: "Giriş sayfası", sub: "/login · React", icon: browser }
+  - { id: kratos, lane: app, col: 1, title: "Kratos", sub: ":4433 /self-service", icon: user }
+  - { id: portfolio, lane: app, col: 2, title: "portfolio-service", sub: "KratosMiddleware", icon: server }
+  - { id: kdb, lane: data, col: 1, title: "Postgres (Kratos)", sub: "kimlik · oturum", icon: db }
+  - { id: smtp, lane: data, col: 2, title: "SMTP · courier", sub: "dev: mailpit", icon: mail }
+
+edges:
+  - [login, kratos]
+  - [login, portfolio]
+  - [portfolio, kratos]
+  - [kratos, kdb]
+  - [kratos, smtp]
+
+steps:
+  - node: login
+    edge: null
+    title: "Giriş sayfası Kratos'tan bir akış ister"
+    what: >-
+      Tarayıcı `/self-service/login/browser` adresine gider. Kratos yeni bir login akışı açar ve
+      `/login?flow=<id>` adresine geri yollar. Sayfa akışı `getFlow` ile okur ve formu çizer.
+    why: >-
+      Form durumu ve CSRF koruması Kratos'ta tutulur. Frontend yalnız formu çizer ve gönderir.
+    cost: >-
+      Akış 10 dakikada dolar, başka tarayıcıya ait olabilir veya silinebilir.
+      `classifyFlowError` her durumda ne yapılacağını tek yerden söyler.
+    terms: [self-service-flow, csrf]
+    file: web/src/lib/kratosFlow.js
+    code: |
+      # Yeni akış: tarayıcı Kratos'a gider, Kratos ?flow= ile /login'e geri yollar
+      export const browserFlowUrl = (kind) => `${KRATOS_URL}/self-service/${kind}/browser`
+
+      export async function getFlow(kind, id) {
+        const res = await fetch(`${KRATOS_URL}/self-service/${kind}/flows?id=${encodeURIComponent(id)}`, {
+          credentials: 'include',
+        })
+      }
+
+  - node: kratos
+    edge: [login, kratos]
+    aux: [kdb]
+    auxEdges: [[kratos, kdb]]
+    title: "Şifre adımı: oturum AAL1 açılır"
+    what: >-
+      Form `method: 'password'` ile Kratos'a gönderilir. Kratos şifreyi kendi veritabanındaki hash ile
+      karşılaştırır. Doğruysa oturum açar ve cookie yazar. Bu oturum AAL1'dir.
+    why: >-
+      Şifre hash'i, deneme koruması ve oturum yönetimi hazır gelir. Assay bu kodu yazmaz ve bakımını yapmaz.
+    cost: >-
+      Kratos'un akış ve hata modeli öğrenilmelidir. Sürüm yükseltmede davranış değişebilir.
+    terms: [session, aal]
+    file: web/src/pages/Login.jsx
+    code: |
+      const { ok, status, body } = await submitFlow('login', flow.id, {
+        method: 'password',
+        identifier: email,
+        password,
+        csrf_token: csrfOf(flow),
+      })
+
+  - node: portfolio
+    edge: [login, portfolio]
+    title: "Frontend ikinci adımın seçeneklerini sorar"
+    what: >-
+      Sayfa `/api/auth/options` ucunu çağırır. Cevap: 2FA zorunlu mu ve hangi kanal açık (e-posta).
+    why: >-
+      Kullanıcı bu noktada AAL1'dir. Bu yüzden `KratosMiddleware` bu yolu atlar. Dönen bilgi hassas değildir.
+    cost: >-
+      2FA ayarı iki yerde okunur: Kratos'ta ve portfolio-service'te. Değerler aynı ortam değişkeninden gelir.
+    terms: [mfa]
+    file: portfolio-service/Controllers/AuthOptionsController.cs
+    code: |
+      [Route("api/auth/options")]
+      public IActionResult Get()
+      {
+          return Ok(new
+          {
+              mfaRequired = a.MfaRequired,
+              channels = new { email = a.EmailOtpEnabled },
+          });
+      }
+
+  - node: smtp
+    edge: [kratos, smtp]
+    title: "Kod e-postaya gönderilir"
+    what: >-
+      Sayfa `aal=aal2&via=email` ile yeni bir login akışı açar ve `method: 'code'` gönderir.
+      Kratos'un courier'ı kodu SMTP ile yollar. Kod 10 dakika geçerlidir.
+    why: >-
+      Kod yalnız ikinci faktördür. Şifresiz giriş kapalıdır: Kratos'ta ikisi aynı anda açılamaz.
+    cost: >-
+      E-posta teslimatına bağımlıdır. Dev ortamında mailler `mailpit`'e düşer (localhost:8025).
+    terms: [otp, courier]
+    file: kratos/kratos.yml
+    code: |
+      methods:
+        password:
+          enabled: true
+        code:   # OTP yalnızca 2. faktör; şifresiz giriş kapalı
+          mfa_enabled: true
+          passwordless_enabled: false
+          config:
+            lifespan: 10m
+
+  - node: kratos
+    edge: [login, kratos]
+    title: "Kod girilir: oturum AAL2 olur"
+    what: >-
+      Kullanıcı kodu girer. Sayfa `method: 'code'` ve kodu Kratos'a gönderir. Kod doğruysa oturum AAL2'ye yükselir.
+    why: >-
+      Şifre çalınsa bile e-posta kutusuna erişimi olmayan kişi panele giremez.
+    cost: >-
+      Her girişte e-posta beklenir. Kod gelmezse "yeniden gönder" `resend: 'code'` ile çalışır.
+    terms: [aal, mfa]
+    file: web/src/pages/Login.jsx
+    code: |
+      const { ok, status, body } = await submitFlow('login', otpFlow.id, {
+        method: 'code',
+        code: value,
+        identifier: otpEmail,
+        csrf_token: csrfOf(otpFlow),
+      })
+
+  - node: portfolio
+    edge: [portfolio, kratos]
+    title: "Her API isteğinde oturum yeniden sorulur"
+    what: >-
+      Oturum 8 saat yaşar ve tarayıcı kapanınca silinir. Şifre değişince diğer cihazlardaki oturumlar kapanır.
+      AAL1 oturumla gelen API isteğine backend 403 `aal2_required` döner.
+    why: >-
+      Kratos v1.2 AAL2 zorunluluğunu `whoami`'de kendisi uygulamıyor. Bu yüzden kontrol `KratosMiddleware`'de.
+    cost: >-
+      Zorunluluk Kratos'ta değil Assay kodunda. Yeni bir servis eklenirse aynı kontrol orada da gerekir.
+    terms: [session, aal]
+    file: kratos/kratos.yml
+    code: |
+      session:
+        lifespan: 8h
+        cookie:
+          persistent: false   # tarayıcı kapanınca cookie silinsin
+        whoami:
+          required_aal: highest_available
+
+      settings:
+        after:
+          password:
+            hooks:
+              - hook: revoke_active_sessions
+
+  - node: kdb
+    edge: [kratos, kdb]
+    title: "Şema, Kratos başlamadan kurulur"
+    what: >-
+      `kratos-migrate` servisi `migrate sql -e --yes` çalıştırır ve çıkar.
+      `kratos` servisi ancak bu iş başarıyla bitince başlar.
+    why: >-
+      Kratos'un tabloları sürüme göre değişir. Migration her deploy'da önce çalışır, eksik tabloyla başlanmaz.
+    cost: >-
+      Migration başarısız olursa Kratos hiç başlamaz ve giriş tamamen durur.
+    terms: [migration, depends-on]
+    file: docker-compose.yml
+    code: |
+      kratos-migrate:
+        image: oryd/kratos:v1.2.0
+        command: migrate sql -e --yes
+        restart: on-failure
+
+      kratos:
+        depends_on:
+          kratos-migrate:
+            condition: service_completed_successfully

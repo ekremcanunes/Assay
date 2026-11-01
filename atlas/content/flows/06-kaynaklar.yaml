@@ -1,0 +1,144 @@
+id: kaynaklar
+no: "06"
+group: veri
+eyebrow: "Akış 06 · Veri kaynakları · Dış API'ler"
+title: "Veri *nereden* geliyor?"
+lede: >-
+  Assay kendi piyasa verisini üretmez. Üç ücretsiz kaynaktan alır ve her birini tek bir iş için kullanır:
+  Yahoo fiyat, Twelve Data liste, Frankfurter döviz.
+stats:
+  - { n: 3, l: "dış kaynak" }
+  - { n: 0, l: "ücretli plan" }
+  - { n: 1, l: "API anahtarı" }
+  - { n: 6, l: "adım" }
+
+lanes:
+  - { id: ext, label: "DIŞ KAYNAKLAR", tone: ext }
+  - { id: app, label: "MARKET-SERVICE · İSTEMCİLER", tone: app }
+  - { id: data, label: "MARKET-SERVICE · SONUÇ", tone: data }
+
+nodes:
+  - { id: yahoo, lane: ext, col: 0, title: "Yahoo Finance", sub: "v8 chart · anahtarsız", icon: globe }
+  - { id: twelve, lane: ext, col: 1, title: "Twelve Data", sub: "liste · API anahtarı", icon: globe }
+  - { id: frank, lane: ext, col: 2, title: "Frankfurter", sub: "kur · anahtarsız", icon: globe }
+  - { id: yclient, lane: app, col: 0, title: "YahooFinanceClient", sub: "fiyat · mum · kapanış", icon: code }
+  - { id: tclient, lane: app, col: 1, title: "TwelveDataClient", sub: "BIST + US listesi", icon: code }
+  - { id: fclient, lane: app, col: 2, title: "FrankfurterClient", sub: "USD/TRY · seri", icon: code }
+  - { id: ms, lane: data, col: 0, title: "MarketService", sub: "hisse · altın · döviz", icon: calc }
+  - { id: instruments, lane: data, col: 1, title: "Instruments", sub: "Postgres · katalog", icon: db }
+
+edges:
+  - [yahoo, yclient]
+  - [twelve, tclient]
+  - [frank, fclient]
+  - [yclient, ms]
+  - [fclient, ms]
+  - [tclient, instruments]
+
+steps:
+  - node: yahoo
+    edge: null
+    title: "Yahoo: fiyat ve geçmiş"
+    what: >-
+      Hisse fiyatı, mum ve kapanış Yahoo'nun `v8/finance/chart` ucundan gelir. BIST için `SYMBOL.IS`,
+      ABD için `SYMBOL` istenir. Fiyat hissenin kendi para biriminde döner.
+    why: >-
+      Yahoo tüm BIST hisselerini ücretsiz ve TRY olarak verir. Twelve Data'nın ücretsiz planı çoğunu vermez.
+    cost: >-
+      Resmî bir API değildir. Tarayıcı `User-Agent`'ı gerekir; Yahoo davranışı haber vermeden değiştirebilir.
+    terms: [unofficial-api]
+    file: market-service/Clients/YahooFinanceClient.cs
+    code: |
+      var url = $"https://query1.finance.yahoo.com/v8/finance/chart/{Uri.EscapeDataString(yahooSymbol)}?interval=1d&range=1d";
+      # Yahoo varsayılan istemcileri engeller; tarayıcı User-Agent gerekli
+
+  - node: yclient
+    edge: [yahoo, yclient]
+    title: "Eksik veri sessizce düzeltilir"
+    what: >-
+      `previousClose` boş gelirse `chartPreviousClose` kullanılır. Tatil ve durdurma günlerinde boş gelen mum atlanır.
+      Seans saatleri `currentTradingPeriod` alanından okunur.
+    why: >-
+      Yahoo cevabı her gün aynı alanları doldurmaz. İstemci bu boşlukları tek yerde kapatır.
+    cost: >-
+      Yedek alan da boşsa günlük değişim hesaplanamaz ve ekranda boş kalır.
+    terms: [ohlc]
+    file: market-service/Clients/YahooFinanceClient.cs
+    code: |
+      # previousClose bazen null döner; chartPreviousClose yedek
+      # Seans sınırları: currentTradingPeriod.regular { start, end } (Unix saniye)
+      # Tatil/durdurma barlarında OHLC null gelir → mum atlanır
+
+  - node: tclient
+    edge: [twelve, tclient]
+    title: "Twelve Data: yalnız enstrüman listesi"
+    what: >-
+      Twelve Data'dan yalnız borsa listeleri çekilir: `/stocks` (BIST, NASDAQ, NYSE) ve `/etfs` (NASDAQ, NYSE).
+      Fiyat için kullanılmaz.
+    why: >-
+      Ücretsiz plan BIST hisselerinin çoğunu fiyatlamaz. Ama Türkçe adlı, düzgün bir sembol listesi verir.
+    cost: >-
+      API anahtarı URL'de gider; bu yüzden URL loglanmaz. Hata HTTP 200 içinde `code` alanıyla döner, ayrıca kontrol edilir.
+    terms: [api-key]
+    file: market-service/Clients/TwelveDataClient.cs
+    code: |
+      var url = $"https://api.twelvedata.com/{kind}?exchange={Uri.EscapeDataString(exchange)}&apikey={_apiKey}";
+      # Twelve Data hatayı (limit, geçersiz anahtar) HTTP 200 + {"code","message"} ile döner.
+      # URL loglanmaz: API anahtarını içerir.
+
+  - node: fclient
+    edge: [frank, fclient]
+    title: "Frankfurter: döviz kuru"
+    what: >-
+      USD, EUR gibi kurların TRY karşılığı Frankfurter'dan gelir. Anahtar gerekmez.
+    why: >-
+      Ücretsiz ve limitsizdir. Tarihli seri de verir; geçmiş tarihli alımlarda kullanılır.
+    cost: >-
+      Günlük referans kurdur, gün içinde değişmez. İstenen gün tatilse önceki iş gününün kuru döner.
+    terms: [reference-rate]
+    file: market-service/Clients/FrankfurterClient.cs
+    code: |
+      $"https://api.frankfurter.dev/v2/rates?base={baseCurrency}&quotes=TRY"
+
+      # v1 zaman serisi: {"rates":{"2026-08-07":{"TRY":47.706}, ...}} — hafta sonları atlanır.
+      $"https://api.frankfurter.dev/v1/{start:yyyy-MM-dd}..{end:yyyy-MM-dd}?base={baseCurrency}&symbols=TRY"
+
+  - node: ms
+    edge: [yclient, ms]
+    aux: [fclient]
+    auxEdges: [[fclient, ms]]
+    title: "Gram altın iki kaynaktan hesaplanır"
+    what: >-
+      Altın fiyatı Yahoo'nun `GC=F` (USD/ons) değeridir. Bu değer ons başına gram sayısına bölünür ve
+      Frankfurter'ın USD/TRY kuruyla çarpılır.
+    why: >-
+      Türk kullanıcı altını gram ve TL ile düşünür. Gram TL'yi doğrudan veren ücretsiz bir kaynak yok.
+    cost: >-
+      İstanbul piyasasındaki gram fiyatından sapar: iki ölçümde %0,13 ve %0,54. Fark piyasanın kendi primidir, hesap hatası değil.
+    terms: [troy-ounce]
+    file: market-service/Services/MarketService.cs
+    code: |
+      private const decimal GramsPerOunce = 31.1034768m;
+
+      var quote = await _yahooClient.GetQuoteAsync("GC=F");
+      var usdTryRate = await UsdTryRateAsync();   # Frankfurter
+      var usdPerGram = quote.Price / GramsPerOunce;
+      var tryPerGram = usdPerGram * usdTryRate.Value;
+
+  - node: instruments
+    edge: [tclient, instruments]
+    title: "Liste veritabanına, arama belleğe"
+    what: >-
+      Twelve Data listesi `Instruments` tablosuna yazılır ve servis açılınca belleğe yüklenir.
+      Kullanıcı araması bu bellek listesinde yapılır.
+    why: >-
+      Arama her tuşta dış kaynağa gitmez; hızlıdır ve kredi harcamaz. Türkçe karakterler normalize edilir ("koc" = "Koç").
+    cost: >-
+      Yeni halka arz edilen hisse ancak bir sonraki senkrondan sonra aranabilir (bkz. Akış 08).
+    terms: [normalization]
+    file: market-service/Services/SymbolSearchService.cs
+    code: |
+      # Arama bellekteki enstrüman listesinde yapılır; Twelve Data'ya ve veritabanına gidilmez.
+      public class SymbolSearchService(InstrumentCatalog catalog) : ISymbolSearchService
+
+      # Diakritik-duyarsız: "Türk Hava" == "turk hava", "Koç" == "koc"

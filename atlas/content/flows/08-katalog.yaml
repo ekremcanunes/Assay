@@ -1,0 +1,142 @@
+id: katalog
+no: "08"
+group: veri
+eyebrow: "Akış 08 · Enstrüman kataloğu · Arka plan işi"
+title: "Hangi hisseler *aranabilir?*"
+lede: >-
+  Aranabilen hisse ve ETF listesi her sabah Twelve Data'dan yenilenir. Liste veritabanında tutulur,
+  aramada bellekten okunur. Senkron yalnız farkı yazar ve hiçbir satırı silmez.
+stats:
+  - { n: 5, l: "kaynak liste" }
+  - { n: 1, l: "senkron / gün" }
+  - { n: 0, l: "silinen satır" }
+  - { n: 8, l: "kural" }
+
+lanes:
+  - { id: ext, label: "TWELVE DATA", tone: ext }
+  - { id: app, label: "MARKET-SERVICE · ARKA PLAN", tone: app }
+  - { id: data, label: "POSTGRES · BELLEK", tone: data }
+
+nodes:
+  - { id: td, lane: ext, col: 1, title: "Twelve Data", sub: "/stocks · /etfs", icon: globe }
+  - { id: job, lane: app, col: 0, title: "InstrumentSyncJob", sub: "cron · 06:00 TR", icon: clock }
+  - { id: syncer, lane: app, col: 1, title: "InstrumentSyncer", sub: "kurallar 1–8", icon: gear }
+  - { id: catalog, lane: app, col: 2, title: "InstrumentCatalog", sub: "bellek · arama", icon: bolt }
+  - { id: state, lane: data, col: 0, title: "InstrumentSyncState", sub: "son senkron", icon: db }
+  - { id: table, lane: data, col: 1, title: "Instruments", sub: "Market + Symbol", icon: db }
+
+edges:
+  - [job, syncer]
+  - [job, state]
+  - [td, syncer]
+  - [syncer, table]
+  - [syncer, catalog]
+
+steps:
+  - node: job
+    edge: null
+    aux: [state]
+    auxEdges: [[job, state]]
+    title: "Her sabah 06:00'da çalışır"
+    what: >-
+      `InstrumentSyncJob` bir arka plan servisidir. Cron ifadesi `0 6 * * *`, Türkiye saatine göre.
+      Servis açılınca yalnız planlı bir çalışma kaçırıldıysa hemen çalışır.
+    why: >-
+      Liste günde bir kez değişir. Her açılışta senkron yapmak kredi harcar ve deploy'u yavaşlatır.
+    cost: >-
+      Gün içinde halka arz olan hisse ertesi sabaha kadar aranamaz.
+    terms: [cron, hosted-service]
+    file: market-service/Services/InstrumentSyncJob.cs
+    code: |
+      # Senkronu zamanlar: cron (InstrumentSync:Cron, Türkiye saati) geldiğinde ve açılışta yalnızca
+      # bir planlı çalışma kaçırıldıysa InstrumentSyncer'ı çağırır.
+      cron = CronExpression.Parse(configuration["InstrumentSync:Cron"] ?? string.Empty);
+
+      # appsettings.json
+      "Cron": "0 6 * * *"
+
+  - node: syncer
+    edge: [td, syncer]
+    title: "Beş liste çekilir ve süzülür"
+    what: >-
+      BIST, NASDAQ ve NYSE hisseleri ile NASDAQ ve NYSE ETF'leri çekilir. Hisse listesinde tür süzülür;
+      NASDAQ'ın varant, imtiyazlı ve unit sembolleri elenir.
+    why: >-
+      Kullanıcı yalnız alınabilecek, fiyatlanabilecek enstrümanı görür.
+    cost: >-
+      Her liste bir API kredisi harcar. Senkron başına en fazla 5 kredi.
+    terms: [api-key]
+    file: market-service/Services/InstrumentSyncer.cs
+    code: |
+      new("stocks", "BIST",   "BIST", "stock"),
+      new("stocks", "NASDAQ", "US",   "stock"),
+      new("stocks", "NYSE",   "US",   "stock"),
+      new("etfs",   "NASDAQ", "US",   "etf"),
+      new("etfs",   "NYSE",   "US",   "etf"),
+
+  - node: table
+    edge: [syncer, table]
+    title: "Yalnız fark yazılır, satır silinmez"
+    what: >-
+      Yeni satır eklenir, değişen güncellenir, aynı olana dokunulmaz. Listeden düşen satır `IsActive = false` olur.
+    why: >-
+      Eski işlemler bu satırlara bağlı olabilir. Silmek geçmişi bozar; pasife çekmek bozmaz.
+    cost: >-
+      Tablo zamanla pasif satırlarla büyür. Kaybolan semboller prod'da görünsün diye `Warning` loglanır.
+    terms: [upsert, soft-delete]
+    file: market-service/Services/InstrumentSyncer.cs
+    code: |
+      # 4) Ekle / değişeni güncelle / aynıysa dokunma
+      # 5) Başarılı bir kaynağa ait olup bugün gelmeyen aktif satırlar pasife çekilir.
+      # Kaybolanlar prod'da görünsün diye Warning (kural 8); kaynak başına tek satır
+
+  - node: table
+    edge: null
+    title: "Hisse–ETF çakışması: sembol sunulmaz"
+    what: >-
+      Aynı sembol hem hisse hem ETF listesinde gelirse hangisinin doğru olduğu bilinmez.
+      Satır `IsConflict = true` ve pasif yazılır.
+    why: >-
+      Yanlış türle alım yapılmasındansa sembolün hiç sunulmaması daha güvenlidir.
+    cost: >-
+      Satır ancak pazarın tüm kaynakları aynı gün gelip çakışma kalkınca yeniden açılır.
+    terms: [soft-delete]
+    file: market-service/Models/Instrument.cs
+    code: |
+      # Listeden düşünce false olur; satır silinmez
+      public bool IsActive { get; set; }
+
+      # Hisse–ETF çakışması görüldü; pazarın tüm kaynakları aynı gün gelip
+      # çakışma kalkana kadar satır aktif olmaz
+      public bool IsConflict { get; set; }
+
+  - node: catalog
+    edge: [syncer, catalog]
+    title: "Bellek listesi yenilenir"
+    what: >-
+      Değişiklikler tek kayıtta veritabanına yazılır. Ardından son senkron zamanı yazılır ve bellek listesi yeniden yüklenir.
+    why: >-
+      Arama her tuşta veritabanına gitmez. Bellekteki liste anında cevap verir.
+    cost: >-
+      Liste her servis örneğinin belleğinde ayrı tutulur. Servis çoğaltılırsa her örnek ayrı yükler.
+    terms: [in-memory]
+    file: market-service/Services/InstrumentCatalog.cs
+    code: |
+      logger.LogInformation("Instrument catalog loaded: {Count} active instruments", active.Count);
+
+  - node: job
+    edge: [job, state]
+    title: "Başarısız senkron tamamlanmış sayılmaz"
+    what: >-
+      Hiçbir kaynak başarılı değilse (Twelve Data kapalı, limit dolu, anahtar geçersiz) son senkron zamanı yazılmaz.
+      Bir sonraki açılışta veya planlı zamanda yeniden denenir.
+    why: >-
+      Senkron hatası servisi düşürmez. Arama mevcut listeyle çalışmaya devam eder.
+    cost: >-
+      Uzun süren bir kesintide liste eskir ve bunu yalnız loglar söyler.
+    terms: [hosted-service]
+    file: market-service/Services/InstrumentSyncJob.cs
+    code: |
+      # BackgroundService'te yakalanmayan istisna host'u durdurur; senkron hatası servisi düşürmemeli.
+      logger.LogError(ex, "Instrument sync failed");
+      # Son senkron zamanı güncellenmedi; bir sonraki planlı zamanda yeniden denenir.

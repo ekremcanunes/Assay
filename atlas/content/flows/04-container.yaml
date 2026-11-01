@@ -1,0 +1,189 @@
+id: container
+no: "04"
+group: altyapi
+eyebrow: "Akış 04 · Container düzeni · Docker Compose"
+title: "Sunucuda *ne çalışıyor?*"
+lede: >-
+  EC2'de tek bir `docker compose` projesi: altı servis, iki port, sıfır veritabanı container'ı.
+  Hangi servis neden var, birbirini nasıl buluyor, dev ile prod nerede ayrılıyor.
+stats:
+  - { n: 6, l: "servis" }
+  - { n: 2, l: "açık port" }
+  - { n: 0, l: "DB container'ı" }
+  - { n: 3, l: "image (ECR)" }
+
+lanes:
+  - { id: edge, label: "DIŞARI AÇIK · ports", tone: edge }
+  - { id: app, label: "COMPOSE AĞI · expose", tone: app }
+  - { id: ext, label: "COMPOSE DIŞI · TEK SEFERLİK", tone: ext }
+
+nodes:
+  - { id: web, lane: edge, col: 1, title: "web (nginx)", sub: "80 · 443", icon: shield }
+  - { id: kratos, lane: app, col: 0, title: "kratos", sub: "4433 · 4434", icon: user }
+  - { id: portfolio, lane: app, col: 1, title: "portfolio-service", sub: "5001", icon: server }
+  - { id: market, lane: app, col: 2, title: "market-service", sub: "5002", icon: server }
+  - { id: redis, lane: app, col: 3, title: "redis", sub: "6379 · volume yok", icon: bolt }
+  - { id: migrate, lane: ext, col: 0, title: "kratos-migrate", sub: "çalışır ve çıkar", icon: clock }
+  - { id: neon, lane: ext, col: 1, title: "Neon Postgres", sub: "yönetilen DB", icon: db }
+  - { id: ecr, lane: ext, col: 2, title: "Amazon ECR", sub: "image:tag=SHA", icon: box }
+
+edges:
+  - [web, portfolio]
+  - [web, kratos]
+  - [portfolio, kratos]
+  - [portfolio, market]
+  - [market, redis]
+  - [portfolio, neon]
+  - [ecr, market]
+  - [migrate, kratos]
+
+steps:
+  - node: web
+    edge: null
+    title: "Dışarıya yalnız web açık"
+    what: >-
+      Yalnız `web` servisi `ports` ile 80 ve 443'ü sunucunun dışına açar. Diğer servisler `expose` ile
+      yalnız compose ağına açıktır.
+    why: >-
+      Saldırı yüzeyi tek kapıya iner. Rate limit ve TLS o kapıda uygulanır.
+    cost: >-
+      Servislere dışarıdan doğrudan erişilemez. Teşhis için sunucuda `docker compose exec` veya dev override gerekir.
+    terms: [expose]
+    file: docker-compose.yml
+    code: |
+      web:
+        image: ${ECR_REGISTRY:-local}/assay/web:${IMAGE_TAG:-dev}
+        ports:
+          - "80:80"
+          - "443:443"
+
+      portfolio-service:
+        expose:
+          - "5001"
+
+  - node: portfolio
+    edge: [web, portfolio]
+    aux: [kratos]
+    auxEdges: [[web, kratos]]
+    title: "Servisler birbirini adla bulur"
+    what: >-
+      Compose projeye bir ağ kurar. Servis adı o ağda alan adı gibi çözülür. Adresler ortam değişkeniyle verilir:
+      `http://market-service:5002`, `http://kratos:4433`.
+    why: >-
+      IP adresi yazılmaz. Container yeniden başlayıp başka IP alsa da ad aynı kalır.
+    cost: >-
+      Adlar yalnız compose ağı içinde çözülür. Servis başka bir sunucuya taşınırsa adresler değişir.
+    terms: [service-dns, env-var]
+    file: docker-compose.yml
+    code: |
+      portfolio-service:
+        environment:
+          - ServiceUrls__MarketService=http://market-service:5002
+          - Kratos__BaseUrl=http://kratos:4433
+        depends_on:
+          - market-service
+          - kratos
+
+  - node: redis
+    edge: [market, redis]
+    title: "Redis'in volume'u yok"
+    what: >-
+      `redis:alpine` hiçbir volume bağlamadan çalışır. Container yeniden başlarsa cache boşalır.
+    why: >-
+      Redis yalnız cache. Kaybolan kayıt bir sonraki istekte kaynaktan yeniden çekilir. Kalıcı veri Postgres'tedir.
+    cost: >-
+      Restart sonrası ilk istekler yavaşlar ve Yahoo'ya kısa süre daha çok istek gider.
+    terms: [volume]
+    file: docker-compose.yml
+    code: |
+      redis:
+        image: redis:alpine
+        logging: *default-logging
+        expose:
+          - "6379"
+        # volumes: yok — bilinçli
+
+  - node: neon
+    edge: [portfolio, neon]
+    title: "Veritabanı compose'un dışında"
+    what: >-
+      Postgres bir container değil. Neon'un yönetilen Postgres'i kullanılır. Bağlantı metni ortam değişkeniyle gelir.
+    why: >-
+      Yedek, sürüm yükseltme ve disk yönetimi sağlayıcıdadır. EC2 silinse de veri kalır.
+    cost: >-
+      Her sorgu internet üzerinden gider ve gecikme ekler. Sağlayıcıya bağımlılık oluşur.
+    terms: [managed-db, env-var]
+    file: portfolio-service/Controllers/SystemController.cs
+    code: |
+      # Yalnız sağlayıcı adı: Neon host'ları "*.neon.tech" ile biter
+      private static string ProviderOf(string? connectionString)
+      {
+          return host.EndsWith(".neon.tech", StringComparison.OrdinalIgnoreCase)
+              ? "Neon Postgres" : "PostgreSQL";
+      }
+
+  - node: market
+    edge: [ecr, market]
+    title: "Image prod'da ECR'dan, dev'de kaynaktan"
+    what: >-
+      `docker-compose.yml` image'ı ECR adresinden ve SHA tag'iyle tanımlar. Dev'de compose
+      `docker-compose.override.yml`'ı otomatik okur ve image'ı kaynaktan build eder, portları açar.
+    why: >-
+      Aynı compose dosyası iki ortamda çalışır. Farklar tek bir override dosyasında toplanır.
+    cost: >-
+      Prod'da override dosyası da sunucuda durur. Bu yüzden her komut `-f docker-compose.yml` ile verilmelidir.
+    terms: [image, override-file, registry]
+    file: docker-compose.override.yml
+    code: |
+      # Compose bu dosyayı OTOMATİK okur.
+      # prod'da MUTLAKA "docker compose -f docker-compose.yml"
+      services:
+        market-service:
+          build: ./market-service
+          ports:
+            - "5002:5002"
+
+  - node: kratos
+    edge: [migrate, kratos]
+    title: "Yeniden başlatma politikası yalnız Kratos'ta"
+    what: >-
+      `kratos-migrate` `on-failure`, `kratos` `unless-stopped` taşır. Diğer servislerde `restart` ayarı yok.
+    why: >-
+      Migration hata verirse tekrar denenir. Kratos çökerse kendiliğinden kalkar.
+    cost: >-
+      `restart` ayarı olmayan bir servis çökerse durmuş kalır. Bir sonraki deploy'a veya elle başlatmaya kadar kapalıdır.
+    terms: [restart-policy, depends-on]
+    file: docker-compose.yml
+    code: |
+      kratos-migrate:
+        command: migrate sql -e --yes
+        restart: on-failure
+
+      kratos:
+        restart: unless-stopped
+
+      market-service:   # restart: yok
+
+  - node: web
+    edge: null
+    title: "Ayar dosyaları dışarıdan bağlanır"
+    what: >-
+      `web` iki bind mount alır: nginx prod ayarı ve TLS sertifikaları. İkisi de salt okunur (`:ro`).
+      Dev override bu mount'ları ve 443'ü tamamen kaldırır.
+    why: >-
+      Sertifika image'a gömülmez. `deploy.sh` onu Secrets Manager'dan alıp `./certs`'e yazar.
+    cost: >-
+      Dosya sunucuda yoksa nginx başlamaz. Dev'de `!override` söz dizimi bilinmeden okunamaz.
+    terms: [bind-mount]
+    file: docker-compose.yml
+    code: |
+      web:
+        volumes:
+          - ./web/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
+          - ./certs:/etc/nginx/certs:ro
+
+      # docker-compose.override.yml
+      web:
+        ports: !override
+          - "80:80"
+        volumes: !override []

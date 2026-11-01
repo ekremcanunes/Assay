@@ -1,0 +1,169 @@
+id: turetilen
+no: "09"
+group: veri
+eyebrow: "Akış 09 · Türetilen veri · Hesaplar"
+title: "Ham veriden *ne üretiyoruz?*"
+lede: >-
+  Veritabanında yalnız işlemler ve miktarlar durur. Ekrandaki K/Z, kategori payı, piyasa nabzı ve
+  fiyat uyarısı bu ham veriden hesaplanır. Bir kısmı serviste, bir kısmı tarayıcıda.
+stats:
+  - { n: 0, l: "saklanan fiyat" }
+  - { n: 2, l: "sunucu hesabı" }
+  - { n: 4, l: "tarayıcı hesabı" }
+  - { n: 7, l: "adım" }
+
+lanes:
+  - { id: client, label: "TARAYICIDA HESAPLANAN", tone: client }
+  - { id: app, label: "PORTFOLIO-SERVICE'TE HESAPLANAN", tone: app }
+  - { id: data, label: "HAM VERİ", tone: data }
+
+nodes:
+  - { id: cat, lane: client, col: 1, title: "Kategori özeti", sub: "portfolioCategories", icon: chart }
+  - { id: pulse, lane: client, col: 2, title: "Piyasa ekranı", sub: "nabız · seans", icon: chart }
+  - { id: dev, lane: client, col: 3, title: "Fiyat sapması", sub: "priceDeviation", icon: calc }
+  - { id: avg, lane: app, col: 0, title: "Ortalama maliyet", sub: "alım anında", icon: calc }
+  - { id: pl, lane: app, col: 1, title: "Anlık K/Z", sub: "her istekte", icon: calc }
+  - { id: tx, lane: data, col: 0, title: "Assets · Transactions", sub: "Postgres", icon: db }
+  - { id: price, lane: data, col: 1, title: "Fiyat", sub: "market-service", icon: bolt }
+
+edges:
+  - [tx, avg]
+  - [avg, pl]
+  - [price, pl]
+  - [pl, cat]
+  - [price, pulse]
+  - [price, dev]
+
+steps:
+  - node: tx
+    edge: null
+    title: "Saklanan: işlem, miktar, maliyet"
+    what: >-
+      Portföy veritabanı her varlık için miktarı, ortalama maliyeti ve alış para birimini tutar.
+      Her alım ve satış ayrıca `Transactions`'a yazılır. Fiyat hiçbir yerde saklanmaz.
+    why: >-
+      Fiyat her an değişir ve dışarıdan gelir. Saklanırsa bayatlar; her istekte güncel değer kullanılır.
+    cost: >-
+      Geçmiş bir günün portföy değerini göstermek için o günün fiyatı ayrıca istenmelidir.
+    terms: []
+    file: portfolio-service/Models/Asset.cs
+    code: |
+      # Asset: Symbol, Market, AssetType, Quantity, AvgCostBasis, Currency
+      # Transaction: Type, Amount, Currency, Symbol, Market, Quantity, ...
+
+  - node: avg
+    edge: [tx, avg]
+    title: "Ortalama maliyet alım anında hesaplanır"
+    what: >-
+      Aynı varlığa yeni alım gelince ortalama maliyet ağırlıklı olarak yeniden hesaplanır ve kaydedilir.
+      Farklı para birimiyle ek alım reddedilir.
+    why: >-
+      Maliyet bir kez yazılır ve her okumada yeniden hesaplanmaz. USD ile alınmış hisseye TL eklemek ortalamayı bozardı.
+    cost: >-
+      Formül veya veri hatası kayıtlı değere işler. Düzeltmek için işlemlerden yeniden hesap gerekir.
+    terms: [weighted-average]
+    file: portfolio-service/Services/AssetService.cs
+    code: |
+      # Ağırlıklı ortalama maliyet
+      var oldCost = asset.AvgCostBasis ?? dto.UnitPrice;
+      asset.AvgCostBasis = (asset.Quantity * oldCost + dto.Quantity * dto.UnitPrice)
+                           / (asset.Quantity + dto.Quantity);
+      asset.Quantity += dto.Quantity;
+
+  - node: pl
+    edge: [avg, pl]
+    aux: [price]
+    auxEdges: [[price, pl]]
+    title: "K/Z her istekte yeniden hesaplanır"
+    what: >-
+      Güncel fiyat, varlığın alış para biriminde alınır. Gerçekleşmemiş K/Z = (güncel − ortalama maliyet) × miktar.
+      Yüzde = K/Z ÷ toplam maliyet.
+    why: >-
+      USD ile alınmış hisse USD fiyatla karşılaştırılır. Kur değişimi hissenin performansına karışmaz.
+    cost: >-
+      market-service cevap vermezse varlık `PriceAvailable = false` ile döner. K/Z boş görünür, sayfa düşmez.
+    terms: [unrealized-pl]
+    file: portfolio-service/Services/AssetService.cs
+    code: |
+      decimal? currentUnitPrice = a.Currency == "USD" ? price?.PriceInUsd : price?.PriceInTry;
+      decimal? totalCost = a.Quantity * a.AvgCostBasis.Value;
+      decimal? unrealized = (currentUnitPrice.Value - a.AvgCostBasis.Value) * a.Quantity;
+      decimal? unrealizedPercent = unrealized.Value / totalCost.Value * 100;
+
+  - node: cat
+    edge: [pl, cat]
+    title: "Kategori özeti tarayıcıda"
+    what: >-
+      Hisse, döviz ve altın kartlarının değeri ve K/Z yüzdesi tarayıcıda toplanır.
+      Kategori yüzdesi = (Σ değer − Σ maliyet) ÷ Σ maliyet.
+    why: >-
+      Hesap saf bir fonksiyondur, yeni sunucu ucu gerektirmez. Aynı veriyle iki sayfa da beslenir.
+    cost: >-
+      Yüzdesi olmayan (fiyatı alınamayan) varlık değere katılır ama yüzdeye katılmaz. Kart bunu ayrıca belirtmez.
+    terms: [pure-function]
+    file: web/src/lib/portfolioCategories.js
+    code: |
+      # K/Z %: her varlığın TL maliyeti değer ve yüzdeden geri türetilir,
+      # kategori yüzdesi = (Σdeğer − Σmaliyet) / Σmaliyet. Yüzdesi olmayan varlık
+      # yüzdeye katılmaz ama değere katılır.
+      export function summarizeCategories(holdings, keys) { ... }
+
+      # Kart grafiği: kategorinin temsilci serisi (portföy değeri DEĞİL)
+
+  - node: pulse
+    edge: [price, pulse]
+    title: "Piyasa nabzı: dağılım ve ruh hali"
+    what: >-
+      BIST 30 hisselerinin günlük değişiminden yükselen, düşen ve sabit sayısı ile ortalama çıkarılır.
+      ±0,05 altı "değişmedi" sayılır; ortalama ±1'i aşarsa "güçlü" denir.
+    why: >-
+      Kullanıcı 30 satır okumadan piyasanın yönünü tek bakışta görür.
+    cost: >-
+      Ortalama ağırlıksızdır: küçük ve büyük şirket aynı etkiye sahiptir. Endeksin kendisiyle aynı yönü göstermeyebilir.
+    terms: [pure-function]
+    file: web/src/lib/marketPulse.js
+    code: |
+      const FLAT = 0.05
+
+      export function moodOf(avg) {
+        if (avg > 1) return 'strongUp'
+        if (avg > FLAT) return 'up'
+        if (avg < -1) return 'strongDown'
+        if (avg < -FLAT) return 'down'
+        return 'flat'
+      }
+
+  - node: pulse
+    edge: [price, pulse]
+    title: "Seans açık mı: hüküm tarayıcıda"
+    what: >-
+      Backend, Yahoo'nun seans başlangıç ve bitişini verir. "Açık mı" hükmü tarayıcıda, anlık saatle verilir.
+    why: >-
+      Piyasa özeti 5 dakika cache'te kalır. Hüküm orada verilseydi seans kapandıktan sonra da "açık" görünebilirdi.
+    cost: >-
+      Resmî tatil günündeki davranış henüz doğrulanmadı (BACKLOG'da).
+    terms: [ttl]
+    file: web/src/lib/marketSession.js
+    code: |
+      # Backend BIST 100 satırında Yahoo'nun son/şimdiki seans sınırlarını (sessionStart/End)
+      # ve son işlem zamanını (asOf) verir. Açık/kapalı hükmü burada, anlık saatle verilir:
+      # overview 5 dk önbellekte kalır, hüküm orada verilseydi bayat olabilirdi.
+      export function sessionOf(index, now = new Date()) { ... }
+
+  - node: dev
+    edge: [price, dev]
+    title: "Girilen fiyat gerçekle karşılaştırılır"
+    what: >-
+      Alım formunda girilen birim fiyat, o günün gerçek fiyatıyla karşılaştırılır.
+      %5 üstü sapmada uyarı gösterilir, %20 üstünde kayıttan önce onay istenir.
+    why: >-
+      Formülün gerçek piyasaya göre gürültüsü yaklaşık %0,5'tir. %5 eşiği bunun 10 katıdır; yanlış alarm vermez.
+    cost: >-
+      Referans fiyat yoksa (tatil, eski tarih) karşılaştırma yapılmaz ve uyarı çıkmaz.
+    terms: []
+    file: web/src/lib/priceDeviation.js
+    code: |
+      # Eşikler spec §3'teki ölçüme dayanıyor: formülün gerçek piyasaya göre gürültü
+      # tabanı ~%0,5. Sessizlik eşiği %5 = gürültünün 10 katı.
+      export const DEVIATION_WARN = 0.05
+      export const DEVIATION_CONFIRM = 0.20
