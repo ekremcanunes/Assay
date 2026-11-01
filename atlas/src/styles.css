@@ -1,0 +1,76 @@
+/* Atlas token'ları — onaylanan mockup'tan (flow-style-v2). Yalnız koyu tema. */
+:root {
+  --bg: #070B14;
+  --bg2: #0B1120;
+  --card: #0F172A;
+  --line: #1E293B;
+  --line2: #273449;
+  --ink: #E2E8F0;
+  --ink2: #C6D0DE;
+  --mute: #8B9BB4;
+  --dim: #56657E;
+  --cob: #3B82F6;
+  --cob2: #60A5FA;
+  --em: #10B981;
+  --amb: #FBBF24;
+  --ros: #F43F5E;
+  --done: #2B4A7A;
+  --lane-gh: #A78BFA;
+  --lane-aws: #FB923C;
+  --lane-ec2: #34D399;
+  --sans: "Plus Jakarta Sans Variable", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; }
+
+body {
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  background:
+    radial-gradient(900px 500px at 85% -10%, rgba(59, 130, 246, .18), transparent 60%),
+    radial-gradient(700px 500px at -10% 110%, rgba(16, 185, 129, .10), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+a { color: var(--cob2); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+code {
+  font-family: var(--mono);
+  font-size: .9em;
+  color: #93C5FD;
+}
+
+.wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 28px 28px 48px;
+}
+
+.h1 {
+  margin: 8px 0 6px;
+  font-size: 44px;
+  line-height: 1.05;
+  letter-spacing: -.035em;
+  font-weight: 800;
+}
+
+@media (max-width: 767px) {
+  .wrap { padding: 20px 16px 40px; }
+  .h1 { font-size: 32px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0s !important;
+  }
+}
