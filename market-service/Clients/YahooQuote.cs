@@ -10,4 +10,9 @@ public record YahooQuote(
     decimal? Week52Low,
     long? Volume,
     string Currency,
-    string Exchange);
+    string Exchange,
+    // Son işlemin gerçek zamanı (regularMarketTime) — "fiyatlar şu saat itibarıyla"
+    DateTimeOffset? MarketTime = null,
+    // Son/şimdiki seansın sınırları (currentTradingPeriod.regular). Hafta sonu son işlem gününü gösterir.
+    DateTimeOffset? SessionStart = null,
+    DateTimeOffset? SessionEnd = null);

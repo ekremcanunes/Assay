@@ -100,6 +100,9 @@ public class MarketOverviewService : IMarketOverviewService
                 Week52High = q.Week52High,
                 Week52Low = q.Week52Low,
                 Volume = q.Volume,
+                AsOf = q.MarketTime,
+                SessionStart = q.SessionStart,
+                SessionEnd = q.SessionEnd,
             };
         }, _ => CacheTtl.Live);
         if (quote == null) return null;

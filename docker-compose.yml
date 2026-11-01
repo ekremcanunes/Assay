@@ -93,6 +93,10 @@ services:
       - Serilog__MinimumLevel__Override__System=${LOG_LEVEL_FRAMEWORK:-Warning}
       - Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore=${LOG_LEVEL_EFCORE:-Warning}
       - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
+      # Panel durum şeridi (/api/system/status): nerede çalıştığımız — prod deploy bunları set eder
+      - DEPLOY_ENV=${DEPLOY_ENV:-local}
+      - DEPLOY_REGION=${DEPLOY_REGION:-}
+      - APP_VERSION=${IMAGE_TAG:-dev}
       - ServiceUrls__MarketService=http://market-service:5002
       - Kratos__BaseUrl=http://kratos:4433
       # Kratos'a giden AUTH_REQUIRED_AAL ile ayni deger: /api/auth/options frontend'e 2. adim seceneklerini soyler.

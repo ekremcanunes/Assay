@@ -37,6 +37,11 @@ public class YahooFinanceClient(HttpClient httpClient, ILogger<YahooFinanceClien
             decimal? prevClose = TryGetDecimal(meta, "previousClose", out var pc) ? pc
                 : TryGetDecimal(meta, "chartPreviousClose", out var cpc) ? cpc : null;
 
+            // Seans sınırları: currentTradingPeriod.regular { start, end } (Unix saniye)
+            JsonElement session = default;
+            var hasSession = meta.TryGetProperty("currentTradingPeriod", out var period)
+                && period.TryGetProperty("regular", out session);
+
             return new YahooQuote(
                 Price: price,
                 PreviousClose: prevClose,
@@ -46,7 +51,10 @@ public class YahooFinanceClient(HttpClient httpClient, ILogger<YahooFinanceClien
                 Week52Low: TryGetDecimal(meta, "fiftyTwoWeekLow", out var wl) ? wl : null,
                 Volume: meta.TryGetProperty("regularMarketVolume", out var v) && v.ValueKind == JsonValueKind.Number ? v.GetInt64() : null,
                 Currency: meta.TryGetProperty("currency", out var c) ? c.GetString() ?? "USD" : "USD",
-                Exchange: meta.TryGetProperty("exchangeName", out var e) ? e.GetString() ?? string.Empty : string.Empty);
+                Exchange: meta.TryGetProperty("exchangeName", out var e) ? e.GetString() ?? string.Empty : string.Empty,
+                MarketTime: TryGetUnixTime(meta, "regularMarketTime"),
+                SessionStart: hasSession ? TryGetUnixTime(session, "start") : null,
+                SessionEnd: hasSession ? TryGetUnixTime(session, "end") : null);
         }
         catch (Exception ex)
         {
@@ -191,6 +199,11 @@ public class YahooFinanceClient(HttpClient httpClient, ILogger<YahooFinanceClien
             return ([], string.Empty);
         }
     }
+
+    private static DateTimeOffset? TryGetUnixTime(JsonElement el, string prop) =>
+        el.TryGetProperty(prop, out var p) && p.ValueKind == JsonValueKind.Number
+            ? DateTimeOffset.FromUnixTimeSeconds(p.GetInt64())
+            : null;
 
     private static bool TryGetDecimal(JsonElement el, string prop, out decimal value)
     {

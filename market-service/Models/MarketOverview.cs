@@ -17,6 +17,12 @@ public class MarketQuote
     public decimal? Week52Low { get; set; }
     public long? Volume { get; set; }
 
+    // Yalnız endekslerde dolu (BIST 100 piyasayı temsil eder): son işlemin gerçek zamanı ve seans sınırları.
+    // Açık/kapalı hükmü burada verilmez — kayıt 5 dk önbellekte kalır; tarayıcı anlık saatle karar verir.
+    public DateTimeOffset? AsOf { get; set; }
+    public DateTimeOffset? SessionStart { get; set; }
+    public DateTimeOffset? SessionEnd { get; set; }
+
     // Sparkline için kapanış serisi (kronolojik). Yalnızca endeks ve altın/döviz doldurulur;
     // 30 hisse için ayrı ayrı seri çekmek maliyetli olurdu.
     public List<decimal> Spark { get; set; } = [];
