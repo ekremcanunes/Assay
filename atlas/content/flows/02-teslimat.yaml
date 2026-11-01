@@ -1,0 +1,158 @@
+id: teslimat
+no: "02"
+group: altyapi
+eyebrow: "Akış 02 · Teslimat · CI/CD"
+title: "Kod *prod'a* nasıl çıkar?"
+lede: >-
+  `main-prod`'a yapılan bir push'tan, EC2'de yeni container'ların çalışmasına kadar altı adım.
+  Hiçbir adımda elle müdahale yok. Hiçbir yerde uzun ömürlü AWS anahtarı saklanmıyor.
+stats:
+  - { n: 6, l: "adım" }
+  - { n: 5, l: "AWS servisi" }
+  - { n: 3, l: "image" }
+  - { n: 0, l: "kalıcı anahtar" }
+
+lanes:
+  - { id: github, label: "GitHub", tone: gh }
+  - { id: aws, label: "AWS · kontrol düzlemi", tone: aws }
+  - { id: ec2, label: "AWS · EC2 sunucu", tone: ec2 }
+
+nodes:
+  - { id: push, lane: github, col: 0, title: "git push", sub: "main-prod", icon: git }
+  - { id: act, lane: github, col: 1, title: "GitHub Actions", sub: "build-push.yml", icon: gear }
+  - { id: ecr, lane: aws, col: 1, title: "Amazon ECR", sub: "3 image · tag=SHA", icon: box }
+  - { id: s3, lane: aws, col: 2, title: "Amazon S3", sub: "release.zip", icon: bucket }
+  - { id: cp, lane: aws, col: 3, title: "CodePipeline", sub: "S3 kaynağı → EC2", icon: pipe }
+  - { id: sm, lane: ec2, col: 2, title: "Secrets Manager", sub: ".env + TLS", icon: key }
+  - { id: ec2, lane: ec2, col: 3, title: "EC2 · deploy.sh", sub: "compose pull / up", icon: server }
+
+edges:
+  - [push, act]
+  - [act, ecr]
+  - [act, s3]
+  - [s3, cp]
+  - [cp, ec2]
+  - [sm, ec2]
+  - [ecr, ec2]
+
+steps:
+  - node: push
+    edge: null
+    title: "Push, workflow'u tetikler"
+    what: >-
+      `main-prod`'a yapılan push (merge de bir push'tur) GitHub Actions'taki
+      "Build and Push to ECR" workflow'unu başlatır.
+    why: >-
+      Prod yalnız tek branch'ten çıkar. `test`'e push WSL'deki self-hosted runner'a gider.
+      İki yol karışmaz.
+    cost: >-
+      Yanlış merge doğrudan prod'a gider. Önlem: PR ile birleştirme ve her push'ta CodeQL taraması.
+    terms: [workflow, trigger, self-hosted-runner]
+    file: .github/workflows/build-push.yml
+    code: |
+      on:
+        push:
+          branches: [ main-prod ]
+
+      # test → wsl-deploy.yml (self-hosted)
+      # test, main-prod → codeql.yml
+
+  - node: act
+    edge: [push, act]
+    title: "Actions, AWS'ye OIDC ile girer"
+    what: >-
+      Runner, GitHub'dan kısa ömürlü bir kimlik token'ı alır. AWS'de deploy rolünü bu token ile üstlenir.
+    why: >-
+      Repoda veya GitHub secret'larında uzun ömürlü AWS erişim anahtarı tutulmaz.
+      Token dakikalar içinde geçersizleşir.
+    cost: >-
+      İlk kurulum zordur. IAM trust policy'deki `sub` koşulu branch ile birebir eşleşmeli.
+    terms: [oidc, iam-role, trust-policy]
+    file: .github/workflows/build-push.yml
+    fileNote: "job: build"
+    code: |
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: <deploy rolü>
+          aws-region: ${{ env.AWS_REGION }}
+
+      # anahtar yok — token istek anında üretilir
+
+  - node: ecr
+    edge: [act, ecr]
+    title: "Üç image build edilir, ECR'a gönderilir"
+    what: >-
+      `market-service`, `portfolio-service` ve `web` image'ları build edilir. Tag olarak commit SHA kullanılır.
+    why: >-
+      SHA tag'i her sürümü tekil yapar. EC2'de, CI'da build edilen image'ın byte'ı byte'ına aynısı çalışır.
+    cost: >-
+      `latest` daha basittir ama hangi sürümün çalıştığı bilinmez. Bedel: ECR'da image birikir,
+      lifecycle kuralı gerekir.
+    terms: [image, registry, immutable-deploy]
+    file: .github/workflows/build-push.yml
+    fileNote: "job: build"
+    code: |
+      $ aws ecr get-login-password | docker login $REG
+      $ docker build -t $REG/assay/web:$SHA ./web
+      $ docker push $REG/assay/web:$SHA
+      # aynısı market-service ve portfolio-service için
+
+  - node: s3
+    edge: [act, s3]
+    title: "Sürüm bilgisi S3'e bırakılır"
+    what: >-
+      İkinci job, commit SHA'yı `release.env`'e yazar. `run.sh` ile zip'leyip S3'e yükler.
+    why: >-
+      CodePipeline, ECR'a gelen SHA tag'li image'larla tetiklenmiyordu.
+      S3'teki nesnenin değişmesi pipeline'ı güvenilir şekilde tetikler.
+    cost: >-
+      Zincire bir halka daha eklenir: bucket, zip ve onu okuyan betik. Karşılığında tetikleme kesinleşir.
+    terms: [artifact, source-action]
+    file: .github/workflows/build-push.yml
+    fileNote: "job: release"
+    code: |
+      $ echo "IMAGE_TAG=$GITHUB_SHA" > bundle/release.env
+      $ zip release.zip run.sh release.env
+      $ aws s3 cp release.zip s3://$RELEASE_BUCKET/release.zip
+
+  - node: cp
+    edge: [s3, cp]
+    title: "CodePipeline, sürümü EC2'ye taşır"
+    what: >-
+      Yeni zip pipeline'ı başlatır. EC2 deploy action'ı zip'i sunucuya taşır ve `run.sh`'ı çalıştırır.
+    why: >-
+      GitHub, EC2'ye doğrudan bağlanmaz. Deploy, AWS'nin içinden tetiklenir.
+    cost: >-
+      Hata ayıklama AWS konsoluna taşınır. Bu yüzden `run.sh` girdiyi sıkı doğrular:
+      SHA 40 karakter değilse durur.
+    terms: [pipeline, deploy-action]
+    file: deploy/scripts/run.sh
+    code: |
+      IMAGE_TAG=$(sed -n 's/^IMAGE_TAG=//p' release.env)
+      if [[ ! "$IMAGE_TAG" =~ ^[0-9a-f]{40}$ ]]; then
+        echo "release.env gecersiz" >&2; exit 1
+      fi
+      exec /opt/assay/deploy/scripts/deploy.sh
+
+  - node: ec2
+    edge: [cp, ec2]
+    aux: [sm, ecr]
+    auxEdges: [[sm, ec2], [ecr, ec2]]
+    title: "deploy.sh yeni sürümü ayağa kaldırır"
+    what: >-
+      Secrets Manager'dan `.env` ve TLS sertifikası alınır. ECR'a login olunur.
+      Sonra `compose pull` ve `up -d` çalışır.
+    why: >-
+      Secret diske yalnız deploy anında yazılır. Override dosyası okunmasın diye
+      her komut `-f docker-compose.yml` ile verilir.
+    cost: >-
+      Tek EC2 var. `up -d` container'ları yeniden başlatırken kısa bir kesinti olur.
+      Sıfır kesinti için ikinci sunucu ve yük dengeleyici gerekir.
+    terms: [secrets-manager, docker-compose, override-file]
+    file: deploy/scripts/deploy.sh
+    code: |
+      $ aws secretsmanager get-secret-value --secret-id $SECRET_ID …
+      $ aws ecr get-login-password | docker login $REG
+      $ docker compose -f docker-compose.yml pull
+      $ docker compose -f docker-compose.yml up -d --remove-orphans
+      $ docker compose -f docker-compose.yml ps

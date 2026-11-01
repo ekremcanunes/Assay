@@ -1,0 +1,49 @@
+# Sözlük. Her terim: id (akışlar bununla atıf yapar), term (görünen ad), def (tek-iki cümle tanım).
+- id: workflow
+  term: workflow
+  def: GitHub Actions'ta YAML ile tanımlı, olaylarla tetiklenen otomasyon.
+- id: trigger
+  term: trigger
+  def: Workflow'u başlatan olay. Burada belirli bir branch'e push.
+- id: self-hosted-runner
+  term: self-hosted runner
+  def: Workflow'u GitHub'ın makinesi yerine senin makinende çalıştıran ajan. Assay'da WSL'de çalışır.
+- id: oidc
+  term: OIDC
+  def: Bir servisin başka bir servise kim olduğunu imzalı, kısa ömürlü token ile kanıtladığı kimlik protokolü.
+- id: iam-role
+  term: IAM role
+  def: AWS'de anahtarı olmayan, geçici olarak üstlenilen yetki seti.
+- id: trust-policy
+  term: trust policy
+  def: Bir IAM rolünü kimin, hangi koşulla üstlenebileceğini söyleyen kural.
+- id: image
+  term: image
+  def: Uygulamanın çalışması için gereken her şeyi içeren, değişmez paket. Container bundan başlatılır.
+- id: registry
+  term: registry
+  def: Image'ların saklandığı depo. ECR, AWS'nin private registry'si.
+- id: immutable-deploy
+  term: immutable deploy
+  def: CI'da üretilen artefaktın sunucuda olduğu gibi çalıştırılması. Sunucuda yeniden build yapılmaz.
+- id: artifact
+  term: artifact
+  def: Bir adımın ürettiği ve sonraki adıma devrettiği dosya.
+- id: source-action
+  term: source action
+  def: Pipeline'ı başlatan, değişikliği izlenen kaynak. Burada bir S3 nesnesi.
+- id: pipeline
+  term: pipeline
+  def: Kaynak, derleme ve deploy gibi aşamaları sırayla çalıştıran hat.
+- id: deploy-action
+  term: deploy action
+  def: Pipeline'da artefaktı hedef sunucuya uygulayan aşama.
+- id: secrets-manager
+  term: Secrets Manager
+  def: AWS'de parolaları şifreli tutan, erişimi IAM ile verilen servis.
+- id: docker-compose
+  term: docker compose
+  def: Birden çok container'ı tek YAML dosyasıyla tanımlayıp birlikte yöneten araç.
+- id: override-file
+  term: override dosyası
+  def: Compose'un otomatik okuduğu ikinci dosya. Assay'da dev ortamının farklarını taşır.
