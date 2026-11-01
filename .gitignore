@@ -31,3 +31,6 @@ Thumbs.db
 
 # Postman koleksiyonu (yalnizca lokal, oturum cookie ortam dosyasina girer)
 docs/30-operations/postman/
+
+# Brainstorming mockup oturumlari (superpowers gorsel yardimci)
+.superpowers/

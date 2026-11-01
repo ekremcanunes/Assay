@@ -4,6 +4,18 @@ Sonraya bırakılan işler. Her madde: sorun, neden önemli, seçenekler, öneri
 
 ---
 
+## Atlas değişikliği Assay pipeline'ını tetikliyor
+
+*Eklendi: 2026-11-02 · Bağlam: Atlas (`feat/atlas`, spec `docs/superpowers/specs/2026-11-02-atlas-design.md` §7)*
+
+**Sorun.** `build-push.yml` (`main-prod`) ve `wsl-deploy.yml` (`test`) `paths-ignore` taşımıyor. Yalnız `atlas/` değiştiren bir merge de Assay'ın üç image'ını yeniden build eder ve EC2'ye (veya WSL'e) deploy eder.
+
+**Şu anki etkisi.** Gereksiz build süresi ve ECR'da gereksiz image; deploy sırasında kısa kesinti. Veri kaybı yok.
+
+**Öneri.** İki workflow'a `paths-ignore: [ "atlas/**" ]` eklensin (`codeql.yml`'deki kalıp). Karışık commit'te pipeline yine çalışır. Prod pipeline işi: `PIPELINE-SECURITY.md` okunarak, öğrenme modunda.
+
+---
+
 ## Prod deploy: durum şeridi için ortam değişkenleri
 
 *Eklendi: 2026-10-31 · Bağlam: Piyasa ekranı / durum şeridi*
