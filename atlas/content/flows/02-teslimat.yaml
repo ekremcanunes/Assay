@@ -13,9 +13,10 @@ stats:
   - { n: 0, l: "kalıcı anahtar" }
 
 lanes:
-  - { id: github, label: "GitHub", tone: gh }
-  - { id: aws, label: "AWS · kontrol düzlemi", tone: aws }
-  - { id: ec2, label: "AWS · EC2 sunucu", tone: ec2 }
+  # Etiketler büyük harfle yazılır; CSS çevirmez (tr dilinde "i" → "İ" olur).
+  - { id: github, label: "GITHUB", tone: gh }
+  - { id: aws, label: "AWS · KONTROL DÜZLEMİ", tone: aws }
+  - { id: ec2, label: "AWS · EC2 SUNUCU", tone: ec2 }
 
 nodes:
   - { id: push, lane: github, col: 0, title: "git push", sub: "main-prod", icon: git }
