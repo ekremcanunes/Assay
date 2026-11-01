@@ -9,7 +9,8 @@
   - `DATA-FETCHING.md` — React Query veri çekme kuralları.
   - `PIPELINE-SECURITY.md` — pipeline güvenlik standardı (planlama aşamasında; CI/CD veya güvenlik işine dokunmadan önce oku).
   - `LOGGING.md` — loglama standardı (Serilog, stdout+JSON, seviye politikası, hassas veri yasağı, docker rotasyonu, AWS maliyet kontrolü). Log yazmadan veya log altyapısına dokunmadan önce oku.
-- `docs/20-modules/` — modül tasarımları (`GOLD-MODULE.md` — altın modülü).
+  - `WRITING.md` — yazım standardı (Basit Teknik Türkçe, ASD-STE100 uyarlaması). Standart dokümanı veya agent talimatı yazmadan önce oku.
+- `docs/20-modules/` — modül tasarımları (`GOLD-MODULE.md` — altın modülü; `SCREENS.md` — ekran içeriği ve davranışı, taslak).
 - `docs/30-operations/` — operasyon (`COMMANDS.md` — Docker, Redis, Kratos, psql, EF Core, hata ayıklama sırası).
 - `docs/40-learning/` — öğrenme notları (bağlayıcı değil).
 - `docs/50-planning/` — planlama (`BACKLOG.md` — sonraya bırakılan işler ve seçenekleri; `PLATFORM-ROADMAP.md` — vizyon, ilkeler ve aşama sırası, **yeni iş seçmeden önce oku**).

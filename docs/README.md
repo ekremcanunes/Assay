@@ -20,7 +20,9 @@ Proje dokümanları bu klasörde, numaralı kategori klasörleri altında tutulu
 - [10-standards/DATA-FETCHING.md](10-standards/DATA-FETCHING.md) — React Query veri çekme kuralları. **Web'de veri çeken kod yazmadan önce zorunlu okuma.**
 - [10-standards/PIPELINE-SECURITY.md](10-standards/PIPELINE-SECURITY.md) — Pipeline güvenlik standardı (planlama): kod hangi analiz istasyonlarından geçer, araç seçimi, GitHub Actions/CodePipeline sorumluluk ayrımı, öncelik sırası.
 - [10-standards/LOGGING.md](10-standards/LOGGING.md) — Loglama standardı: stdout+JSON kuralı, seviye politikası, ne loglanmaz, docker rotasyonu, AWS'ye geçiş adımları. **Log yazan veya log altyapısına dokunan değişikliklerde zorunlu okuma.**
+- [10-standards/WRITING.md](10-standards/WRITING.md) — Yazım standardı (Basit Teknik Türkçe, ASD-STE100 uyarlaması): kısa cümle, emir kipi, kural kimliği. **Standart dokümanı veya agent talimatı yazmadan önce zorunlu okuma.**
 - [20-modules/GOLD-MODULE.md](20-modules/GOLD-MODULE.md) — Altın modülü tasarımı.
+- [20-modules/SCREENS.md](20-modules/SCREENS.md) — Ekranların içeriği ve davranışı (taslak; DESIGN.md'den taşınan ham notlar).
 - [30-operations/COMMANDS.md](30-operations/COMMANDS.md) — Komut rehberi: Docker, Redis, Kratos, psql, EF Core, hata ayıklama sırası.
 - [40-learning/DOCKER-LEARNING.md](40-learning/DOCKER-LEARNING.md) — Docker öğrenme notları.
 - [40-learning/LINUX-BASICS.md](40-learning/LINUX-BASICS.md) — Linux temel kavramlar: stdout/stderr, journalctl, konteyner log zinciri.
