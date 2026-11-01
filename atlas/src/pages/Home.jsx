@@ -1,14 +1,11 @@
-import { useState } from 'react'
-import FlowStage from '../components/FlowStage'
-import { getFlow } from '../content'
+import { Link } from 'react-router-dom'
 
-// Geçici: Task 3 kontrolü için sahne. Task 4'te kaldırılır.
+// Geçici: Task 5'te akış listesiyle değişir.
 export default function Home() {
-  const [i, setI] = useState(2)
   return (
     <main className="wrap">
       <h1 className="h1">Atlas</h1>
-      <FlowStage flow={getFlow('teslimat')} stepIndex={i} onSelect={setI} />
+      <Link to="/flow/teslimat">02 · Teslimat →</Link>
     </main>
   )
 }
