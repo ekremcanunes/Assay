@@ -4,63 +4,115 @@ group: veri
 eyebrow: "Akış 09 · Türetilen veri · Hesaplar"
 title: "Ham veriden *ne üretiyoruz?*"
 lede: >-
-  Veritabanında yalnız işlemler ve miktarlar durur. Ekrandaki K/Z, kategori payı, piyasa nabzı ve
-  fiyat uyarısı bu ham veriden hesaplanır. Bir kısmı serviste, bir kısmı tarayıcıda.
+  Portföy veritabanında varlıklar ve işlemler durur; güncel fiyat durmaz. Ekrandaki K/Z, kategori payı,
+  piyasa nabzı ve fiyat uyarısı bu ham veriden hesaplanır. Bir kısmı portfolio-service'te, bir kısmı tarayıcıda.
 stats:
-  - { n: 0, l: "saklanan fiyat" }
-  - { n: 2, l: "sunucu hesabı" }
+  - { n: 0, l: "saklanan güncel fiyat" }
+  - { n: 3, l: "sunucu hesabı" }
   - { n: 4, l: "tarayıcı hesabı" }
-  - { n: 7, l: "adım" }
+  - { n: 8, l: "adım" }
 
 lanes:
-  - { id: client, label: "TARAYICIDA HESAPLANAN", tone: client }
-  - { id: app, label: "PORTFOLIO-SERVICE'TE HESAPLANAN", tone: app }
-  - { id: data, label: "HAM VERİ", tone: data }
+  - { id: pscreen, label: "TARAYICI · PORTFÖY EKRANLARI", tone: client }
+  - { id: pcalc, label: "TARAYICI · PORTFÖY HESAPLARI", tone: client }
+  - { id: app, label: "PORTFOLIO-SERVICE", tone: app }
+  - { id: data, label: "POSTGRES", tone: data }
+  - { id: market, label: "MARKET-SERVICE", tone: app }
+  - { id: mcalc, label: "TARAYICI · PİYASA HESAPLARI", tone: client }
+  - { id: mscreen, label: "TARAYICI · PİYASA BİLEŞENLERİ", tone: client }
 
 nodes:
-  - { id: cat, lane: client, col: 1, title: "Kategori özeti", sub: "portfolioCategories", icon: chart }
-  - { id: pulse, lane: client, col: 2, title: "Piyasa ekranı", sub: "nabız · seans", icon: chart }
-  - { id: dev, lane: client, col: 3, title: "Fiyat sapması", sub: "priceDeviation", icon: calc }
-  - { id: avg, lane: app, col: 0, title: "Ortalama maliyet", sub: "alım anında", icon: calc }
-  - { id: pl, lane: app, col: 1, title: "Anlık K/Z", sub: "her istekte", icon: calc }
-  - { id: tx, lane: data, col: 0, title: "Assets · Transactions", sub: "Postgres", icon: db }
-  - { id: price, lane: data, col: 1, title: "Fiyat", sub: "market-service", icon: bolt }
+  - { id: form, lane: pscreen, col: 0, title: "Alım formu", sub: "sayfa · AddAsset.jsx", icon: browser }
+  - { id: summary, lane: pscreen, col: 2, title: "usePortfolioSummary", sub: "React hook", icon: browser }
+  - { id: cat, lane: pcalc, col: 2, title: "summarizeCategories", sub: "fonksiyon · kategori", icon: chart }
+  - { id: dev, lane: pcalc, col: 3, title: "deviationOf()", sub: "fonksiyon · sapma", icon: calc }
+  - { id: buy, lane: app, col: 0, title: "BuyAsync()", sub: "metot · AssetService", icon: calc }
+  - { id: holdings, lane: app, col: 2, title: "MapToHolding()", sub: "metot · AssetService", icon: calc }
+  - { id: tx, lane: data, col: 0, title: "Transactions", sub: "tablo · işlemler", icon: db }
+  - { id: assets, lane: data, col: 1, title: "Assets", sub: "tablo · varlıklar", icon: db }
+  - { id: price, lane: market, col: 3, title: "market-service", sub: "servis · fiyat, özet", icon: bolt }
+  - { id: pulse, lane: mcalc, col: 2, title: "pulse()", sub: "fonksiyon · nabız", icon: chart }
+  - { id: session, lane: mcalc, col: 3, title: "sessionOf()", sub: "fonksiyon · seans", icon: clock }
+  - { id: panel, lane: mscreen, col: 2, title: "StockPanel", sub: "bileşen · piyasa", icon: browser }
+  - { id: bar, lane: mscreen, col: 3, title: "StatusBar", sub: "bileşen · üst şerit", icon: browser }
 
 edges:
-  - [tx, avg]
-  - [avg, pl]
-  - [price, pl]
-  - [pl, cat]
-  - [price, pulse]
+  - [form, dev]
+  - [form, buy]
+  - [buy, tx]
+  - [buy, assets]
+  - [assets, holdings]
+  - [price, holdings]
+  - [holdings, cat]
+  - [summary, cat]
   - [price, dev]
+  - [price, pulse]
+  - [price, session]
+  - [panel, pulse]
+  - [bar, session]
 
 steps:
-  - node: tx
+  - node: assets
     edge: null
-    title: "Saklanan: işlem, miktar, maliyet"
+    aux: [tx]
+    title: "Saklanan: varlık, miktar, maliyet, işlem"
     what: >-
-      Portföy veritabanı her varlık için miktarı, ortalama maliyeti ve alış para birimini tutar.
-      Her alım ve satış ayrıca `Transactions`'a yazılır. Fiyat hiçbir yerde saklanmaz.
+      `Assets` tablosu her varlık için miktarı, ortalama maliyeti ve alış para birimini tutar.
+      Her alım ve satış ayrıca `Transactions` tablosuna bir satır olarak yazılır.
+      Güncel fiyat bu veritabanında hiç saklanmaz.
     why: >-
-      Fiyat her an değişir ve dışarıdan gelir. Saklanırsa bayatlar; her istekte güncel değer kullanılır.
+      Fiyat her an değişir ve dışarıdan gelir. Saklansaydı bayatlardı. Her istekte market-service'ten güncel değer alınır.
     cost: >-
       Geçmiş bir günün portföy değerini göstermek için o günün fiyatı ayrıca istenmelidir.
     terms: []
     file: portfolio-service/Models/Asset.cs
     code: |
-      # Asset: Symbol, Market, AssetType, Quantity, AvgCostBasis, Currency
-      # Transaction: Type, Amount, Currency, Symbol, Market, Quantity, ...
+      public decimal Quantity { get; set; }
+      # Alışlarda ödenen para birimi (TRY/USD) — AvgCostBasis bu birimdedir
+      public string Currency { get; set; } = "TRY";
+      public decimal? AvgCostBasis { get; set; }
 
-  - node: avg
-    edge: [tx, avg]
+  - id: sapma
+    node: dev
+    edge: [price, dev]
+    aux: [form]
+    auxEdges: [[form, dev]]
+    title: "Girilen fiyat gerçekle karşılaştırılır"
+    what: >-
+      Alım formu (`AddAsset.jsx`) seçilen gün için `usePriceOnDate()` ile referans fiyat ister.
+      İstek `GET /api/market/price-on/…` olarak portfolio-service'e gider; portfolio-service onu market-service'e iletir.
+      Kullanıcı fiyatı elle yazdıysa form `deviationOf(girilen, referans)` çağırır.
+      Sapma %5 ve üstündeyse uyarı gösterilir. %20 ve üstündeyse kayıttan önce onay istenir.
+    why: >-
+      Formülün gerçek piyasaya göre gürültüsü yaklaşık %0,5'tir. %5 eşiği bunun 10 katıdır; yanlış alarm vermez.
+    cost: >-
+      Referans fiyat yoksa (tatil, eski tarih) karşılaştırma yapılmaz ve uyarı çıkmaz.
+    next:
+      - { when: "Fiyat otomatik doldu, kullanıcı değiştirmedi → karşılaştırma yok", to: alim }
+      - { when: "Sapma %20 ve üstü → Kaydet'e basınca önce onay penceresi", to: alim }
+    terms: [pure-function]
+    file: web/src/lib/priceDeviation.js
+    code: |
+      # Eşikler spec §3'teki ölçüme dayanıyor: formülün gerçek piyasaya göre gürültü
+      # tabanı ~%0,5. Sessizlik eşiği %5 = gürültünün 10 katı.
+      export const DEVIATION_WARN = 0.05
+      export const DEVIATION_CONFIRM = 0.20
+
+      const ratio = Math.abs(e - r) / r
+
+  - id: alim
+    node: buy
+    edge: [form, buy]
     title: "Ortalama maliyet alım anında hesaplanır"
     what: >-
-      Aynı varlığa yeni alım gelince ortalama maliyet ağırlıklı olarak yeniden hesaplanır ve kaydedilir.
-      Farklı para birimiyle ek alım reddedilir.
+      Form `POST /api/assets/buy` atar. Hisse alımında `AssetController.Buy()` sembolü market-service'in aktif listesinde doğrular.
+      Sonra `AssetService.BuyAsync()` çağrılır. Varlık yoksa maliyet birim fiyattır.
+      Varlık varsa ortalama maliyet ağırlıklı olarak yeniden hesaplanır. Farklı para birimiyle ek alım reddedilir.
     why: >-
-      Maliyet bir kez yazılır ve her okumada yeniden hesaplanmaz. USD ile alınmış hisseye TL eklemek ortalamayı bozardı.
+      Maliyet bir kez yazılır, her okumada yeniden hesaplanmaz.
+      Örnek: USD ile alınmış hisseye TL ile ek alım eklenseydi ortalama iki ayrı birimi karıştırırdı.
     cost: >-
-      Formül veya veri hatası kayıtlı değere işler. Düzeltmek için işlemlerden yeniden hesap gerekir.
+      Kayıtlı maliyet yanlışsa varlık listesindeki düzenle formundan elle değiştirilir (`UpdateAsync()`). Bu düzeltme işlem geçmişine yazılmaz.
     terms: [weighted-average]
     file: portfolio-service/Services/AssetService.cs
     code: |
@@ -70,52 +122,88 @@ steps:
                            / (asset.Quantity + dto.Quantity);
       asset.Quantity += dto.Quantity;
 
-  - node: pl
-    edge: [avg, pl]
-    aux: [price]
-    auxEdges: [[price, pl]]
-    title: "K/Z her istekte yeniden hesaplanır"
+  - node: tx
+    edge: [buy, tx]
+    aux: [assets]
+    auxEdges: [[buy, assets]]
+    title: "İşlem satırı o anki değerleri saklar"
     what: >-
-      Güncel fiyat, varlığın alış para biriminde alınır. Gerçekleşmemiş K/Z = (güncel − ortalama maliyet) × miktar.
-      Yüzde = K/Z ÷ toplam maliyet.
+      `BuyAsync()` aynı kayıtta `Transactions`'a bir satır ekler: miktar, birim fiyat, tutar ve işlem gününün USD/TRY kuru (`UsdTryRate`, market-service'ten).
+      Varlık satırı ve işlem satırı tek `SaveChangesAsync()` ile yazılır.
+      Satışta `SellAsync()` gerçekleşen K/Z'yi de hesaplar: (satış fiyatı − ortalama maliyet) × miktar. Sonuç `RealizedProfitLoss` alanına yazılır.
+    why: >-
+      Kur ve gerçekleşen K/Z işlem anına aittir; sonradan değişmez. Bu yüzden hesaplanıp saklanır.
+    cost: >-
+      Kur alınamazsa `UsdTryRate` boş kalır. İşlem engellenmez.
+    terms: [realized-pl]
+    file: portfolio-service/Services/AssetService.cs
+    code: |
+      Amount = dto.Quantity * dto.UnitPrice,
+      ...
+      UnitPrice = dto.UnitPrice,
+      UsdTryRate = await GetUsdTryRateAsync(date),
+
+  - id: kz
+    node: holdings
+    edge: [assets, holdings]
+    aux: [price]
+    auxEdges: [[price, holdings]]
+    title: "Anlık K/Z her istekte yeniden hesaplanır"
+    what: >-
+      Varlıklar sayfası `useHoldings()` ile `GET /api/assets` atar. `AssetService.GetHoldingsAsync()` varlıkları okur ve fiyatları market-service'ten ister.
+      Her varlık için `MapToHolding()` çalışır. Güncel fiyat, varlığın alış para biriminde alınır.
+      Gerçekleşmemiş K/Z = (güncel fiyat − ortalama maliyet) × miktar. Yüzde = K/Z ÷ toplam maliyet × 100.
     why: >-
       USD ile alınmış hisse USD fiyatla karşılaştırılır. Kur değişimi hissenin performansına karışmaz.
     cost: >-
       market-service cevap vermezse varlık `PriceAvailable = false` ile döner. K/Z boş görünür, sayfa düşmez.
+    next:
+      - { when: "Fiyat var → K/Z ve yüzde dolu", to: kategori }
+      - { when: "Fiyat yok → K/Z boş; kategori yüzdesine katılmaz", to: kategori }
     terms: [unrealized-pl]
     file: portfolio-service/Services/AssetService.cs
     code: |
+      # Güncel birim fiyatı varlığın alış para biriminde bul (P&L kıyaslaması için)
       decimal? currentUnitPrice = a.Currency == "USD" ? price?.PriceInUsd : price?.PriceInTry;
-      decimal? totalCost = a.Quantity * a.AvgCostBasis.Value;
-      decimal? unrealized = (currentUnitPrice.Value - a.AvgCostBasis.Value) * a.Quantity;
-      decimal? unrealizedPercent = unrealized.Value / totalCost.Value * 100;
 
-  - node: cat
-    edge: [pl, cat]
+      decimal? totalCost = a.AvgCostBasis.HasValue ? a.Quantity * a.AvgCostBasis.Value : null;
+      decimal? unrealized = (a.AvgCostBasis.HasValue && currentUnitPrice.HasValue)
+          ? (currentUnitPrice.Value - a.AvgCostBasis.Value) * a.Quantity
+          : null;
+
+  - id: kategori
+    node: cat
+    edge: [holdings, cat]
+    aux: [summary]
+    auxEdges: [[summary, cat]]
     title: "Kategori özeti tarayıcıda"
     what: >-
-      Hisse, döviz ve altın kartlarının değeri ve K/Z yüzdesi tarayıcıda toplanır.
-      Kategori yüzdesi = (Σ değer − Σ maliyet) ÷ Σ maliyet.
+      `usePortfolioSummary()` hook'u `useHoldings()` verisini alır ve `summarizeCategories()` fonksiyonunu çağırır.
+      Hisse, döviz ve altın için toplam değer, pay ve K/Z yüzdesi çıkar.
+      Kategori yüzdesi = (Σ değer − Σ maliyet) ÷ Σ maliyet. Her varlığın maliyeti değer ve yüzdeden geri hesaplanır.
     why: >-
-      Hesap saf bir fonksiyondur, yeni sunucu ucu gerektirmez. Aynı veriyle iki sayfa da beslenir.
+      Hesap saf bir fonksiyondur; yeni sunucu ucu gerektirmez. Varlıklar sayfası ve kategori sayfası aynı hook'u kullanır.
     cost: >-
       Yüzdesi olmayan (fiyatı alınamayan) varlık değere katılır ama yüzdeye katılmaz. Kart bunu ayrıca belirtmez.
     terms: [pure-function]
     file: web/src/lib/portfolioCategories.js
     code: |
-      # K/Z %: her varlığın TL maliyeti değer ve yüzdeden geri türetilir,
-      # kategori yüzdesi = (Σdeğer − Σmaliyet) / Σmaliyet. Yüzdesi olmayan varlık
-      # yüzdeye katılmaz ama değere katılır.
-      export function summarizeCategories(holdings, keys) { ... }
-
-      # Kart grafiği: kategorinin temsilci serisi (portföy değeri DEĞİL)
+      for (const h of items) {
+        const p = h.unrealizedProfitLossPercent
+        if (p == null || h.valueInTry == null || p <= -100) continue
+        v += h.valueInTry
+        cost += h.valueInTry / (1 + p / 100)
+      }
 
   - node: pulse
     edge: [price, pulse]
+    aux: [panel]
+    auxEdges: [[panel, pulse]]
     title: "Piyasa nabzı: dağılım ve ruh hali"
     what: >-
-      BIST 30 hisselerinin günlük değişiminden yükselen, düşen ve sabit sayısı ile ortalama çıkarılır.
-      ±0,05 altı "değişmedi" sayılır; ortalama ±1'i aşarsa "güçlü" denir.
+      Piyasa sayfası (`Market.jsx`) `useMarketOverview()` ile `GET /api/market/overview` atar. İstek portfolio-service üzerinden market-service'e gider.
+      `StockPanel` bileşeni cevaptaki BIST 30 hisseleriyle `pulse()` çağırır.
+      Yükselen, düşen ve sabit sayısı ile ortalama değişim çıkar. ±0,05 altı "değişmedi" sayılır; ortalama ±1'i aşarsa "güçlü" denir.
     why: >-
       Kullanıcı 30 satır okumadan piyasanın yönünü tek bakışta görür.
     cost: >-
@@ -126,6 +214,7 @@ steps:
       const FLAT = 0.05
 
       export function moodOf(avg) {
+        if (avg == null) return null
         if (avg > 1) return 'strongUp'
         if (avg > FLAT) return 'up'
         if (avg < -1) return 'strongDown'
@@ -133,13 +222,16 @@ steps:
         return 'flat'
       }
 
-  - node: pulse
-    edge: [price, pulse]
+  - node: session
+    edge: [price, session]
+    aux: [bar]
+    auxEdges: [[bar, session]]
     title: "Seans açık mı: hüküm tarayıcıda"
     what: >-
-      Backend, Yahoo'nun seans başlangıç ve bitişini verir. "Açık mı" hükmü tarayıcıda, anlık saatle verilir.
+      Durum şeridi (`StatusBar`) aynı `useMarketOverview()` verisinden BIST 100 satırını alır.
+      Bu satırda Yahoo'nun seans başlangıcı ve bitişi vardır. `sessionOf(bist100, now)` "açık mı" hükmünü anlık saatle verir.
     why: >-
-      Piyasa özeti 5 dakika cache'te kalır. Hüküm orada verilseydi seans kapandıktan sonra da "açık" görünebilirdi.
+      Piyasa özeti 5 dakika cache'te kalır. Hüküm orada verilseydi seans kapandıktan sonra 5 dakikaya kadar "açık" görünebilirdi.
     cost: >-
       Resmî tatil günündeki davranış henüz doğrulanmadı (BACKLOG'da).
     terms: [ttl]
@@ -148,22 +240,6 @@ steps:
       # Backend BIST 100 satırında Yahoo'nun son/şimdiki seans sınırlarını (sessionStart/End)
       # ve son işlem zamanını (asOf) verir. Açık/kapalı hükmü burada, anlık saatle verilir:
       # overview 5 dk önbellekte kalır, hüküm orada verilseydi bayat olabilirdi.
-      export function sessionOf(index, now = new Date()) { ... }
-
-  - node: dev
-    edge: [price, dev]
-    title: "Girilen fiyat gerçekle karşılaştırılır"
-    what: >-
-      Alım formunda girilen birim fiyat, o günün gerçek fiyatıyla karşılaştırılır.
-      %5 üstü sapmada uyarı gösterilir, %20 üstünde kayıttan önce onay istenir.
-    why: >-
-      Formülün gerçek piyasaya göre gürültüsü yaklaşık %0,5'tir. %5 eşiği bunun 10 katıdır; yanlış alarm vermez.
-    cost: >-
-      Referans fiyat yoksa (tatil, eski tarih) karşılaştırma yapılmaz ve uyarı çıkmaz.
-    terms: []
-    file: web/src/lib/priceDeviation.js
-    code: |
-      # Eşikler spec §3'teki ölçüme dayanıyor: formülün gerçek piyasaya göre gürültü
-      # tabanı ~%0,5. Sessizlik eşiği %5 = gürültünün 10 katı.
-      export const DEVIATION_WARN = 0.05
-      export const DEVIATION_CONFIRM = 0.20
+      export function sessionOf(index, now = new Date()) {
+        ...
+          open: t >= new Date(index.sessionStart).getTime() && t < new Date(index.sessionEnd).getTime(),
