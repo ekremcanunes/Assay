@@ -88,7 +88,7 @@ function FlowView({ flow }) {
       <p className="sr-only" aria-live="polite">Adım {index + 1} / {total}: {step.title}</p>
 
       <div className="deck" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-        <StepPanel step={step} index={index} total={total} />
+        <StepPanel step={step} index={index} total={total} steps={flow.steps} onGo={go} />
         <Terminal file={step.file} fileNote={step.fileNote} code={step.code} />
       </div>
 

@@ -84,8 +84,20 @@ for (const f of flowFiles) {
   }
   flow.edges.forEach((e) => checkEdge(e, 'edges'))
 
+  // Adım `id`'si isteğe bağlı; `next.to` bunlara atıf yapar.
+  const stepIds = new Set()
+  for (const s of flow.steps) {
+    if (s?.id == null) continue
+    if (stepIds.has(s.id)) err(where, `tekrar eden adım id: ${s.id}`)
+    stepIds.add(s.id)
+  }
+
   flow.steps.forEach((s, i) => {
     const ctx = `adım ${i + 1}`
+    for (const n of s?.next ?? []) {
+      if (!n?.when || !n.to) err(where, `${ctx}: next öğesi when ve to ister`)
+      else if (!stepIds.has(n.to)) err(where, `${ctx}: next: bilinmeyen adım id: ${n.to}`)
+    }
     const miss = STEP_FIELDS.filter((k) => s?.[k] == null)
     if (miss.length) { err(where, `${ctx}: eksik alan: ${miss.join(', ')}`); return }
     checkNode(s.node, ctx)

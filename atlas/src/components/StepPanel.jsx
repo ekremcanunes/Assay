@@ -5,7 +5,7 @@ import TermChip from './TermChip'
 
 const pad = (n) => String(n).padStart(2, '0')
 
-export default function StepPanel({ step, index, total }) {
+export default function StepPanel({ step, index, total, steps, onGo }) {
   const [openTerm, setOpenTerm] = useState(null)
   const open = openTerm && step.terms.includes(openTerm) ? openTerm : null
 
@@ -20,6 +20,23 @@ export default function StepPanel({ step, index, total }) {
         <div className="col why"><div className="k">Neden böyle</div><p>{renderInline(step.why)}</p></div>
         <div className="col cost"><div className="k">Bedeli</div><p>{renderInline(step.cost)}</p></div>
       </div>
+      {step.next && (
+        // Dallanma: hangi koşulda hangi adıma gidildiği. Hedef adım `to` ile adımın `id`'sinden bulunur.
+        <div className="next">
+          <div className="k">Sonra</div>
+          <ul>
+            {step.next.map((n) => {
+              const to = steps.findIndex((s) => s.id === n.to)
+              return (
+                <li key={n.when}>
+                  <span>{n.when}</span>
+                  <button type="button" onClick={() => onGo(to)}>{pad(to + 1)} · {steps[to].title}</button>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
       <div className="terms">
         {step.terms.map((id) => (
           <TermChip key={id} id={id} open={open === id} onToggle={() => setOpenTerm(open === id ? null : id)} />

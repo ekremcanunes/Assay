@@ -16,6 +16,7 @@ npm run build   # check + üretim derlemesi (dist/)
 
 - Akışlar `content/flows/*.yaml`, sözlük `content/terms.yaml`, ekran → veri sayfası `content/screens.yaml` (`/ekran-veri`).
 - Ekran öğesinin `source` alanı: `db` (olduğu gibi), `server` (serviste hesap), `client` (tarayıcıda hesap), `external` (dış kaynaktan olduğu gibi).
+- Adımın isteğe bağlı `next` alanı dallanmayı yazar: `{ when: "koşul", to: <adım id> }`. Hedef adıma `id` verilir.
 - Her adımın `file` alanı repoda gerçek bir dosyayı gösterir. Dosya yoksa build düşer.
 - Metin `docs/10-standards/WRITING.md` (`YZ-01`–`YZ-08`) kurallarına uyar.
 - **Yasak:** AWS hesap ID'si, `arn:aws`, IP adresi, bucket adı, secret adı veya değeri. Yer tutucu kullan: `<deploy rolü>`, `$REG`.

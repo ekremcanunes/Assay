@@ -184,6 +184,22 @@ code {
 .col.why { border-color: var(--em); } .col.why .k { color: var(--em); }
 .col.cost { border-color: var(--amb); } .col.cost .k { color: var(--amb); }
 
+.next { margin-top: 16px; padding-top: 10px; border-top: 2px solid var(--line2); }
+.next .k { margin-bottom: 6px; font-size: 10px; font-weight: 800; letter-spacing: .14em; color: var(--dim); }
+.next ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.next li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 13px; line-height: 1.5; color: var(--ink2); }
+.next button {
+  min-height: 32px;
+  padding: 5px 12px;
+  border: 1px solid #2B3E60;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, .08);
+  color: var(--cob2);
+  font: 600 12px var(--sans);
+  cursor: pointer;
+}
+.next button:hover { border-color: var(--cob); background: rgba(59, 130, 246, .18); }
+
 .terms { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .term { position: relative; }
 .term button {
