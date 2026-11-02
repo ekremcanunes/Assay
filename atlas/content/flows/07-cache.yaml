@@ -5,7 +5,7 @@ eyebrow: "Akış 07 · Cache · Redis"
 title: "Veri *ne kadar* taze?"
 lede: >-
   Her veri türünün kendi ömrü var: anlık fiyat 5 dakika, geçmiş kapanış 30 gün.
-  Ömür tek yerde tanımlanır ve Redis'ten tarayıcıya kadar taşınır.
+  Ömür tek yerde tanımlanır. Kalan süre Redis'ten tarayıcıya kadar bir HTTP başlığıyla taşınır.
 stats:
   - { n: 4, l: "süre sınıfı" }
   - { n: 5, l: "dk anlık fiyat" }
@@ -13,107 +13,196 @@ stats:
   - { n: 1, l: "tanım yeri" }
 
 lanes:
-  - { id: client, label: "İSTEMCİ", tone: client }
-  - { id: app, label: "SERVİSLER", tone: app }
-  - { id: data, label: "CACHE · KAYNAK", tone: data }
+  - { id: client, label: "TARAYICI", tone: client }
+  - { id: portfolio, label: "PORTFOLIO-SERVICE", tone: app }
+  - { id: mhttp, label: "MARKET-SERVICE · HTTP", tone: app }
+  - { id: mcache, label: "MARKET-SERVICE · FİYAT VE CACHE", tone: app }
+  - { id: redis, label: "REDIS", tone: data }
+  - { id: ext, label: "DIŞ API", tone: ext }
 
 nodes:
-  - { id: rq, lane: client, col: 0, title: "React Query", sub: "staleTime", icon: browser }
-  - { id: portfolio, lane: app, col: 0, title: "portfolio-service", sub: "en erken bitiş", icon: server }
-  - { id: market, lane: app, col: 1, title: "market-service", sub: "CacheStore", icon: server }
-  - { id: redis, lane: data, col: 1, title: "Redis", sub: "değer + bitiş anı", icon: bolt }
-  - { id: source, lane: data, col: 2, title: "Yahoo · Frankfurter", sub: "kaynak", icon: globe }
+  - { id: rq, lane: client, col: 0, title: "useHoldings()", sub: "React Query hook", icon: browser }
+  - { id: asset, lane: portfolio, col: 0, title: "AssetService", sub: "GetHoldingsAsync()", icon: code }
+  - { id: pclient, lane: portfolio, col: 1, title: "MarketServiceClient", sub: "sınıf · GetAsync()", icon: server }
+  - { id: plife, lane: portfolio, col: 2, title: "CacheLifetime", sub: "sınıf · en erken bitiş", icon: clock }
+  - { id: pmw, lane: portfolio, col: 3, title: "Middleware", sub: "başlığı cevaba yazar", icon: gear }
+  - { id: mctrl, lane: mhttp, col: 1, title: "MarketController", sub: "GET /prices", icon: server }
+  - { id: mmw, lane: mhttp, col: 3, title: "Middleware", sub: "başlığı cevaba yazar", icon: gear }
+  - { id: msvc, lane: mcache, col: 0, title: "MarketService", sub: "GetPriceAsync()", icon: code }
+  - { id: store, lane: mcache, col: 1, title: "CacheStore", sub: "GetOrSetAsync()", icon: code }
+  - { id: life, lane: mcache, col: 2, title: "CacheLifetime", sub: "sınıf · en erken bitiş", icon: clock }
+  - { id: redis, lane: redis, col: 1, title: "Redis", sub: "anahtar → değer+bitiş", icon: bolt }
+  - { id: source, lane: ext, col: 2, title: "Yahoo · Frankfurter", sub: "dış API · fiyat, kur", icon: globe }
 
 edges:
-  - [rq, portfolio]
-  - [portfolio, market]
-  - [market, redis]
-  - [market, source]
+  - [rq, asset]
+  - [asset, pclient]
+  - [pclient, mctrl]
+  - [mctrl, msvc]
+  - [msvc, store]
+  - [store, redis]
+  - [msvc, source]
+  - [store, life]
+  - [life, mmw]
+  - [mmw, pclient]
+  - [pclient, plife]
+  - [plife, pmw]
+  - [pmw, rq]
 
 steps:
-  - node: market
+  - id: ekran
+    node: rq
     edge: null
-    title: "Anahtar: tür, pazar, sembol"
+    title: "Ekran veriyi ister, önce tarayıcı bakar"
     what: >-
-      Her kayıt parçaları `:` ile birleşen bir anahtar taşır. Ör. fiyat `stock:BIST:THYAO`,
-      grafik `history:stock:BIST:THYAO:1y`, tarihli fiyat `priceon:...:2026-08-21`, mini grafik `spark:USD`.
+      Varlıklar sayfası (`Assets.jsx`) `usePortfolioSummary()` üzerinden `useHoldings()` hook'unu çağırır.
+      React Query `['holdings']` anahtarında veri var mı ve taze mi diye bakar.
+      Veri tazeyse istek atılmaz; ekran eldeki veriyi gösterir.
     why: >-
-      Anahtar veriyi tekil tanımlar. Aynı soruyu soran her kullanıcı aynı kaydı okur.
+      Aynı veri için iki ekran ayrı istek atmaz. Örnek: Varlıklar sayfasından kategori sayfasına geçilir; veri tazeyse sunucuya gidilmez.
     cost: >-
-      Anahtar biçimi değişirse eski kayıtlar okunmaz ve süreleri dolana kadar Redis'te boşuna durur.
-    terms: [cache-key]
-    file: market-service/Caching/CacheKeys.cs
+      Sayfa ilk açıldığında tarayıcıda veri yoktur. Bu durumda istek her zaman atılır.
+    next:
+      - { when: "Veri taze → istek atılmaz (süre 13. adımda belirlenir)", to: tarayici }
+      - { when: "Veri yok veya bayat → istek atılır", to: istek }
+    terms: [stale-time]
+    file: web/src/hooks/queries.js
     code: |
-      public static string Price(string assetType, string market, string symbol) =>
-          Build(assetType.ToLowerInvariant(), market, symbol);
+      export function useHoldings() {
+        return useQuery({
+          queryKey: queryKeys.holdings,
+          ...serverCached(() => assetApi.getAll()),
+        })
+      }
 
-      public static string History(...) =>
-          Build("history", assetType.ToLowerInvariant(), market, symbol, range.ToLowerInvariant());
-
-      private static string Build(params string[] parts) =>
-          string.Join(':', parts.Where(p => p.Length > 0));
-
-  - node: redis
-    edge: [market, redis]
-    title: "Kayıt bitiş anıyla saklanır"
+  - id: istek
+    node: asset
+    edge: [rq, asset]
+    title: "portfolio-service fiyatları toplu ister"
     what: >-
-      Değer, bitiş anıyla birlikte bir zarf içinde yazılır. Okuyan taraf kalan süreyi bu zarftan hesaplar.
+      Tarayıcı `GET /api/assets` atar. nginx `/api/` ile başlayan istekleri portfolio-service'e iletir.
+      `AssetController.GetAll()`, `AssetService.GetHoldingsAsync()` metodunu çağırır.
+      Varlıklar Postgres'ten okunur ve sembol listesi kurulur: `BIST:THYAO`, `XAU`.
+      `GetPriceMapAsync()` bu listeyi tek çağrıyla `MarketServiceClient.GetPricesAsync()`'e verir.
     why: >-
-      .NET'in `IDistributedCache` arayüzü bir kaydın kalan süresini veremez. Zarf bu eksiği kapatır.
+      Fiyat portföy veritabanında tutulmaz. Her istekte market-service'ten alınır.
     cost: >-
-      Eski biçimde (zarfsız) kalan kayıt boş okunur ve kaynaktan yeniden çekilir.
-    terms: [ttl]
+      market-service hata verirse `catch` boş sözlük döner. Varlıklar fiyatsız gelir (`PriceAvailable = false`).
+    terms: [reverse-proxy]
+    file: portfolio-service/Services/AssetService.cs
+    code: |
+      public async Task<List<AssetHoldingDto>> GetHoldingsAsync(string userId)
+      {
+          var assets = await db.Assets.Where(a => a.UserId == userId).OrderBy(a => a.Symbol).ToListAsync();
+          var priceMap = await GetPriceMapAsync(assets);
+          return assets.Select(a => MapToHolding(a, priceMap)).ToList();
+      }
+
+      # GetPriceMapAsync içinde:
+      var prices = await marketClient.GetPricesAsync(list);
+
+  - id: cagri
+    node: mctrl
+    edge: [pclient, mctrl]
+    aux: [pclient]
+    auxEdges: [[asset, pclient]]
+    title: "İstek market-service'e iletilir"
+    what: >-
+      `MarketServiceClient.GetAsync()`, `GET /api/market/prices?symbols=BIST:THYAO,XAU` isteğini atar ve kullanıcının cookie'sini ekler.
+      market-service'te `MarketController.GetPrices()` karşılar.
+      `MarketService.GetPricesAsync()` her sembol için `GetPriceAsync()` metodunu paralel çağırır (`Task.WhenAll`).
+    why: >-
+      market-service dışarı açık değildir; yalnız Docker ağının içinden erişilir.
+      Tüm market-service çağrıları `GetAsync()` metodundan geçer. Başlık okuma (11. adım) bu yüzden tek yerdedir.
+    cost: >-
+      Geçersiz veya fiyatı bulunamayan sembol cevaptan düşer. Sebep tek özet log satırıyla yazılır.
+    terms: [http-client, expose]
+    file: portfolio-service/Clients/MarketServiceClient.cs
+    code: |
+      # Tüm market-service çağrılarının tek yolu: kullanıcının cookie'si iletilir,
+      # cevaptaki kalan cache ömrü (X-Cache-Expires-In) bu isteğin CacheLifetime'ına eklenir.
+      private async Task<T?> GetAsync<T>(string url)
+      {
+          var request = new HttpRequestMessage(HttpMethod.Get, url);
+          ...
+          var response = await httpClient.SendAsync(request);
+          response.EnsureSuccessStatusCode();
+
+  - id: anahtar
+    node: msvc
+    edge: [mctrl, msvc]
+    title: "Anahtar kurulur, süre seçilir"
+    what: >-
+      `MarketService.GetPriceAsync()` önce sembolün türünü bulur: `XAU` altın, `USD`, `EUR`, `GBP` döviz, gerisi hisse.
+      `CacheKeys.Price()` anahtarı kurar: `stock:BIST:THYAO`, `gold:XAU`, `currency:USD`.
+      Sonra `CacheStore.GetOrSetAsync()` metodunu üç şeyle çağırır: anahtar, kaynaktan çekme fonksiyonu, süre (`CacheTtl.Live`, 5 dk).
+    why: >-
+      Aynı soruyu soran her kullanıcı aynı kaydı okur. Örnek: iki kullanıcının portföyünde THYAO varsa ikisi de `stock:BIST:THYAO` kaydını okur.
+    cost: >-
+      Anahtar biçimi değişirse eski kayıtlar okunmaz. Süreleri dolana kadar Redis'te boşuna durur.
+    terms: [cache-key]
+    file: market-service/Services/MarketService.cs
+    code: |
+      # Anlık fiyatın tek kaynağı: portföy, piyasa özeti ve "bugün" fiyatı hep buradan, aynı anahtardan okur.
+      public async Task<MarketPrice?> GetPriceAsync(string market, string symbol)
+      {
+          ...
+          return await _cache.GetOrSetAsync(CacheKeys.Price(assetType, market, symbol),
+              () => assetType switch
+              {
+                  "Currency" => FetchCurrencyAsync(symbol),
+                  "Gold" => FetchGoldAsync(symbol),
+                  _ => FetchStockAsync(market, symbol)
+              },
+              _ => CacheTtl.Live);
+      }
+
+  - id: bak
+    node: redis
+    edge: [store, redis]
+    aux: [store]
+    auxEdges: [[msvc, store]]
+    title: "CacheStore önce Redis'e bakar"
+    what: >-
+      `GetOrSetAsync()`, `GetStringAsync(key)` ile kaydı Redis'ten okur.
+      Kayıt bir zarftır: değer ve bitiş anı birlikte durur (`Entry<T>`). Zarf açılır; değer doluysa kullanılır.
+    why: >-
+      Kayıt yaşadığı sürece dış kaynağa gidilmez. Örnek: THYAO kaydı 5 dakika yaşar; bu sürede Yahoo'ya THYAO için istek gitmez.
+    cost: >-
+      Eski biçimde (zarfsız) kalan kayıtta değer boş gelir. Kayıt yok sayılır ve kaynaktan yeniden çekilir.
+    next:
+      - { when: "Kayıt var, değer dolu → hit", to: hit }
+      - { when: "Kayıt yok, süresi dolmuş veya zarfsız → miss", to: miss }
+    terms: [cache-aside]
     file: market-service/Caching/CacheStore.cs
     code: |
-      # Kayıt bitiş anıyla birlikte saklanır,
-      # çünkü IDistributedCache bir kaydın kalan süresini veremez.
-      await cache.SetStringAsync(key, JsonSerializer.Serialize(new Entry<T>(value, expiresAt)), ...);
+      var cached = await cache.GetStringAsync(key);
+      if (cached != null)
+      {
+          # Eski biçimdeki (zarfsız) kayıtta Value null gelir → yeniden çekilip üzerine yazılır.
+          var entry = JsonSerializer.Deserialize<Entry<T>>(cached);
+          if (entry?.Value != null)
+          {
+              lifetime.Report(entry.ExpiresAt);
+              return entry.Value;
+          }
+      }
 
-      # fetch null dönerse cache'e yazılmaz (bir sonraki istek yeniden dener).
-
-  - node: source
-    edge: [market, source]
-    title: "Süre verinin türüne göre seçilir"
+  - id: hit
+    node: life
+    edge: [store, life]
+    title: "Hit: değer döner, bitiş anı bildirilir"
     what: >-
-      Dört süre sınıfı var. Anlık fiyat, endeks ve gün içi grafik 5 dk. Günlük grafik ve mini seriler 1 saat.
-      Geçmiş günün kapanışı 30 gün. Başarısız cevap 5 dk.
+      `CacheStore`, zarftaki bitiş anını `CacheLifetime.Report()` ile bildirir ve değeri döndürür.
+      `CacheLifetime` bu istekte görülen en erken bitişi tutar.
+      Her HTTP isteği için yeni bir `CacheLifetime` nesnesi oluşur (`AddScoped`). Bir isteğin süreleri başka isteğe karışmaz.
     why: >-
-      Değişmeyen veri (dünün kapanışı) uzun, sık değişen veri kısa tutulur. Dış kaynağa giden istek sayısı azalır.
+      Örnek: cevapta 3 fiyat var. Biri 1 dk, ikisi 4 dk sonra bitiyor. Cevap 1 dk sonra bayatlar; tarayıcıya bu süre bildirilir.
     cost: >-
-      Anlık fiyat en fazla 5 dakika eskidir. Ekran bunu "Fiyatlar 18:10 itibarıyla" diye açıkça yazar.
-    terms: [ttl]
-    file: market-service/Caching/CacheTtl.cs
-    code: |
-      public static readonly TimeSpan Live = TimeSpan.FromMinutes(5);       # anlık fiyat, endeks, gün içi grafik
-      public static readonly TimeSpan Daily = TimeSpan.FromHours(1);        # günlük grafik, sparkline serileri
-      public static readonly TimeSpan Permanent = TimeSpan.FromDays(30);    # geçmiş günün kapanışı
-      public static readonly TimeSpan Failure = TimeSpan.FromMinutes(5);    # başarısız cevap
-
-  - node: market
-    edge: [market, redis]
-    title: "Başarısızlık da cache'lenir, ama kısa"
-    what: >-
-      Tarihli fiyat bulunamazsa sonuç `Failure` süresiyle yazılır. Bulunduysa `Permanent` süresiyle yazılır.
-    why: >-
-      Olmayan bir veri için her istekte dış kaynağa gidilmez. 5 dakika sonra yeniden denenir.
-    cost: >-
-      Kaynak düzelse bile o 5 dakika boyunca "fiyat yok" gösterilir.
-    terms: [negative-cache]
-    file: market-service/Services/PriceOnDateService.cs
-    code: |
-      r => r.Available ? CacheTtl.Permanent : CacheTtl.Failure
-
-  - node: portfolio
-    edge: [portfolio, market]
-    title: "En erken bitiş yukarı taşınır"
-    what: >-
-      Bir istekte okunan her kaydın bitişi `CacheLifetime`'a bildirilir; en erkeni tutulur.
-      Kalan saniye `X-Cache-Expires-In` başlığına yazılır. portfolio-service aynısını kendi cevabına taşır.
-    why: >-
-      Portföy cevabı birçok fiyat içerir. En erken biten fiyat, cevabın tamamının ne zaman bayatlayacağını belirler.
-    cost: >-
-      Mutlak saat değil kalan saniye gönderilir; sunucu ile tarayıcı saati farklı olsa da sonuç doğrudur.
-    terms: [http-header]
+      Semboller paralel okunur ve aynı nesneye yazar. Bu yüzden `Report()` içinde `lock` gerekir.
+    next:
+      - { when: "Tüm semboller bitti → cevap hazırlanır", to: baslik }
+    terms: [scoped]
     file: market-service/Caching/CacheLifetime.cs
     code: |
       public void Report(DateTimeOffset expiresAt)
@@ -123,20 +212,248 @@ steps:
               if (_earliest is null || expiresAt < _earliest) _earliest = expiresAt;
           }
       }
-      # Saat farkı sorununu önlemek için mutlak zaman değil, kalan saniye verilir.
 
-  - node: rq
-    edge: [rq, portfolio]
-    title: "Tarayıcı aynı süreyi kullanır"
+  - id: miss
+    node: source
+    edge: [msvc, source]
+    aux: [store]
+    title: "Miss: kaynaktan çekilir"
     what: >-
-      React Query veriyi başlıktaki süre kadar taze sayar. Süre dolmadan aynı veri için istek atmaz.
+      `CacheStore`, `MarketService`'in verdiği çekme fonksiyonunu çağırır.
+      Hisse için `YahooFinanceClient.GetQuoteAsync()`, döviz için `FrankfurterClient.GetExchangeRateAsync()` çalışır.
+      Altın için Yahoo'dan `GC=F` (ons) fiyatı alınır ve grama çevrilir.
     why: >-
-      Süreler yalnız backend'de (`CacheTtl`) tanımlıdır. Frontend'de tek bir süre sayısı yoktur.
+      TL karşılığı için USD/TRY kuru da gerekir. Kur da `GetPriceAsync("USD")` ile aynı yoldan okunur ve kendi `currency:USD` kaydında durur.
     cost: >-
-      Başlık gelmezse veri hemen bayat sayılır ve bir sonraki ihtiyaçta yeniden istenir.
+      Kaynak cevap vermezse fonksiyon `null` döner. `null` Redis'e yazılmaz; bir sonraki istek yeniden dener.
+    next:
+      - { when: "Değer geldi → Redis'e yazılır", to: yaz }
+      - { when: "null → yazılmaz, bitiş bildirilmez, sembol cevaptan düşer", to: baslik }
+    terms: [unofficial-api]
+    file: market-service/Services/MarketService.cs
+    code: |
+      private async Task<MarketPrice?> FetchStockAsync(string market, string symbol)
+      {
+          var quote = await _yahooClient.GetQuoteAsync(YahooSymbol.ToYahoo(market, symbol));
+          if (quote == null) return null;
+
+          var usdTryRate = await UsdTryRateAsync();
+          if (usdTryRate == null) return null;
+
+  - id: yaz
+    node: redis
+    edge: [store, redis]
+    aux: [life]
+    auxEdges: [[store, life]]
+    title: "Kayıt bitiş anıyla Redis'e yazılır"
+    what: >-
+      Bitiş anı = şimdi + süre. Değer ve bitiş anı zarfa konur ve `SetStringAsync()` ile yazılır.
+      Aynı an Redis'e `AbsoluteExpiration` olarak da verilir; süre dolunca Redis kaydı kendisi siler.
+      Bitiş anı `CacheLifetime.Report()` ile bildirilir.
+    why: >-
+      .NET'in `IDistributedCache` arayüzü bir kaydın kalan süresini veremez. Zarf bu eksiği kapatır; okuyan taraf kalan süreyi zarftan hesaplar.
+    cost: >-
+      Kayıt süresi dolana kadar değişmez. Kaynakta fiyat değişse de en fazla 5 dakika eski değer okunur.
+    terms: [ttl]
+    file: market-service/Caching/CacheStore.cs
+    code: |
+      var value = await fetch();
+      if (value == null) return null;
+
+      var expiresAt = DateTimeOffset.UtcNow + ttl(value);
+      await cache.SetStringAsync(key, JsonSerializer.Serialize(new Entry<T>(value, expiresAt)),
+          new DistributedCacheEntryOptions { AbsoluteExpiration = expiresAt });
+      lifetime.Report(expiresAt);
+      return value;
+
+  - id: sureler
+    node: store
+    edge: null
+    title: "Süre verinin türüne göre seçilir"
+    what: >-
+      Dört süre sınıfı var ve hepsi `CacheTtl` içinde. Anlık fiyat, endeks ve gün içi grafik 5 dk.
+      Günlük grafik ve mini seriler 1 saat. Geçmiş günün kapanışı 30 gün.
+      `Failure` (5 dk) yalnız tarihli fiyatta kullanılır: fiyat bulunamazsa sonuç bu süreyle yazılır.
+    why: >-
+      Değişmeyen veri (dünün kapanışı) uzun, sık değişen veri kısa tutulur. Bulunamayan tarihli fiyat için her istekte dış kaynağa gidilmez.
+    cost: >-
+      Anlık fiyat en fazla 5 dakika eskidir. Durum şeridi (`StatusBar.jsx`) fiyatın zamanını "Fiyatlar 18:10 itibarıyla" diye yazar.
+      Bulunamayan tarihli fiyat, kaynak düzelse bile 5 dakika "fiyat yok" görünür.
+    terms: [ttl, negative-cache]
+    file: market-service/Caching/CacheTtl.cs
+    code: |
+      public static readonly TimeSpan Live = TimeSpan.FromMinutes(5);       # anlık fiyat, endeks, gün içi grafik
+      public static readonly TimeSpan Daily = TimeSpan.FromHours(1);        # günlük grafik, sparkline serileri
+      public static readonly TimeSpan Permanent = TimeSpan.FromDays(30);    # geçmiş günün kapanışı (bir daha değişmez)
+      public static readonly TimeSpan Failure = TimeSpan.FromMinutes(5);    # başarısız cevap: kalıcı değil, geçici durum
+
+      # PriceOnDateService.cs:
+      r => r.Available ? CacheTtl.Permanent : CacheTtl.Failure
+
+  - id: baslik
+    node: mmw
+    edge: [life, mmw]
+    title: "market-service kalan süreyi başlığa yazar"
+    what: >-
+      `CacheLifetimeMiddleware` cevap gönderilmeden hemen önce (`Response.OnStarting`) `CacheLifetime.SecondsLeft()` değerini okur.
+      Sonucu `X-Cache-Expires-In` başlığına yazar. Ör. `X-Cache-Expires-In: 212`.
+    why: >-
+      Mutlak saat değil kalan saniye gönderilir. Sunucu ile tarayıcının saati farklı olsa da sonuç doğrudur.
+    cost: >-
+      Bu istekte hiçbir kayıt okunmadı veya yazılmadıysa başlık eklenmez.
+    next:
+      - { when: "Başlık yazıldı → portfolio-service okur", to: tasima }
+      - { when: "Başlık yok → tarayıcı veriyi hemen bayat sayar", to: tarayici }
+    terms: [http-header, middleware]
+    file: market-service/Middleware/CacheLifetimeMiddleware.cs
+    code: |
+      public async Task InvokeAsync(HttpContext context, CacheLifetime lifetime)
+      {
+          context.Response.OnStarting(() =>
+          {
+              if (lifetime.SecondsLeft() is int seconds)
+                  context.Response.Headers[HeaderName] = seconds.ToString();
+              return Task.CompletedTask;
+          });
+          await next(context);
+      }
+
+  - id: tasima
+    node: plife
+    edge: [pclient, plife]
+    aux: [pclient]
+    auxEdges: [[mmw, pclient]]
+    title: "portfolio-service başlığı okur"
+    what: >-
+      `MarketServiceClient.GetAsync()` cevaptaki `X-Cache-Expires-In` değerini okur.
+      Değeri portfolio-service'in kendi `CacheLifetime.Report(seconds)` metoduna verir.
+      Bu sınıf saniyeyi kendi saatine göre bitiş anına çevirir ve en erkenini tutar.
+    why: >-
+      Bir portföy isteği market-service'i birden çok kez çağırabilir. En erken biten çağrı, cevabın tamamının ömrünü belirler.
+    cost: >-
+      market-service hata verirse başlık okunmaz. Cevap başlıksız gider.
+    terms: []
+    file: portfolio-service/Clients/MarketServiceClient.cs
+    code: |
+      if (response.Headers.TryGetValues(CacheLifetimeMiddleware.HeaderName, out var values)
+          && int.TryParse(values.FirstOrDefault(), out var seconds))
+          cacheLifetime.Report(seconds);
+
+  - id: pbaslik
+    node: pmw
+    edge: [plife, pmw]
+    title: "Aynı başlık tarayıcıya iletilir"
+    what: >-
+      portfolio-service'in kendi `CacheLifetimeMiddleware` sınıfı aynı işi yapar.
+      `SecondsLeft()` değerini `X-Cache-Expires-In` başlığına yazar. Cevap nginx üzerinden tarayıcıya döner.
+    why: >-
+      Tarayıcı yalnız portfolio-service ile konuşur. Başlık iletilmeseydi Redis'teki süre tarayıcıya ulaşmazdı.
+    cost: >-
+      Başlık adı iki serviste ayrı tanımlı (`HeaderName`). Ad değişirse iki dosya da değişmeli.
+    terms: [http-header, middleware]
+    file: portfolio-service/Middleware/CacheLifetimeMiddleware.cs
+    code: |
+      # market-service'ten gelen kalan cache ömrünü tarayıcıya iletir. Portföy gibi birden çok fiyat
+      # içeren cevaplarda en erken biten kayıt esas alınır. Frontend staleTime'ı bu header'dan okur.
+      public class CacheLifetimeMiddleware(RequestDelegate next)
+      {
+          public const string HeaderName = "X-Cache-Expires-In";
+
+  - id: tarayici
+    node: rq
+    edge: [pmw, rq]
+    title: "React Query en erken biten kaydın süresini kullanır"
+    what: >-
+      `serverCached()` başlıktaki saniyeyi okur ve kesin bir bitiş anına çevirir: `Date.now() + saniye × 1000`.
+      `Date.now()` şu anı milisaniye olarak verir; `× 1000` saniyeyi milisaniyeye çevirir.
+      Örnek: başlık `240`, şu an `1 000 000` ms → bitiş anı `1 240 000` ms.
+      React Query tazeliği her sorduğunda `staleTime` kalan süreyi hesaplar: `bitiş anı − şimdi`.
+      100 sn sonra kalan 140 sn'dir, veri tazedir. 240 sn sonra kalan 0'dır, veri bayattır. Başlık yoksa kalan hep 0'dır.
+    why: >-
+      Frontend kendi süresini belirlemez; Redis'in kalan süresini kopyalar. Süreler yalnız backend'de (`CacheTtl`) tanımlıdır.
+      Redis kaydı dolmadan istek atmak boşunadır: sunucu aynı veriyi döner.
+      Saniye yerine bitiş anı saklanır, çünkü "240 sn" zamanla eskir; "1 240 000'de biter" hep doğrudur.
+    cost: >-
+      Bayat veri silinmez. React Query onu bellekte tutar ve ekran açılınca önce onu gösterir, yenisini arkada ister.
+      Ekranda kullanılmayan veri 5 dakika sonra bellekten silinir (React Query varsayılanı, `gcTime`).
+    next:
+      - { when: "Veri bayat oldu → ne zaman yenilenir?", to: tetik }
     terms: [stale-time]
     file: web/src/hooks/queries.js
     code: |
-      # React Query veriyi tam o süre taze sayar: Redis kaydı dolmadan boşa istek atılmaz.
-      # Süreler yalnızca backend'de (CacheTtl) tutulur, burada sayı yoktur.
-      const EXPIRES_HEADER = 'x-cache-expires-in'
+      queryFn: () =>
+        request().then((r) => {
+          const seconds = Number(r.headers[EXPIRES_HEADER])
+          return { data: r.data, expiresAt: Number.isFinite(seconds) ? Date.now() + seconds * 1000 : null }
+        }),
+      staleTime: (query) => {
+        const expiresAt = query.state.data?.expiresAt
+        return expiresAt ? Math.max(0, expiresAt - Date.now()) : 0
+      },
+
+  - id: tetik
+    node: rq
+    edge: null
+    title: "Yeni veri ne zaman gelir?"
+    what: >-
+      Ekran açık beklerse veri hiç yenilenmez; süre dolsa da dolmasa da. Yeni istek için bir tetik gerekir.
+      Ekran yeniden açılır (sayfa değişip geri gelinir): istek yalnız veri bayatsa atılır.
+      İnternet bağlantısı geri gelir: istek yalnız veri bayatsa atılır.
+      F5: tarayıcı belleği silinir, istek her zaman atılır.
+      Alım veya satış kaydedilir: `invalidateQueries` veriyi bayat sayar, istek her zaman atılır.
+      Pencereye geri dönmek tetik değildir (`refetchOnWindowFocus: false`).
+    why: >-
+      F5 veya alım/satış, süre dolmadan da istek atar. Ama fiyat değişmez: market-service Redis'teki aynı kaydı döner.
+      Yeni fiyat için iki şart birlikte gerekir: Redis süresi dolmuş olmalı ve bir tetik olmalı.
+      Örnek: fiyat 10:00'da Redis'e yazıldı (5 dk). 10:02'de F5 → aynı fiyat. 10:06'da F5 → Yahoo'dan yeni fiyat.
+    cost: >-
+      Ekranı açık bırakan kullanıcı eski fiyatı görür. Yenilemek için sayfa değiştirmeli veya F5'e basmalıdır.
+      İstisna durum şerididir (`useSystemStatus`): dakikada bir kendiliğinden yenilenir (`refetchInterval`).
+    next:
+      - { when: "Tetik geldi, veri bayat → yeni istek", to: istek }
+      - { when: "Tetik geldi, veri taze (ekran değişimi) → istek yok", to: ekran }
+    terms: [stale-time, ttl]
+    file: web/src/App.jsx
+    code: |
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 60_000,        // 1 dk taze — geri gelince anında, arkada sessiz yenileme
+            refetchOnWindowFocus: false,
+            retry: 1,
+          },
+        },
+      })
+
+  - id: ozet
+    node: life
+    edge: null
+    aux: [store, mmw, pclient, plife, pmw]
+    title: "Benzer adlı parçalar: kim ne yapar?"
+    what: >-
+      `CacheStore` veriyi yönetir. Redis'e bakar; kayıt yoksa kaynaktan çeker ve bitiş anıyla yazar. Her fiyat için bir kez çalışır.
+      `CacheLifetime` yalnız süreyi tutar. Veriyi görmez; istek boyunca bildirilen bitiş anlarından en erkenini saklar.
+      Middleware süreyi cevaba koyar. Cevap çıkarken `CacheLifetime.SecondsLeft()` değerini `X-Cache-Expires-In` başlığına yazar. İstek başına bir kez çalışır.
+      portfolio-service'te `CacheStore` yoktur; Redis'e gitmez. Süreyi `MarketServiceClient` başlıktan okur ve kendi `CacheLifetime`'ına bildirir.
+    why: >-
+      Her parça tek iş yapar: veri (`CacheStore`), süre (`CacheLifetime`), başlık (middleware).
+      Örnek: portföyde THYAO (4 dk kaldı) ve ASELS (1 dk kaldı) var. `CacheStore` iki kez `Report` çağırır. `CacheLifetime` 1 dk'yı tutar. Middleware başlığa `60` yazar.
+      `CacheLifetime` ve middleware iki serviste ayrı sınıflardır, çünkü servisler ayrı programlardır ve birbirinin sınıfını kullanamaz.
+      `CacheLifetime` her HTTP isteği için yeni oluşur (scoped). Böylece bir kullanıcının süresi başka kullanıcının cevabına karışmaz.
+    cost: >-
+      Aynı adlı sınıflar iki serviste farklı klasördedir: market-service'te `Caching/`, portfolio-service'te `Services/`.
+      Başlık adı da iki middleware'de ayrı tanımlıdır; ad değişirse iki dosya da değişmelidir.
+    terms: [cache-aside, middleware, scoped]
+    file: market-service/Caching/CacheStore.cs
+    code: |
+      var entry = JsonSerializer.Deserialize<Entry<T>>(cached);
+      if (entry?.Value != null)
+      {
+          lifetime.Report(entry.ExpiresAt);
+          return entry.Value;
+      }
+
+      var expiresAt = DateTimeOffset.UtcNow + ttl(value);
+      await cache.SetStringAsync(key, JsonSerializer.Serialize(new Entry<T>(value, expiresAt)),
+          new DistributedCacheEntryOptions { AbsoluteExpiration = expiresAt });
+      lifetime.Report(expiresAt);
