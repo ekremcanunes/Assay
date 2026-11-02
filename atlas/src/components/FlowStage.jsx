@@ -61,6 +61,9 @@ export default function FlowStage({ flow, stepIndex, onSelect }) {
         {flow.nodes.map((n) => {
           const { x, y } = nodePos(flow, n.id)
           const idx = order.indexOf(n.id)
+          // Düğüm birden çok adımda geçiyorsa rozet hepsini yazar: "01 · 08"
+          const badge = order.flatMap((id, i) => (id === n.id ? [String(i + 1).padStart(2, '0')] : [])).join(' · ')
+          const badgeW = 12 + badge.length * 6.4
           const tone = flow.lanes.find((l) => l.id === n.lane).tone
           const select = idx >= 0 ? () => onSelect(idx) : undefined
           return (
@@ -74,7 +77,7 @@ export default function FlowStage({ flow, stepIndex, onSelect }) {
               } : undefined}
               role={select ? 'button' : undefined}
               tabIndex={select ? 0 : undefined}
-              aria-label={select ? `Adım ${idx + 1}: ${n.title}` : undefined}
+              aria-label={select ? `Adım ${badge}: ${n.title}` : undefined}
             >
               {select && <rect className="focus-ring" x="-6" y="-6" width={NODE_W + 12} height={NODE_H + 12} rx="18" />}
               <rect className="box" width={NODE_W} height={NODE_H} rx="14" />
@@ -82,9 +85,9 @@ export default function FlowStage({ flow, stepIndex, onSelect }) {
               <text className="ttl" x="54" y="28">{n.title}</text>
               <text className="sub" x="54" y="46">{n.sub}</text>
               {idx >= 0 && (
-                <g className="stepbadge" transform={`translate(${NODE_W - 38} -9)`}>
-                  <rect width="28" height="18" rx="9" />
-                  <text className="stepnum" x="14" y="13" textAnchor="middle">{String(idx + 1).padStart(2, '0')}</text>
+                <g className="stepbadge" transform={`translate(${NODE_W - 10 - badgeW} -9)`}>
+                  <rect width={badgeW} height="18" rx="9" />
+                  <text className="stepnum" x={badgeW / 2} y="13" textAnchor="middle">{badge}</text>
                 </g>
               )}
             </g>
