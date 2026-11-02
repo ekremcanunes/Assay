@@ -188,6 +188,42 @@
 - id: in-memory
   term: bellekte tutma
   def: Veriyi servisin RAM'inde saklamak. Okuma çok hızlıdır; servis yeniden başlarsa yeniden yüklenir.
+- id: singleton
+  term: singleton (DI)
+  def: .NET bağımlılık kaydında servis ömrü. Uygulama boyunca tek örnek oluşur; herkes aynı örneği kullanır.
+- id: scoped
+  term: scoped (DI)
+  def: .NET bağımlılık kaydında servis ömrü. Her scope için bir örnek oluşur; web'de scope bir HTTP isteğidir.
+- id: middleware
+  term: middleware
+  def: ASP.NET'te her HTTP isteğinin sırayla geçtiği ara katman. İsteği okuyabilir, cevabı değiştirebilir veya isteği durdurabilir.
+- id: sink
+  term: sink (Serilog)
+  def: Serilog'da log satırının yazıldığı hedef. Ör. konsol, dosya veya uzak bir log servisi.
+- id: realized-pl
+  term: gerçekleşen K/Z
+  def: Satılan miktarın kârı veya zararı. (satış fiyatı − ortalama maliyet) × miktar. Satış anında kesinleşir.
+- id: matrix
+  term: matrix (GitHub Actions)
+  def: Aynı job'u farklı değerlerle birden çok kopya hâlinde paralel çalıştıran strateji.
+- id: fail-fast
+  term: fail-fast
+  def: Matrix'te bir kopya başarısız olunca henüz bitmemiş diğer kopyaların iptal edilmesi. GitHub Actions'ta varsayılan olarak açıktır.
+- id: needs
+  term: needs (GitHub Actions)
+  def: Bir job'un, belirtilen job'lar başarıyla bitmeden başlamamasını sağlayan bağımlılık ayarı.
+- id: manual-approval
+  term: manuel onay
+  def: Pipeline'ı bir insan onaylayana kadar durduran aşama.
+- id: eventbridge
+  term: EventBridge
+  def: AWS servislerinde olan olayları kurallarla yakalayıp başka bir servise (ör. CodePipeline) ileten AWS servisi.
+- id: security-group
+  term: güvenlik grubu
+  def: AWS'de EC2'ye hangi porttan ve hangi adresten gelen trafiğin girebileceğini belirleyen güvenlik duvarı kuralları.
+- id: healthcheck
+  term: healthcheck
+  def: Container içindeki uygulamanın gerçekten hazır olup olmadığını düzenli bir komutla yoklayan Docker ayarı.
 - id: weighted-average
   term: ağırlıklı ortalama maliyet
   def: Her alımın birim fiyatını alınan miktarla tartarak bulunan ortalama. (eski miktar × eski maliyet + yeni miktar × yeni fiyat) ÷ toplam miktar.
