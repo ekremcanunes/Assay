@@ -5,105 +5,197 @@ eyebrow: "Akış 05 · Gözlem · Loglama"
 title: "Bir log satırı *nereye gider?*"
 lede: >-
   Servis yalnız stdout'a yazar. Logun nereye gideceğine platform karar verir.
-  Koddaki tek satırdan disk üzerindeki dosyaya, oradan okuma komutuna kadar.
+  Açılışta okunan seviye ayarından koddaki tek satıra, oradan diskteki dosyaya ve okuma komutuna kadar.
 stats:
-  - { n: 6, l: "adım" }
+  - { n: 9, l: "adım" }
   - { n: 0, l: "log dosyası (kodda)" }
   - { n: 30, l: "MB / container" }
   - { n: 1, l: "satır / istek" }
 
 lanes:
-  - { id: app, label: "SERVİS İÇİ · .NET", tone: app }
+  - { id: cfg, label: "YAPILANDIRMA DOSYALARI", tone: app }
+  - { id: src, label: "LOG ÜRETENLER · .NET", tone: app }
+  - { id: lib, label: "SERILOG · .NET", tone: app }
   - { id: ec2, label: "DOCKER · EC2", tone: ec2 }
-  - { id: aws, label: "AWS · PLAN", tone: aws }
+  - { id: aws, label: "AWS · HENÜZ KURULMADI", tone: aws }
 
 nodes:
-  - { id: code, lane: app, col: 0, title: "ILogger", sub: "LogWarning(...)", icon: code }
-  - { id: serilog, lane: app, col: 1, title: "Serilog", sub: "seviye filtresi", icon: gear }
-  - { id: stdout, lane: app, col: 2, title: "stdout", sub: "tek satır JSON", icon: log }
-  - { id: driver, lane: ec2, col: 2, title: "json-file driver", sub: "10MB × 3", icon: box }
-  - { id: reader, lane: ec2, col: 3, title: "compose logs | jq", sub: "okuma", icon: browser }
-  - { id: cw, lane: aws, col: 2, title: "CloudWatch Logs", sub: "henüz kurulmadı", icon: cloud }
+  - { id: appset, lane: cfg, col: 1, title: "appsettings.json", sub: "dosya · seviyeler", icon: code }
+  - { id: env, lane: cfg, col: 2, title: "docker-compose.yml", sub: "dosya · env değişkeni", icon: code }
+  - { id: code, lane: src, col: 0, title: "MarketService", sub: "sınıf · LogWarning()", icon: code }
+  - { id: reqlog, lane: src, col: 3, title: "İstek logu", sub: "middleware · Serilog", icon: gear }
+  - { id: serilog, lane: lib, col: 1, title: "Serilog", sub: "kütüphane · seviye", icon: gear }
+  - { id: stdout, lane: lib, col: 2, title: "WriteTo.Console", sub: "Serilog sink · stdout", icon: log }
+  - { id: driver, lane: ec2, col: 2, title: "json-file", sub: "Docker log sürücüsü", icon: box }
+  - { id: reader, lane: ec2, col: 3, title: "docker compose logs", sub: "komut · jq ile okuma", icon: browser }
+  - { id: cw, lane: aws, col: 2, title: "CloudWatch Logs", sub: "AWS servisi · plan", icon: cloud }
 
 edges:
+  - [appset, serilog]
+  - [env, serilog]
   - [code, serilog]
+  - [reqlog, serilog]
   - [serilog, stdout]
   - [stdout, driver]
   - [driver, reader]
   - [driver, cw]
 
 steps:
-  - node: code
-    edge: null
-    title: "Kod yalnız olay üretir"
+  - id: kurulum
+    node: serilog
+    edge: [appset, serilog]
+    title: "Açılış: Serilog seviyeleri okur"
     what: >-
-      Servis `ILogger` ile yazar. Mesaj bir şablondur: değerler `{Count}` gibi adlı alanlara girer, metne gömülmez.
+      Servis açılırken `Program.cs` içindeki `AddSerilog(...)` çalışır.
+      `ReadFrom.Configuration` ile `appsettings.json` içindeki `Serilog:MinimumLevel` bölümü okunur.
+      Varsayılan seviye `Information`. `Microsoft`, `System` ve EF Core yalnız `Warning` ve üstünü yazar.
     why: >-
-      Alanlar JSON'da ayrı tutulur ve sorgulanabilir. Kod logun nereye gittiğini bilmez.
+      Framework her istekte çok sayıda satır üretir. `Override` bu satırları keser, uygulamanın kendi logları kalır.
+      `Microsoft.Hosting.Lifetime` ayrıca `Information`'da tutulur: "Application started" satırı her ortamda görünür.
     cost: >-
-      Şablon yerine `$"..."` ile metin birleştirilirse alanlar kaybolur ve sorgu yapılamaz.
-    terms: [structured-logging]
-    file: market-service/Services/InstrumentCatalog.cs
-    code: |
-      logger.LogInformation("Instrument catalog loaded: {Count} active instruments", active.Count);
-
-      # Loglanmaz: şifre, token, cookie, API anahtarı, e-posta, portföy içeriği
-      # Döngüde loglanmaz: N satır yerine tek özet satır
-
-  - node: serilog
-    edge: [code, serilog]
-    title: "Serilog seviyeye göre eler"
-    what: >-
-      Varsayılan seviye `Information`. `Microsoft`, `System` ve EF Core yalnız `Warning` üstünü yazar.
-      İstek logu ayrıca `Information`'da açık tutulur.
-    why: >-
-      Framework gürültüsü kesilir. Her HTTP isteği tek satırda kalır: method, path, status, süre.
-    cost: >-
-      Prod'da seviye `Warning`'e çekilince istek satırı da düşerdi. Bu yüzden onun override'ı silinmez.
+      İstek logu da `Information` seviyesindedir. Prod'da seviye `Warning` olunca o da düşerdi; bu yüzden ayrı override'ı vardır ve silinmez.
+    next:
+      - { when: "Container'da docker-compose ortam değişkenleri bu değerleri ezer", to: ortam }
     terms: [log-level]
-    file: portfolio-service/appsettings.json
+    file: market-service/appsettings.json
     code: |
       "Serilog": {
         "MinimumLevel": {
           "Default": "Information",
           "Override": {
             "Microsoft": "Warning",
+            "Microsoft.Hosting.Lifetime": "Information",
+            "Microsoft.EntityFrameworkCore": "Warning",
             "System": "Warning",
-            "Serilog.AspNetCore.RequestLoggingMiddleware": "Information",
-            "Microsoft.EntityFrameworkCore": "Warning"
+            "Serilog.AspNetCore.RequestLoggingMiddleware": "Information"
           }
         }
       }
 
-  - node: stdout
+  - id: ortam
+    node: serilog
+    edge: [env, serilog]
+    title: "Açılış: ortam değişkenleri ayarı ezer"
+    what: >-
+      `docker-compose.yml`, market-service ve portfolio-service container'larına `Serilog__MinimumLevel__...` değişkenlerini verir.
+      .NET ortam değişkenini `appsettings.json`'dan sonra okur; aynı ayar varsa ortam değişkeni kazanır.
+      Değerler `.env` dosyasındaki `LOG_LEVEL`, `LOG_LEVEL_FRAMEWORK`, `LOG_LEVEL_EFCORE`'dan gelir. Boşsa `:-` sonrasındaki varsayılan kullanılır.
+    why: >-
+      Seviye yeni image olmadan değişir. Örnek: `.env`'e `LOG_LEVEL=Warning` yazılır, container yeniden başlatılır.
+      Bundan sonra `Information` satırları yazılmaz.
+    cost: >-
+      Geçersiz değer servisi açtırmaz. Örnek: `LOG_LEVEL=info` yazılırsa Serilog istisna fırlatır ve servis ayağa kalkmaz.
+    terms: [env-var, log-level]
+    file: docker-compose.yml
+    code: |
+      - ASPNETCORE_ENVIRONMENT=Production
+      # Gerçek prod (AWS) ortamında Warning olarak set edilir; burada lokal teşhis için Information.
+      - Serilog__MinimumLevel__Default=${LOG_LEVEL:-Information}
+      - Serilog__MinimumLevel__Override__Microsoft=${LOG_LEVEL_FRAMEWORK:-Warning}
+      - Serilog__MinimumLevel__Override__System=${LOG_LEVEL_FRAMEWORK:-Warning}
+      - Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore=${LOG_LEVEL_EFCORE:-Warning}
+
+  - id: uret
+    node: code
+    edge: null
+    title: "Kod yalnız olay üretir"
+    what: >-
+      Portföy fiyat isteyince `MarketService.GetPricesAsync()` çalışır. Fiyatı gelmeyen semboller sayılır.
+      Döngü bitince `ILogger` ile tek `LogWarning` satırı yazılır.
+      Mesaj bir şablondur: sayılar `{InvalidCount}` ve `{MissingCount}` gibi adlı alanlara girer, metne gömülmez.
+    why: >-
+      Adlı alanlar JSON'da ayrı tutulur ve sorgulanır. Örnek: `MissingCount > 0` olan satırlar süzülür.
+      Kod logun nereye gittiğini bilmez; yalnız `ILogger`'ı çağırır.
+    cost: >-
+      Şablon yerine `$"..."` ile metin birleştirilirse alanlar kaybolur.
+      Döngüde her sembol için satır yazılmaz; 50 sembolde 50 satır yerine 1 satır.
+      Kullanıcı girdisi (sembol, sorgu) loglanacaksa önce `LogSanitizer.ForLog()` ile satır sonu karakterleri silinir.
+    terms: [structured-logging]
+    file: market-service/Services/MarketService.cs
+    code: |
+      var missingCount = valid.Count - prices.Count;
+      if (invalidCount > 0 || missingCount > 0)
+          _logger.LogWarning("{InvalidCount} sembol geçersiz market nedeniyle, {MissingCount} sembol fiyat bulunamadığı için atlandı",
+              invalidCount, missingCount);
+
+  - id: istek
+    node: reqlog
+    edge: null
+    title: "Her HTTP isteği tek satır"
+    what: >-
+      `Program.cs`, `app.UseSerilogRequestLogging()` ile Serilog'un istek middleware'ini ekler.
+      Her HTTP isteği bu middleware'den geçer. Cevap dönünce tek satır yazılır: method, path, status, süre.
+    why: >-
+      Framework'ün kendi istek logu istek başına birkaç satırdır ve `Warning` override'ıyla kapalıdır. Bu tek satır onun yerine geçer.
+      "Çalışıyor ama yavaş" durumu süre alanından görünür.
+    cost: >-
+      Her istek bir satırdır; log hacmi trafikle büyür.
+    terms: [log-level, middleware]
+    file: market-service/Program.cs
+    code: |
+      app.UseSerilogRequestLogging();
+      app.UseCors();
+      app.UseMiddleware<KratosMiddleware>();
+
+      # Serilog.AspNetCore varsayılan mesaj şablonu:
+      # HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms
+
+  - id: filtre
+    node: serilog
+    edge: [code, serilog]
+    aux: [reqlog]
+    auxEdges: [[reqlog, serilog]]
+    title: "Serilog seviyeye göre eler"
+    what: >-
+      Her satır yazılmadan önce Serilog seviyesine bakar. Satırın seviyesi eşiğin altındaysa satır atılır ve hiçbir yere gitmez.
+      Eşik, satırı yazan sınıfın ad alanına göre seçilir. En uzun eşleşen `Override` kazanır.
+    why: >-
+      Örnek: `LOG_LEVEL=Warning` ise `InstrumentCatalog`'un `LogInformation` satırı atılır.
+      `MarketService`'in `LogWarning` satırı geçer. İstek satırı kendi override'ı sayesinde `Information`'da da geçer.
+    cost: >-
+      Atılan satır sonradan geri getirilemez. Teşhis için seviye geçici açılır, iş bitince geri alınır.
+    terms: [log-level]
+    file: market-service/Program.cs
+    code: |
+      builder.Services.AddSerilog((services, cfg) =>
+      {
+          cfg.ReadFrom.Configuration(builder.Configuration)
+             .ReadFrom.Services(services)
+             .Enrich.FromLogContext();
+
+  - id: json
+    node: stdout
     edge: [serilog, stdout]
     title: "Container'da JSON, lokalde metin"
     what: >-
-      Development dışında `CompactJsonFormatter` ile tek satır JSON basılır. Lokal `dotnet run`'da okunabilir metin basılır.
+      Geçen satır `WriteTo.Console` ile stdout'a yazılır. Sink, Serilog'da satırın yazıldığı hedeftir; burada tek hedef konsoldur.
+      Ortam `Development` değilse `CompactJsonFormatter` ile tek satır JSON basılır.
+      docker-compose `ASPNETCORE_ENVIRONMENT=Production` verir; bu yüzden container'da hep JSON çıkar.
+      Lokal `dotnet run` ortamı `Development`'tır: düz metin basılır, yalnız terminalde görünür ve Docker'a gitmez.
     why: >-
       Log bir olay akışıdır (12-Factor). Uygulama dosyaya yazmaz; EC2'den ECS'e geçişte kod değişmez.
     cost: >-
       JSON satırları terminalde okunması zordur. Okumak için `jq` gerekir.
-    terms: [twelve-factor, stdout]
-    file: portfolio-service/Program.cs
+    terms: [twelve-factor, stdout, sink]
+    file: market-service/Program.cs
     code: |
-      builder.Services.AddSerilog((services, cfg) =>
-      {
-          if (builder.Environment.IsDevelopment())
-              cfg.WriteTo.Console();
-          else
-              cfg.WriteTo.Console(new CompactJsonFormatter());
-      });
+      if (builder.Environment.IsDevelopment())
+          cfg.WriteTo.Console();
+      else
+          cfg.WriteTo.Console(new CompactJsonFormatter());
 
-  - node: driver
+  - id: surucu
+    node: driver
     edge: [stdout, driver]
     title: "Docker yakalar ve döndürür"
     what: >-
-      Docker stdout'u `json-file` sürücüsüyle diske yazar. Dosya 10 MB olunca yenisi açılır; en fazla 3 dosya kalır.
+      Docker container'ın stdout'unu `json-file` log sürücüsüyle sunucu diskine yazar.
+      Dosya 10 MB olunca kapanır ve yenisi açılır. En fazla 3 dosya kalır; dördüncü gerekince en eski silinir.
+      Ayar `docker-compose.yml`'de bir kez tanımlanır ve her servise `logging: *default-logging` ile verilir.
     why: >-
       Rotasyon yoksa dosya container yaşadıkça büyür ve diski doldurur. Üst sınır container başına 30 MB.
     cost: >-
-      Eski loglar silinir. Uzun süreli saklama gerekirse merkezi bir log servisi gerekir.
+      30 MB'tan eski loglar silinir. Uzun süreli saklama için merkezi bir log servisi gerekir.
     terms: [log-rotation, yaml-anchor]
     file: docker-compose.yml
     code: |
@@ -113,15 +205,16 @@ steps:
           max-size: "10m"
           max-file: "3"
 
-      services:
-        market-service:
-          logging: *default-logging
+      market-service:
+        logging: *default-logging
 
-  - node: reader
+  - id: okuma
+    node: reader
     edge: [driver, reader]
     title: "Okuma: compose logs ve jq"
     what: >-
-      Loglar `docker compose logs <servis>` ile okunur. JSON satırları `jq` ile biçimlenir ve süzülür.
+      Loglar sunucuda `docker compose logs <servis>` ile okunur. Komut `json-file` dosyalarını okur.
+      JSON satırları `jq`'ya aktarılır; `jq` satırları biçimler ve alana göre süzer.
     why: >-
       Ek araç kurmadan sunucuda teşhis yapılır.
     cost: >-
@@ -129,23 +222,22 @@ steps:
     terms: [jq]
     file: docs/10-standards/LOGGING.md
     code: |
-      $ docker compose logs market-service | jq
-      $ docker compose logs -f portfolio-service
+      JSON logu terminalde okumak için: `docker compose logs market-service | jq`
 
-  - node: cw
+  - id: plan
+    node: cw
     edge: [driver, cw]
     title: "Plan: CloudWatch ve Warning seviyesi"
     what: >-
-      Planda log sürücüsü `awslogs`'a çevrilir ve loglar CloudWatch Logs'a akar. Seviye `Warning` olur.
+      Bu adım henüz kurulmadı. Planda log sürücüsü `json-file` yerine `awslogs` olur ve loglar CloudWatch Logs'a akar.
+      Seviye `.env` ile `Warning`'e çekilir.
     why: >-
-      Uygulama kodu değişmez; yalnız altyapı ayarı değişir. Loglar sunucu dışında saklanır ve aranır.
+      Uygulama kodu değişmez; yalnız Docker ayarı değişir. Loglar sunucu dışında saklanır ve aranır.
     cost: >-
-      CloudWatch log grubu varsayılan olarak süresiz saklar ve fatura büyür. Retention ve bütçe alarmı zorunlu.
+      CloudWatch log grubu varsayılan olarak süresiz saklar ve fatura büyür. Saklama süresi ve bütçe alarmı zorunlu.
     terms: [log-level]
     file: docs/10-standards/LOGGING.md
     code: |
-      # §7 AWS'ye geçiş (henüz yapılmadı)
-      1. log driver → awslogs
-      2. retention ZORUNLU: 30 gün (test), 90 gün (prod)
-      3. Serilog__MinimumLevel__Default=Warning
-      4. CloudWatch Billing Alarm
+      1. **Log driver'ı `awslogs`'a çevir** (veya CloudWatch agent kur). `json-file` yerine loglar doğrudan CloudWatch Logs'a akar.
+      2. **Retention süresi ZORUNLU olarak set edilir.** CloudWatch log grubunun varsayılanı "süresiz saklama"dır ve **faturanın kontrolsüz şişmesinin bir numaralı sebebi budur**. Öneri: 30 gün (test), 90 gün (prod).
+      3. **Seviye `Warning`** — `Serilog__MinimumLevel__Default=Warning`.
