@@ -4,156 +4,373 @@ group: altyapi
 eyebrow: "Akış 02 · Teslimat · CI/CD"
 title: "Kod *prod'a* nasıl çıkar?"
 lede: >-
-  `main-prod`'a yapılan bir push'tan, EC2'de yeni container'ların çalışmasına kadar altı adım.
-  Hiçbir adımda elle müdahale yok. Hiçbir yerde uzun ömürlü AWS anahtarı saklanmıyor.
+  `main-prod`'a yapılan bir push'tan, EC2'de yeni container'ların çalışmasına kadar.
+  GitHub image'ları build eder ve sürümü S3'e bırakır. AWS sürümü bir insan onayından sonra sunucuya taşır.
+  Hiçbir yerde uzun ömürlü AWS anahtarı saklanmıyor.
 stats:
-  - { n: 6, l: "adım" }
-  - { n: 5, l: "AWS servisi" }
   - { n: 3, l: "image" }
+  - { n: 2, l: "GitHub job'u" }
+  - { n: 1, l: "insan onayı" }
   - { n: 0, l: "kalıcı anahtar" }
 
 lanes:
   # Etiketler büyük harfle yazılır; CSS çevirmez (tr dilinde "i" → "İ" olur).
-  - { id: github, label: "GITHUB", tone: gh }
-  - { id: aws, label: "AWS · KONTROL DÜZLEMİ", tone: aws }
+  - { id: github, label: "GITHUB · REPO VE ACTIONS", tone: gh }
+  - { id: store, label: "AWS · ECR · S3 · IAM", tone: aws }
+  - { id: cd, label: "AWS · EVENTBRIDGE · CODEPIPELINE", tone: aws }
+  - { id: secret, label: "AWS · SECRETS MANAGER", tone: aws }
   - { id: ec2, label: "AWS · EC2 SUNUCU", tone: ec2 }
 
 nodes:
-  - { id: push, lane: github, col: 0, title: "git push", sub: "main-prod", icon: git }
-  - { id: act, lane: github, col: 1, title: "GitHub Actions", sub: "build-push.yml", icon: gear }
-  - { id: ecr, lane: aws, col: 1, title: "Amazon ECR", sub: "3 image · tag=SHA", icon: box }
-  - { id: s3, lane: aws, col: 2, title: "Amazon S3", sub: "release.zip", icon: bucket }
-  - { id: cp, lane: aws, col: 3, title: "CodePipeline", sub: "S3 kaynağı → EC2", icon: pipe }
-  - { id: sm, lane: ec2, col: 2, title: "Secrets Manager", sub: ".env + TLS", icon: key }
-  - { id: ec2, lane: ec2, col: 3, title: "EC2 · deploy.sh", sub: "compose pull / up", icon: server }
+  - { id: repo, lane: github, col: 0, title: "GitHub repo", sub: "branch · main-prod", icon: git }
+  - { id: build, lane: github, col: 1, title: "build", sub: "job · 3 paralel kopya", icon: gear }
+  - { id: release, lane: github, col: 2, title: "release", sub: "job · needs: build", icon: gear }
+  - { id: ecr, lane: store, col: 1, title: "Amazon ECR", sub: "registry · tag=SHA", icon: box }
+  - { id: s3, lane: store, col: 2, title: "Amazon S3", sub: "dosya · release.zip", icon: bucket }
+  - { id: iam, lane: store, col: 3, title: "AWS IAM", sub: "rol · OIDC ile girilir", icon: shield }
+  - { id: eb, lane: cd, col: 2, title: "EventBridge", sub: "kural · S3 olayı", icon: bolt }
+  - { id: cp, lane: cd, col: 3, title: "CodePipeline", sub: "Source → Onay → Deploy", icon: pipe }
+  - { id: sm, lane: secret, col: 2, title: "Secrets Manager", sub: "2 secret · .env + TLS", icon: key }
+  - { id: compose, lane: ec2, col: 1, title: "docker compose", sub: "6 container · Akış 04", icon: server }
+  - { id: deploy, lane: ec2, col: 2, title: "deploy.sh", sub: "bash · /opt/assay", icon: code }
+  - { id: run, lane: ec2, col: 3, title: "run.sh", sub: "bash · zip içinde", icon: code }
 
 edges:
-  - [push, act]
-  - [act, ecr]
-  - [act, s3]
-  - [s3, cp]
-  - [cp, ec2]
-  - [sm, ec2]
-  - [ecr, ec2]
+  - [repo, build]
+  - [build, release]
+  - [build, iam]
+  - [release, iam]
+  - [build, ecr]
+  - [release, s3]
+  - [s3, eb]
+  - [eb, cp]
+  - [cp, run]
+  - [run, deploy]
+  - [deploy, repo]
+  - [deploy, sm]
+  - [deploy, ecr]
+  - [deploy, compose]
 
 steps:
-  - node: push
+  - id: tetik
+    node: repo
     edge: null
-    title: "Push, workflow'u tetikler"
+    title: "Push, iki workflow'u birden başlatır"
     what: >-
-      `main-prod`'a yapılan push (merge de bir push'tur) GitHub Actions'taki
-      "Build and Push to ECR" workflow'unu başlatır.
+      `main-prod`'a yapılan push iki workflow'u aynı anda başlatır. PR'ın merge edilmesi de bir push'tur.
+      Birincisi `build-push.yml` ("Build and Push to ECR"), ikincisi `codeql.yml` (güvenlik taraması).
+      İkisi birbirini beklemez.
     why: >-
-      Prod yalnız tek branch'ten çıkar. `test`'e push WSL'deki self-hosted runner'a gider.
-      İki yol karışmaz.
+      Prod yalnız tek branch'ten çıkar. `test`'e push ise `wsl-deploy.yml`'ı WSL'deki self-hosted runner'da çalıştırır.
+      O yol prod'a dokunmaz.
     cost: >-
-      Yanlış merge doğrudan prod'a gider. Önlem: PR ile birleştirme ve her push'ta CodeQL taraması.
+      CodeQL deploy'u durdurmaz. Tarama bulgu çıkarsa da deploy devam eder.
+      `build-push.yml`'da `paths-ignore` yok. Yalnız doküman değişen bir push da üç image'ı yeniden build eder.
     terms: [workflow, trigger, self-hosted-runner]
     file: .github/workflows/build-push.yml
     code: |
+      name: Build and Push to ECR
+
       on:
         push:
           branches: [ main-prod ]
 
-      # test → wsl-deploy.yml (self-hosted)
-      # test, main-prod → codeql.yml
-
-  - node: act
-    edge: [push, act]
-    title: "Actions, AWS'ye OIDC ile girer"
+  - id: build
+    node: build
+    edge: [repo, build]
+    title: "build job'u üç kopya hâlinde çalışır"
     what: >-
-      Runner, GitHub'dan kısa ömürlü bir kimlik token'ı alır. AWS'de deploy rolünü bu token ile üstlenir.
+      `build` job'u bir matrix'tir. Aynı adımlar `web`, `portfolio-service` ve `market-service` için
+      üç ayrı GitHub makinesinde paralel çalışır.
+      Her kopyanın adımları sırayla: `Checkout`, `Configure AWS credentials (OIDC)`, `Login to ECR`, `Build and push`.
     why: >-
-      Repoda veya GitHub secret'larında uzun ömürlü AWS erişim anahtarı tutulmaz.
-      Token dakikalar içinde geçersizleşir.
+      Üç image birbirinden bağımsızdır. Paralel çalışınca toplam süre en yavaş image'ın süresi kadar olur.
     cost: >-
-      İlk kurulum zordur. IAM trust policy'deki `sub` koşulu branch ile birebir eşleşmeli.
+      Her kopya kodu ayrı indirir ve AWS'ye ayrı giriş yapar.
+    terms: [workflow, image, matrix, fail-fast]
+    file: .github/workflows/build-push.yml
+    fileNote: "job: build"
+    code: |
+      build:
+        runs-on: ubuntu-latest
+        strategy:
+          matrix:
+            include:
+              - name: web
+                context: ./web
+              - name: portfolio-service
+                context: ./portfolio-service
+              - name: market-service
+                context: ./market-service
+
+  - id: oidc
+    node: iam
+    edge: [build, iam]
+    title: "AWS'ye anahtarsız giriş: OIDC"
+    what: >-
+      `Configure AWS credentials (OIDC)` adımı GitHub'dan imzalı, kısa ömürlü bir token ister.
+      Token "bu istek şu repodan, `main-prod` branch'inden" der.
+      AWS IAM bu bilgiyi deploy rolünün trust policy'si ile karşılaştırır. Eşleşirse rolün geçici yetkisini verir.
+    why: >-
+      Repoda ve GitHub secret'larında AWS anahtarı yoktur. Çalınacak kalıcı bir anahtar olmaz.
+      Token kısa sürede geçersizleşir. Başka bir branch'ten gelen token rolü üstlenemez.
+    cost: >-
+      Trust policy'deki `sub` değeri GitHub'ın gönderdiği değerle birebir aynı olmalı.
+      Tutmazsa adım `Not authorized to perform sts:AssumeRoleWithWebIdentity` hatasıyla düşer.
+    next:
+      - { when: "Trust policy eşleşmez → adım ve job düşer", to: hata }
     terms: [oidc, iam-role, trust-policy]
     file: .github/workflows/build-push.yml
     fileNote: "job: build"
     code: |
-      - uses: aws-actions/configure-aws-credentials@v5
+      permissions:
+        id-token: write      # OIDC jetonu istemek icin ZORUNLU
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5
         with:
           role-to-assume: <deploy rolü>
           aws-region: ${{ env.AWS_REGION }}
 
-      # anahtar yok — token istek anında üretilir
-
-  - node: ecr
-    edge: [act, ecr]
-    title: "Üç image build edilir, ECR'a gönderilir"
+  - id: ecr
+    node: ecr
+    edge: [build, ecr]
+    title: "Image build edilir, SHA tag'iyle ECR'a gider"
     what: >-
-      `market-service`, `portfolio-service` ve `web` image'ları build edilir. Tag olarak commit SHA kullanılır.
+      `Login to ECR` adımı Docker'ı ECR'a bağlar. `Build and push` adımı image'ı build eder ve ECR'a gönderir.
+      Tag olarak commit SHA'sı (`GITHUB_SHA`) kullanılır.
     why: >-
-      SHA tag'i her sürümü tekil yapar. EC2'de, CI'da build edilen image'ın byte'ı byte'ına aynısı çalışır.
+      Örnek: `3f2a…` SHA'lı image yalnız o commit'in kodunu taşır. EC2 tam bu tag'i çeker.
+      Sunucuda, CI'da build edilen image'ın byte'ı byte'ına aynısı çalışır.
     cost: >-
-      `latest` daha basittir ama hangi sürümün çalıştığı bilinmez. Bedel: ECR'da image birikir,
-      lifecycle kuralı gerekir.
+      Her push üç yeni image bırakır. ECR'da image birikir; temizlemek için lifecycle kuralı gerekir.
+    next:
+      - { when: "Bir kopya düşer → matrix diğer kopyaları iptal eder (fail-fast)", to: hata }
     terms: [image, registry, immutable-deploy]
     file: .github/workflows/build-push.yml
     fileNote: "job: build"
     code: |
-      $ aws ecr get-login-password | docker login $REG
-      $ docker build -t $REG/assay/web:$SHA ./web
-      $ docker push $REG/assay/web:$SHA
-      # aynısı market-service ve portfolio-service için
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region "$AWS_REGION" \
+            | docker login --username AWS --password-stdin "$ECR_REGISTRY"
 
-  - node: s3
-    edge: [act, s3]
-    title: "Sürüm bilgisi S3'e bırakılır"
+      - name: Build and push
+        run: |
+          IMAGE="$ECR_REGISTRY/assay/${{ matrix.name }}:${GITHUB_SHA}"
+          docker build -t "$IMAGE" "${{ matrix.context }}"
+          docker push "$IMAGE"
+
+  - id: release
+    node: release
+    edge: [build, release]
+    aux: [iam]
+    auxEdges: [[release, iam]]
+    title: "release job'u üç kopya da bitince başlar"
     what: >-
-      İkinci job, commit SHA'yı `release.env`'e yazar. `run.sh` ile zip'leyip S3'e yükler.
+      `release` job'u `needs: build` taşır. Üç build kopyasının hepsi başarıyla bitince başlar.
+      O da AWS'ye aynı deploy rolüyle, OIDC üzerinden girer.
     why: >-
-      CodePipeline, ECR'a gelen SHA tag'li image'larla tetiklenmiyordu.
-      S3'teki nesnenin değişmesi pipeline'ı güvenilir şekilde tetikler.
+      Örnek: `web` build'i düşerse S3'e yeni sürüm bırakılmaz. Prod'a yarım sürüm (iki yeni, bir eski image) çıkmaz.
     cost: >-
-      Zincire bir halka daha eklenir: bucket, zip ve onu okuyan betik. Karşılığında tetikleme kesinleşir.
+      Tek image'daki hata, diğer ikisinin de prod'a çıkmasını engeller.
+    next:
+      - { when: "build job'u başarısız → release atlanır", to: hata }
+    terms: [oidc, needs]
+    file: .github/workflows/build-push.yml
+    fileNote: "job: release"
+    code: |
+      # Uc imaj da ECR'a cikinca surumu (SHA + run.sh) S3'e birakir; CodePipeline buradan baslar.
+      release:
+        needs: build
+        runs-on: ubuntu-latest
+
+  - id: s3
+    node: s3
+    edge: [release, s3]
+    title: "Sürüm zip'i S3'e bırakılır"
+    what: >-
+      `Upload release bundle` adımı `release.env` dosyasına `IMAGE_TAG=<SHA>` yazar.
+      Bu dosyayı `deploy/scripts/run.sh` ile birlikte `release.zip`'e koyar ve S3'e yükler.
+      Zip her seferinde aynı ada yazılır, eskisinin üstüne gelir.
+    why: >-
+      Deploy edilen şey üç image'dır; onları bağlayan tek bilgi SHA'dır.
+      CodePipeline'ın ECR kaynağı ise tek bir repoyu ve sabit bir tag'i (ör. `latest`) izler.
+      Bizde üç repo ve her push'ta yeni bir SHA var; ECR kaynağı pipeline'ı hiç başlatmaz. S3'teki tek zip bu SHA'yı taşır.
+    cost: >-
+      Zincire bir bucket, bir zip ve onu açan bir betik eklenir.
     terms: [artifact, source-action]
     file: .github/workflows/build-push.yml
     fileNote: "job: release"
     code: |
-      $ echo "IMAGE_TAG=$GITHUB_SHA" > bundle/release.env
-      $ zip release.zip run.sh release.env
-      $ aws s3 cp release.zip s3://$RELEASE_BUCKET/release.zip
+      - name: Upload release bundle
+        run: |
+          mkdir bundle
+          cp deploy/scripts/run.sh bundle/
+          echo "IMAGE_TAG=${GITHUB_SHA}" > bundle/release.env
+          (cd bundle && zip -q ../release.zip run.sh release.env)
+          aws s3 cp release.zip "s3://${RELEASE_BUCKET}/release.zip"
 
-  - node: cp
-    edge: [s3, cp]
-    title: "CodePipeline, sürümü EC2'ye taşır"
+  - id: eventbridge
+    node: eb
+    edge: [s3, eb]
+    title: "S3'teki yeni zip pipeline'ı başlatır"
     what: >-
-      Yeni zip pipeline'ı başlatır. EC2 deploy action'ı zip'i sunucuya taşır ve `run.sh`'ı çalıştırır.
+      S3'e yeni `release.zip` yazılınca bir EventBridge kuralı bu olayı yakalar ve CodePipeline'ı başlatır.
+      Pipeline'ın Source aşaması bu zip'i alır.
     why: >-
-      GitHub, EC2'ye doğrudan bağlanmaz. Deploy, AWS'nin içinden tetiklenir.
+      GitHub'ın işi zip'i S3'e bırakınca biter. GitHub CodePipeline'ı çağırmaz; deploy AWS'nin içinden başlar.
     cost: >-
-      Hata ayıklama AWS konsoluna taşınır. Bu yüzden `run.sh` girdiyi sıkı doğrular:
-      SHA 40 karakter değilse durur.
-    terms: [pipeline, deploy-action]
+      Kural ve pipeline ayarı repoda değil, AWS'de durur. Bu ayarlar kod incelemesinden geçmez.
+    terms: [pipeline, source-action, eventbridge]
+    file: docs/40-learning/PROD-PIPELINE-GUNLUGU.md
+    code: |
+      | **B: GitHub build eder, S3 zip ile devreder** | Mevcut `build-push.yml` korunuyor. Ek parçalar: S3 bucket, EventBridge kuralı, `release` job'u, `run.sh` |
+
+  - id: onay
+    node: cp
+    edge: [eb, cp]
+    title: "Prod'a çıkış için insan onayı beklenir"
+    what: >-
+      Pipeline Source aşamasından sonra durur. SNS üzerinden onay e-postası gider.
+      Biri AWS konsolunda onaylayınca Deploy aşaması başlar.
+    why: >-
+      Otomatik zincirdeki son kontrol bir insandadır. Örnek: yanlışlıkla merge edilen bir commit onaylanmazsa prod'a çıkmaz.
+    cost: >-
+      Onay verilene kadar prod eski sürümde kalır. Onay 7 gün içinde verilmezse action başarısız olur.
+    next:
+      - { when: "Onaylanır → Deploy aşaması", to: run }
+      - { when: "Reddedilir veya 7 gün yanıt yok → pipeline durur", to: hata }
+    terms: [pipeline, manual-approval]
+    file: docs/10-standards/PIPELINE-SECURITY.md
+    code: |
+      - Immutable imajlar (SHA tag, ECR immutable); prod'a çıkış SNS e-postası + insan onayıyla.
+
+  - id: run
+    node: run
+    edge: [cp, run]
+    title: "run.sh sürümü doğrular"
+    what: >-
+      Deploy aşamasındaki EC2 deploy action'ı zip'i sunucuya taşır ve içindeki `run.sh`'ı çalıştırır.
+      `run.sh`, `release.env`'den SHA'yı okur. Değer 40 karakterlik bir commit SHA değilse durur.
+      Geçerliyse `IMAGE_TAG`'i dışa verir ve `/opt/assay/deploy/scripts/deploy.sh`'a geçer.
+    why: >-
+      GitHub EC2'ye bağlanmaz. Sunucudaki komutu AWS çalıştırır.
+      `run.sh` küçük ve sabittir; asıl iş repodaki `deploy.sh`'tadır.
+    cost: >-
+      Hata AWS konsolundaki action logunda görünür. Bu yüzden betik hatayı gelen değerle birlikte açık metinle yazar.
+    next:
+      - { when: "SHA geçersiz → exit 1, deploy.sh çalışmaz", to: hata }
+    terms: [deploy-action]
     file: deploy/scripts/run.sh
     code: |
       IMAGE_TAG=$(sed -n 's/^IMAGE_TAG=//p' release.env)
       if [[ ! "$IMAGE_TAG" =~ ^[0-9a-f]{40}$ ]]; then
-        echo "release.env gecersiz" >&2; exit 1
+        echo "release.env gecersiz: IMAGE_TAG 40 karakterlik commit SHA olmali, gelen: '$IMAGE_TAG'" >&2
+        exit 1
       fi
+
+      export IMAGE_TAG
       exec /opt/assay/deploy/scripts/deploy.sh
 
-  - node: ec2
-    edge: [cp, ec2]
-    aux: [sm, ecr]
-    auxEdges: [[sm, ec2], [ecr, ec2]]
-    title: "deploy.sh yeni sürümü ayağa kaldırır"
+  - id: checkout
+    node: deploy
+    edge: [run, deploy]
+    aux: [repo]
+    auxEdges: [[deploy, repo]]
+    title: "deploy.sh repoyu aynı commit'e getirir"
     what: >-
-      Secrets Manager'dan `.env` ve TLS sertifikası alınır. ECR'a login olunur.
-      Sonra `compose pull` ve `up -d` çalışır.
+      `deploy.sh`, `/opt/assay`'deki repo kopyasında `git fetch origin main-prod` ve `git checkout --detach <SHA>` çalıştırır.
+      Sonra kendini `RE_DEPLOY=<SHA>` ile baştan başlatır (`exec`). İkinci çalışmada bu blok atlanır.
     why: >-
-      Secret diske yalnız deploy anında yazılır. Override dosyası okunmasın diye
-      her komut `-f docker-compose.yml` ile verilir.
+      `docker-compose.yml` ve `kratos/` ayarı da image'larla aynı commit'ten gelmeli.
+      Örnek: yeni commit compose'a bir ortam değişkeni eklediyse eski compose ile servis o değişkeni almaz.
+      Checkout `deploy.sh`'ın kendisini de değiştirebilir; yeniden başlatma diskteki yeni sürümü çalıştırır.
     cost: >-
-      Tek EC2 var. `up -d` container'ları yeniden başlatırken kısa bir kesinti olur.
-      Sıfır kesinti için ikinci sunucu ve yük dengeleyici gerekir.
-    terms: [secrets-manager, docker-compose, override-file]
+      Sunucuda repo kopyası durur ve sunucu GitHub'a erişebilmelidir.
+    terms: [immutable-deploy]
     file: deploy/scripts/deploy.sh
     code: |
-      $ aws secretsmanager get-secret-value --secret-id $SECRET_ID …
-      $ aws ecr get-login-password | docker login $REG
-      $ docker compose -f docker-compose.yml pull
-      $ docker compose -f docker-compose.yml up -d --remove-orphans
-      $ docker compose -f docker-compose.yml ps
+      if [[ "${RE_DEPLOY:-}" != "$IMAGE_TAG" ]]; then
+        git fetch --quiet origin main-prod
+        git checkout --quiet --detach "$IMAGE_TAG"
+        RE_DEPLOY="$IMAGE_TAG" exec "$APP_DIR/deploy/scripts/deploy.sh"
+      fi
+
+  - id: sirlar
+    node: sm
+    edge: [deploy, sm]
+    title: "Sırlar Secrets Manager'dan diske yazılır"
+    what: >-
+      İki secret okunur. Birincisi `.env` dosyasına yazılır: her değer tek tırnak içinde, sona `LOG_LEVEL=Warning` ve `APP_URL` eklenir.
+      İkincisi Cloudflare Origin sertifikasıdır. `certs/origin.pem` ve `certs/origin.key` olarak yazılır.
+    why: >-
+      Sır repoda ve image'da durmaz. EC2'nin rolü yalnız bu iki secret'ı okuyabilir.
+      `umask 077` dosyayı ilk andan yalnız sahibinin okuyabileceği şekilde açar.
+    cost: >-
+      `.env` sunucu diskinde düz metin durur. Bir değer tek tırnak içerirse betik durur.
+    terms: [secrets-manager, env-var]
+    file: deploy/scripts/deploy.sh
+    code: |
+      umask 077
+      aws secretsmanager get-secret-value --region "$AWS_REGION" --secret-id "$SECRET_ID" \
+          --query SecretString --output text \
+        | python3 -c '
+      import json, sys
+      for k, v in json.load(sys.stdin).items():
+          if "\x27" in v:
+              sys.exit(f"{k} tek tirnak iceriyor, .env icin guvenli yazilamaz")
+          print(f"{k}=\x27{v}\x27")
+      print("LOG_LEVEL=Warning")
+      ' > .env.tmp
+      echo "APP_URL=$APP_URL" >> .env.tmp
+      mv .env.tmp .env
+
+  - id: up
+    node: compose
+    edge: [deploy, compose]
+    aux: [ecr]
+    auxEdges: [[deploy, ecr]]
+    title: "Yeni image'lar çekilir, container'lar yenilenir"
+    what: >-
+      `deploy.sh` ECR'a login olur, `ECR_REGISTRY` ve `IMAGE_TAG`'i dışa verir.
+      Sonra `docker compose -f docker-compose.yml` ile sırayla `pull`, `up -d --remove-orphans` ve `ps` çalıştırır.
+      Container'ların açılış sırası Akış 04'te.
+    why: >-
+      `-f docker-compose.yml` verilince `docker-compose.override.yml` okunmaz.
+      Okunsaydı image ECR'dan çekilmez, sunucuda kaynaktan build edilirdi ve dev portları açılırdı.
+    cost: >-
+      Tek EC2 var; `up -d` değişen container'ları yeniden başlatırken kısa bir kesinti olur.
+      `ps` yalnız listeler. Sağlık kontrolü ve otomatik geri alma yok.
+    next:
+      - { when: "Bir komut hata verir → betik durur (set -e)", to: hata }
+    terms: [docker-compose, override-file, registry]
+    file: deploy/scripts/deploy.sh
+    code: |
+      aws ecr get-login-password --region "$AWS_REGION" \
+        | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+
+      # -f: repo'daki docker-compose.override.yml (dev portlari + build) prod'da OKUNMAZ.
+      export ECR_REGISTRY IMAGE_TAG
+      docker compose -f docker-compose.yml pull
+      docker compose -f docker-compose.yml up -d --remove-orphans
+      docker compose -f docker-compose.yml ps
+
+  - id: hata
+    node: compose
+    edge: null
+    aux: [build, release, run, deploy]
+    title: "Zincir koparsa çalışan sürüm kalır"
+    what: >-
+      Bir halka düşerse sonrakiler çalışmaz. Build düşerse `release` atlanır, S3 değişmez, pipeline başlamaz.
+      Onay verilmezse Deploy aşaması çalışmaz. `run.sh` veya `deploy.sh` `up -d`'den önce durursa container'lara dokunulmaz.
+    why: >-
+      Her halka bir öncekinin başarısına bağlıdır. Örnek: OIDC hatası olan bir push'ta EC2'de hiçbir şey değişmez.
+      Site eski SHA ile çalışmaya devam eder.
+    cost: >-
+      Hatayı yalnız ilgili yerin logu söyler: GitHub Actions, CodePipeline veya action logu. Alarm yok.
+      `deploy.sh` checkout'tan sonra düşerse repo yeni commit'te, container'lar eski sürümde kalır.
+    terms: []
+    file: deploy/scripts/deploy.sh
+    code: |
+      set -euo pipefail
