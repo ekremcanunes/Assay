@@ -5,140 +5,322 @@ eyebrow: "Akış 06 · Veri kaynakları · Dış API'ler"
 title: "Veri *nereden* geliyor?"
 lede: >-
   Assay kendi piyasa verisini üretmez. Üç ücretsiz kaynaktan alır ve her birini tek bir iş için kullanır:
-  Yahoo fiyat, Twelve Data liste, Frankfurter döviz.
+  Yahoo fiyat, Frankfurter döviz, Twelve Data enstrüman listesi. Fiyatı bir kullanıcı isteği, listeyi her sabah çalışan bir iş çeker.
 stats:
   - { n: 3, l: "dış kaynak" }
   - { n: 0, l: "ücretli plan" }
   - { n: 1, l: "API anahtarı" }
-  - { n: 6, l: "adım" }
+  - { n: 13, l: "adım" }
 
 lanes:
-  - { id: ext, label: "DIŞ KAYNAKLAR", tone: ext }
-  - { id: app, label: "MARKET-SERVICE · İSTEMCİLER", tone: app }
-  - { id: data, label: "MARKET-SERVICE · SONUÇ", tone: data }
+  - { id: caller, label: "PORTFOLIO-SERVICE", tone: app }
+  - { id: entry, label: "MARKET-SERVICE · GİRİŞ NOKTALARI", tone: app }
+  - { id: svc, label: "MARKET-SERVICE · SERVİSLER", tone: app }
+  - { id: cli, label: "MARKET-SERVICE · HTTP İSTEMCİLERİ", tone: app }
+  - { id: ext, label: "DIŞ API'LER", tone: ext }
+  - { id: data, label: "POSTGRES", tone: data }
 
 nodes:
-  - { id: yahoo, lane: ext, col: 0, title: "Yahoo Finance", sub: "v8 chart · anahtarsız", icon: globe }
-  - { id: twelve, lane: ext, col: 1, title: "Twelve Data", sub: "liste · API anahtarı", icon: globe }
-  - { id: frank, lane: ext, col: 2, title: "Frankfurter", sub: "kur · anahtarsız", icon: globe }
-  - { id: yclient, lane: app, col: 0, title: "YahooFinanceClient", sub: "fiyat · mum · kapanış", icon: code }
-  - { id: tclient, lane: app, col: 1, title: "TwelveDataClient", sub: "BIST + US listesi", icon: code }
-  - { id: fclient, lane: app, col: 2, title: "FrankfurterClient", sub: "USD/TRY · seri", icon: code }
-  - { id: ms, lane: data, col: 0, title: "MarketService", sub: "hisse · altın · döviz", icon: calc }
-  - { id: instruments, lane: data, col: 1, title: "Instruments", sub: "Postgres · katalog", icon: db }
+  - { id: asset, lane: caller, col: 0, title: "AssetService", sub: "GetPriceMapAsync()", icon: code }
+  - { id: ctrl, lane: entry, col: 0, title: "MarketController", sub: "Controller · /prices", icon: server }
+  - { id: job, lane: entry, col: 3, title: "InstrumentSyncJob", sub: "BackgroundService", icon: clock }
+  - { id: ms, lane: svc, col: 0, title: "MarketService", sub: "GetPriceAsync()", icon: calc }
+  - { id: syncer, lane: svc, col: 3, title: "InstrumentSyncer", sub: "SyncAsync()", icon: gear }
+  - { id: yclient, lane: cli, col: 0, title: "YahooFinanceClient", sub: "HttpClient sınıfı", icon: code }
+  - { id: fclient, lane: cli, col: 1, title: "FrankfurterClient", sub: "HttpClient sınıfı", icon: code }
+  - { id: tclient, lane: cli, col: 3, title: "TwelveDataClient", sub: "HttpClient sınıfı", icon: code }
+  - { id: yahoo, lane: ext, col: 0, title: "Yahoo Finance", sub: "dış API · anahtarsız", icon: globe }
+  - { id: frank, lane: ext, col: 1, title: "Frankfurter", sub: "dış API · anahtarsız", icon: globe }
+  - { id: twelve, lane: ext, col: 3, title: "Twelve Data", sub: "dış API · anahtarlı", icon: globe }
+  - { id: instruments, lane: data, col: 2, title: "Instruments", sub: "tablo · enstrümanlar", icon: db }
 
 edges:
-  - [yahoo, yclient]
-  - [twelve, tclient]
-  - [frank, fclient]
-  - [yclient, ms]
-  - [fclient, ms]
-  - [tclient, instruments]
+  - [asset, ctrl]
+  - [ctrl, ms]
+  - [ms, yclient]
+  - [ms, fclient]
+  - [yclient, yahoo]
+  - [fclient, frank]
+  - [job, syncer]
+  - [syncer, tclient]
+  - [tclient, twelve]
+  - [syncer, instruments]
 
 steps:
-  - node: yahoo
-    edge: null
+  - id: istek
+    node: ctrl
+    edge: [asset, ctrl]
+    aux: [asset]
+    title: "portfolio-service fiyat ister"
+    what: >-
+      Kullanıcı portföyünü açınca portfolio-service'te `AssetService.GetPriceMapAsync()` çalışır.
+      Portföydeki tüm sembolleri tek istekte sorar: `GET /api/market/prices?symbols=BIST:THYAO,XAU,USD`.
+      market-service'te `MarketController.GetPrices()` karşılar ve `MarketService.GetPricesAsync()` çağırır. Bu metot her sembol için `GetPriceAsync()` çağırır.
+    why: >-
+      Dış API'lere yalnız market-service gider. portfolio-service hangi kaynağın kullanıldığını bilmez.
+    cost: >-
+      market-service kapalıysa portföy fiyatsız açılır; satırlar "fiyat yok" gösterir.
+    terms: []
+    file: market-service/Controllers/MarketController.cs
+    code: |
+      [HttpGet("prices")]
+      public async Task<ActionResult<List<MarketPrice>>> GetPrices([FromQuery] string? symbols)
+      {
+          if (string.IsNullOrWhiteSpace(symbols)) return Ok(new List<MarketPrice>());
+          var symbolList = symbols.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+          var prices = await _marketService.GetPricesAsync(symbolList);
+          return Ok(prices);
+      }
+
+  - id: tur
+    node: ms
+    edge: [ctrl, ms]
+    title: "Sembolün türü kaynağı seçer"
+    what: >-
+      `GetPriceAsync()` önce Redis'e bakar. 5 dakikadan yeni kayıt varsa onu döner ve dış API'ye gidilmez (bkz. Akış 07).
+      Kayıt yoksa `ResolveAssetType()` sembolün türünü bulur: `XAU` altın, `USD`, `EUR`, `GBP` döviz, geri kalan her sembol hisse.
+      Türe göre `FetchStockAsync`, `FetchCurrencyAsync` veya `FetchGoldAsync` çağrılır.
+    why: >-
+      Kaynak seçimi tek metottadır. Portföy, piyasa özeti ve "bugün" fiyatı aynı metottan ve aynı cache kaydından okur.
+    cost: >-
+      Yeni bir varlık türü (ör. kripto) bu `switch`'e yeni bir kol ister.
+    next:
+      - { when: "Hisse → Yahoo'dan fiyat", to: hisse }
+      - { when: "Döviz → Frankfurter'dan kur", to: kur }
+      - { when: "Altın → Yahoo ve Frankfurter birlikte", to: altin }
+    terms: [cache-aside, ttl]
+    file: market-service/Services/MarketService.cs
+    code: |
+      return await _cache.GetOrSetAsync(CacheKeys.Price(assetType, market, symbol),
+          () => assetType switch
+          {
+              "Currency" => FetchCurrencyAsync(symbol),
+              "Gold" => FetchGoldAsync(symbol),
+              _ => FetchStockAsync(market, symbol)
+          },
+          _ => CacheTtl.Live);
+
+  - id: hisse
+    node: yclient
+    edge: [ms, yclient]
+    title: "Hisse: Yahoo istemcisi çağrılır"
+    what: >-
+      `FetchStockAsync()`, `YahooFinanceClient.GetQuoteAsync()` metodunu çağırır.
+      Sembol önce Yahoo yazımına çevrilir: BIST `THYAO` → `THYAO.IS`, ABD `BRK.B` → `BRK-B`.
+    why: >-
+      Yahoo yazımı yalnız `YahooSymbol.ToYahoo()` içinde üretilir. Başka bir yerde `.IS` eklenmez.
+    cost: >-
+      Yahoo istemcisini başka servisler de çağırır: `PriceHistoryService` (grafik), `PriceOnDateService` (geçmiş tarih), `MarketOverviewService` (piyasa özeti).
+      Yahoo kesintisi bu ekranların hepsini etkiler.
+    terms: [http-client]
+    file: market-service/Services/MarketService.cs
+    code: |
+      private async Task<MarketPrice?> FetchStockAsync(string market, string symbol)
+      {
+          var quote = await _yahooClient.GetQuoteAsync(YahooSymbol.ToYahoo(market, symbol));
+          if (quote == null) return null;
+
+  - id: yahoo
+    node: yahoo
+    edge: [yclient, yahoo]
     title: "Yahoo: fiyat ve geçmiş"
     what: >-
-      Hisse fiyatı, mum ve kapanış Yahoo'nun `v8/finance/chart` ucundan gelir. BIST için `SYMBOL.IS`,
-      ABD için `SYMBOL` istenir. Fiyat hissenin kendi para biriminde döner.
+      İstek Yahoo'nun `v8/finance/chart` ucuna gider. Fiyat hissenin kendi para biriminde döner: BIST için TRY, ABD için USD.
+      Mum, kapanış serisi ve geçmiş günün kapanışı da aynı uçtan, başka parametrelerle gelir.
     why: >-
-      Yahoo tüm BIST hisselerini ücretsiz ve TRY olarak verir. Twelve Data'nın ücretsiz planı çoğunu vermez.
+      Yahoo tüm BIST hisselerini ücretsiz verir. Twelve Data'nın ücretsiz planı çoğunu fiyatlamaz.
     cost: >-
       Resmî bir API değildir. Tarayıcı `User-Agent`'ı gerekir; Yahoo davranışı haber vermeden değiştirebilir.
+    next:
+      - { when: "Cevapta fiyat var", to: eksik }
+      - { when: "Fiyat yok veya istek hata verdi → istemci null döner", to: hata }
     terms: [unofficial-api]
     file: market-service/Clients/YahooFinanceClient.cs
     code: |
       var url = $"https://query1.finance.yahoo.com/v8/finance/chart/{Uri.EscapeDataString(yahooSymbol)}?interval=1d&range=1d";
+      var request = new HttpRequestMessage(HttpMethod.Get, url);
       # Yahoo varsayılan istemcileri engeller; tarayıcı User-Agent gerekli
+      request.Headers.Add("User-Agent", "Mozilla/5.0");
 
-  - node: yclient
-    edge: [yahoo, yclient]
-    title: "Eksik veri sessizce düzeltilir"
+  - id: eksik
+    node: yclient
+    edge: null
+    title: "Eksik alanlar istemcide kapatılır"
     what: >-
-      `previousClose` boş gelirse `chartPreviousClose` kullanılır. Tatil ve durdurma günlerinde boş gelen mum atlanır.
-      Seans saatleri `currentTradingPeriod` alanından okunur.
+      `previousClose` boş gelirse `chartPreviousClose` kullanılır. Seans saatleri `currentTradingPeriod` alanından okunur.
+      Mum ve kapanış serilerinde tatil ve durdurma günleri boş gelir; bu kayıtlar atlanır.
     why: >-
       Yahoo cevabı her gün aynı alanları doldurmaz. İstemci bu boşlukları tek yerde kapatır.
     cost: >-
-      Yedek alan da boşsa günlük değişim hesaplanamaz ve ekranda boş kalır.
+      Yedek alan da boşsa önceki kapanış yoktur. Günlük değişim hesaplanamaz ve ekranda boş kalır.
     terms: [ohlc]
     file: market-service/Clients/YahooFinanceClient.cs
     code: |
       # previousClose bazen null döner; chartPreviousClose yedek
-      # Seans sınırları: currentTradingPeriod.regular { start, end } (Unix saniye)
+      decimal? prevClose = TryGetDecimal(meta, "previousClose", out var pc) ? pc
+          : TryGetDecimal(meta, "chartPreviousClose", out var cpc) ? cpc : null;
+
       # Tatil/durdurma barlarında OHLC null gelir → mum atlanır
 
-  - node: tclient
-    edge: [twelve, tclient]
-    title: "Twelve Data: yalnız enstrüman listesi"
+  - id: kur
+    node: fclient
+    edge: [ms, fclient]
+    title: "Fiyat TL'ye çevrilir: USD/TRY kuru"
     what: >-
-      Twelve Data'dan yalnız borsa listeleri çekilir: `/stocks` (BIST, NASDAQ, NYSE) ve `/etfs` (NASDAQ, NYSE).
-      Fiyat için kullanılmaz.
+      Hisse fiyatı gelince `FetchStockAsync()`, `UsdTryRateAsync()` çağırır. Bu metot `GetPriceAsync("USD")` çağırır.
+      `USD` döviz türüdür; `FetchCurrencyAsync()`, `FrankfurterClient.GetExchangeRateAsync("USD")` metodunu çağırır.
+      Döviz sembolü (`USD`, `EUR`) doğrudan istendiğinde de aynı metot çalışır.
     why: >-
-      Ücretsiz plan BIST hisselerinin çoğunu fiyatlamaz. Ama Türkçe adlı, düzgün bir sembol listesi verir.
+      Her TL çevirisi aynı USD/TRY kaydını kullanır. Kur Redis'te 5 dakika durur; bu sürede yapılan çeviriler Frankfurter'a gitmez.
     cost: >-
-      API anahtarı URL'de gider; bu yüzden URL loglanmaz. Hata HTTP 200 içinde `code` alanıyla döner, ayrıca kontrol edilir.
-    terms: [api-key]
-    file: market-service/Clients/TwelveDataClient.cs
+      Kur gelmezse hisse fiyatı da null döner. TRY ve USD dışındaki para birimleri için ayrıca o paranın kuru çekilir.
+    terms: [http-client]
+    file: market-service/Services/MarketService.cs
     code: |
-      var url = $"https://api.twelvedata.com/{kind}?exchange={Uri.EscapeDataString(exchange)}&apikey={_apiKey}";
-      # Twelve Data hatayı (limit, geçersiz anahtar) HTTP 200 + {"code","message"} ile döner.
-      # URL loglanmaz: API anahtarını içerir.
+      # TL çevirilerinin hepsi aynı cache'li USD/TRY kurunu kullanır.
+      private async Task<decimal?> UsdTryRateAsync() =>
+          (await GetPriceAsync(string.Empty, "USD"))?.PriceInTry;
 
-  - node: fclient
-    edge: [frank, fclient]
+      var tryRate = await _frankfurterClient.GetExchangeRateAsync(symbol);
+
+  - id: frank
+    node: frank
+    edge: [fclient, frank]
     title: "Frankfurter: döviz kuru"
     what: >-
-      USD, EUR gibi kurların TRY karşılığı Frankfurter'dan gelir. Anahtar gerekmez.
+      Güncel kur `v2/rates` ucundan gelir. Tarihli seri `v1` ucundan gelir.
+      Seriyi `PriceHistoryService` (grafik) ve `PriceOnDateService` (geçmiş tarihli alım) kullanır. Anahtar gerekmez.
     why: >-
-      Ücretsiz ve limitsizdir. Tarihli seri de verir; geçmiş tarihli alımlarda kullanılır.
+      Frankfurter Avrupa Merkez Bankası'nın referans kurlarını ücretsiz verir.
     cost: >-
-      Günlük referans kurdur, gün içinde değişmez. İstenen gün tatilse önceki iş gününün kuru döner.
+      Kur günde bir yayımlanır, gün içinde değişmez. Hafta sonu ve tatil günleri seride yoktur.
+      Geçmiş tarih isteğinde `PriceOnDateService`, istenen günden önceki veya o günkü son kuru seçer.
     terms: [reference-rate]
     file: market-service/Clients/FrankfurterClient.cs
     code: |
-      $"https://api.frankfurter.dev/v2/rates?base={baseCurrency}&quotes=TRY"
+      var response = await _httpClient.GetAsync($"https://api.frankfurter.dev/v2/rates?base={baseCurrency}&quotes=TRY");
 
       # v1 zaman serisi: {"rates":{"2026-08-07":{"TRY":47.706}, ...}} — hafta sonları atlanır.
-      $"https://api.frankfurter.dev/v1/{start:yyyy-MM-dd}..{end:yyyy-MM-dd}?base={baseCurrency}&symbols=TRY"
+      var url = $"https://api.frankfurter.dev/v1/{start:yyyy-MM-dd}..{end:yyyy-MM-dd}?base={baseCurrency}&symbols=TRY";
 
-  - node: ms
-    edge: [yclient, ms]
-    aux: [fclient]
-    auxEdges: [[fclient, ms]]
+  - id: altin
+    node: ms
+    edge: null
+    aux: [yclient, fclient]
+    auxEdges: [[ms, yclient], [ms, fclient]]
     title: "Gram altın iki kaynaktan hesaplanır"
     what: >-
-      Altın fiyatı Yahoo'nun `GC=F` (USD/ons) değeridir. Bu değer ons başına gram sayısına bölünür ve
-      Frankfurter'ın USD/TRY kuruyla çarpılır.
+      `FetchGoldAsync()` Yahoo'dan `GC=F` fiyatını alır; bu fiyat USD/ons'tur.
+      Fiyat bir onsun gram sayısına (31,1034768) bölünür ve Frankfurter'ın USD/TRY kuruyla çarpılır.
     why: >-
       Türk kullanıcı altını gram ve TL ile düşünür. Gram TL'yi doğrudan veren ücretsiz bir kaynak yok.
     cost: >-
-      İstanbul piyasasındaki gram fiyatından sapar: iki ölçümde %0,13 ve %0,54. Fark piyasanın kendi primidir, hesap hatası değil.
+      Sonuç spot gram değeridir. Kuyumcudaki gram fiyatı işçilik ve prim içerir; bu hesapta yoktur.
+      İki kaynaktan biri gelmezse altın fiyatı null döner.
     terms: [troy-ounce]
     file: market-service/Services/MarketService.cs
     code: |
       private const decimal GramsPerOunce = 31.1034768m;
 
       var quote = await _yahooClient.GetQuoteAsync("GC=F");
-      var usdTryRate = await UsdTryRateAsync();   # Frankfurter
+      var usdTryRate = await UsdTryRateAsync();
       var usdPerGram = quote.Price / GramsPerOunce;
       var tryPerGram = usdPerGram * usdTryRate.Value;
 
-  - node: instruments
-    edge: [tclient, instruments]
-    title: "Liste veritabanına, arama belleğe"
+  - id: hata
+    node: ms
+    edge: null
+    title: "Fiyat gelmezse sembol atlanır"
     what: >-
-      Twelve Data listesi `Instruments` tablosuna yazılır ve servis açılınca belleğe yüklenir.
-      Kullanıcı araması bu bellek listesinde yapılır.
+      İstemciler hata fırlatmaz; hatayı loglar ve `null` döner. `null` cache'e yazılmaz; sonraki istek kaynağı yeniden dener.
+      `GetPricesAsync()` fiyatı gelmeyen sembolleri listeden çıkarır ve sayılarını tek `Warning` satırıyla loglar (bkz. Akış 05).
     why: >-
-      Arama her tuşta dış kaynağa gitmez; hızlıdır ve kredi harcamaz. Türkçe karakterler normalize edilir ("koc" = "Koç").
+      Bir sembolün sorunu diğerlerini düşürmez. Portföyde yalnız o satır fiyatsız görünür.
     cost: >-
-      Yeni halka arz edilen hisse ancak bir sonraki senkrondan sonra aranabilir (bkz. Akış 08).
-    terms: [normalization]
-    file: market-service/Services/SymbolSearchService.cs
+      Yahoo istemcisi "sembol yok" ile "Yahoo'ya ulaşılamadı" durumlarını ayırmaz. İkisi de `null` döner.
+    terms: []
+    file: market-service/Services/MarketService.cs
     code: |
-      # Arama bellekteki enstrüman listesinde yapılır; Twelve Data'ya ve veritabanına gidilmez.
-      public class SymbolSearchService(InstrumentCatalog catalog) : ISymbolSearchService
+      var results = await Task.WhenAll(valid.Select(v => GetPriceAsync(v.Market, v.Symbol)));
+      var prices = results.Where(r => r != null).Select(r => r!).ToList();
 
-      # Diakritik-duyarsız: "Türk Hava" == "turk hava", "Koç" == "koc"
+      var missingCount = valid.Count - prices.Count;
+
+  - id: senkron
+    node: syncer
+    edge: [job, syncer]
+    title: "Her sabah 06:00: liste senkronu başlar"
+    what: >-
+      Fiyattan bağımsız ikinci bir zincir vardır. `InstrumentSyncJob` her gün 06:00'da (Türkiye saati) `InstrumentSyncer.SyncAsync()` metodunu çağırır.
+      Servis açılırken senkron kaçırılmışsa hemen çağırır. Zamanlama ayrıntısı Akış 08'dedir.
+    why: >-
+      Aranabilir hisse listesi günde bir kez değişir. Her aramada Twelve Data'ya gitmek gerekmez.
+    cost: >-
+      Gün içinde halka arz olan hisse ertesi sabaha kadar listede yoktur.
+    terms: [hosted-service, cron]
+    file: market-service/Services/InstrumentSyncJob.cs
+    code: |
+      using var scope = scopeFactory.CreateScope();
+      await scope.ServiceProvider.GetRequiredService<InstrumentSyncer>().SyncAsync(ct);
+
+  - id: liste
+    node: tclient
+    edge: [syncer, tclient]
+    title: "Beş liste ayrı ayrı istenir"
+    what: >-
+      `SyncAsync()` beş kaynak için `TwelveDataClient.GetListingsAsync()` çağırır.
+      Hisse listesi `/stocks`: BIST, NASDAQ, NYSE. ETF listesi `/etfs`: NASDAQ, NYSE.
+    why: >-
+      Her kaynak ayrı değerlendirilir. Biri boş gelirse yalnız o kaynağın satırlarına dokunulmaz, diğerleri yazılır.
+    cost: >-
+      Her liste bir API kredisi harcar. Senkron başına en fazla 5 kredi.
+    terms: [api-key]
+    file: market-service/Services/InstrumentSyncer.cs
+    code: |
+      new("stocks", "BIST", "BIST", "stock"),
+      new("stocks", "NASDAQ", "US", "stock"),
+      new("stocks", "NYSE", "US", "stock"),
+      new("etfs", "NASDAQ", "US", "etf"),
+      new("etfs", "NYSE", "US", "etf"),
+
+      var items = Filter(source, await twelveData.GetListingsAsync(source.Kind, source.Exchange, ct));
+
+  - id: twelve
+    node: twelve
+    edge: [tclient, twelve]
+    title: "Twelve Data: yalnız enstrüman listesi"
+    what: >-
+      Twelve Data'dan yalnız borsa listeleri çekilir. Fiyat için kullanılmaz.
+      API anahtarı `TwelveData:ApiKey` ayarından okunur ve URL'e eklenir.
+    why: >-
+      Ücretsiz plan BIST hisselerinin çoğunu fiyatlamaz. Ama düzgün bir sembol ve ad listesi verir.
+    cost: >-
+      Anahtar URL'de olduğu için URL loglanmaz. Limit dolunca veya anahtar geçersizse cevap HTTP 200 gelir; hata `code` alanındadır.
+      İstemci bunu kontrol eder ve boş liste döner.
+    next:
+      - { when: "Liste geldi", to: tablo }
+      - { when: "Hata veya boş liste → o kaynak atlanır, satırlarına dokunulmaz", to: tablo }
+    terms: [api-key]
+    file: market-service/Clients/TwelveDataClient.cs
+    code: |
+      var url = $"https://api.twelvedata.com/{kind}?exchange={Uri.EscapeDataString(exchange)}&apikey={_apiKey}";
+
+      # Twelve Data hatayı (limit, geçersiz anahtar) HTTP 200 + {"code","message"} ile döner.
+      # URL loglanmaz: API anahtarını içerir.
+
+  - id: tablo
+    node: instruments
+    edge: [syncer, instruments]
+    title: "Liste veritabanına yazılır"
+    what: >-
+      `InstrumentSyncer` gelen listeyi `Instruments` tablosuyla karşılaştırır ve yalnız farkı yazar. `TwelveDataClient` tabloya yazmaz.
+      Kayıttan sonra `InstrumentCatalog.ReloadAsync()` aktif satırları belleğe yükler. Kullanıcı araması bu bellek listesinde yapılır.
+    why: >-
+      Arama her tuşta dış kaynağa gitmez; hızlıdır ve kredi harcamaz.
+    cost: >-
+      Hiçbir kaynak başarılı değilse hiçbir şey yazılmaz. Arama bellekteki eski listeyle devam eder. Ayrıntı Akış 08'dedir.
+    terms: [upsert]
+    file: market-service/Services/InstrumentSyncer.cs
+    code: |
+      await db.SaveChangesAsync(ct);
+      await catalog.ReloadAsync(db, ct);
