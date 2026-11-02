@@ -4,8 +4,8 @@ group: veri
 eyebrow: "Akış 08 · Enstrüman kataloğu · Arka plan işi"
 title: "Hangi hisseler *aranabilir?*"
 lede: >-
-  Aranabilen hisse ve ETF listesi her sabah Twelve Data'dan yenilenir. Liste veritabanında tutulur,
-  aramada bellekten okunur. Senkron yalnız farkı yazar ve hiçbir satırı silmez.
+  Aranabilen hisse ve ETF listesi her sabah Twelve Data'dan yenilenir. Liste Postgres'te tutulur,
+  aramada servisin belleğindeki kopyadan okunur. Senkron yalnız farkı yazar ve hiçbir satırı silmez.
 stats:
   - { n: 5, l: "kaynak liste" }
   - { n: 1, l: "senkron / gün" }
@@ -13,58 +13,121 @@ stats:
   - { n: 8, l: "kural" }
 
 lanes:
+  - { id: client, label: "TARAYICI", tone: client }
   - { id: ext, label: "TWELVE DATA", tone: ext }
-  - { id: app, label: "MARKET-SERVICE · ARKA PLAN", tone: app }
-  - { id: data, label: "POSTGRES · BELLEK", tone: data }
+  - { id: http, label: "MARKET-SERVICE · ARAMA", tone: app }
+  - { id: app, label: "MARKET-SERVICE · SENKRON", tone: app }
+  - { id: data, label: "POSTGRES", tone: data }
 
 nodes:
+  - { id: web, lane: client, col: 3, title: "Arama kutusu", sub: "StockPanel · AddAsset", icon: browser }
   - { id: td, lane: ext, col: 1, title: "Twelve Data", sub: "/stocks · /etfs", icon: globe }
-  - { id: job, lane: app, col: 0, title: "InstrumentSyncJob", sub: "cron · 06:00 TR", icon: clock }
-  - { id: syncer, lane: app, col: 1, title: "InstrumentSyncer", sub: "kurallar 1–8", icon: gear }
-  - { id: catalog, lane: app, col: 2, title: "InstrumentCatalog", sub: "bellek · arama", icon: bolt }
-  - { id: state, lane: data, col: 0, title: "InstrumentSyncState", sub: "son senkron", icon: db }
-  - { id: table, lane: data, col: 1, title: "Instruments", sub: "Market + Symbol", icon: db }
+  - { id: search, lane: http, col: 2, title: "SymbolSearchService", sub: "SearchAsync()", icon: code }
+  - { id: ctrl, lane: http, col: 3, title: "MarketController", sub: "GET /search", icon: server }
+  - { id: job, lane: app, col: 0, title: "InstrumentSyncJob", sub: "BackgroundService", icon: clock }
+  - { id: syncer, lane: app, col: 1, title: "InstrumentSyncer", sub: "SyncAsync()", icon: gear }
+  - { id: catalog, lane: app, col: 2, title: "InstrumentCatalog", sub: "sınıf · bellekte liste", icon: bolt }
+  - { id: state, lane: data, col: 0, title: "InstrumentSyncState", sub: "tablo · son senkron", icon: db }
+  - { id: table, lane: data, col: 1, title: "Instruments", sub: "tablo · Market+Symbol", icon: db }
 
 edges:
-  - [job, syncer]
+  - [table, catalog]
   - [job, state]
+  - [job, syncer]
   - [td, syncer]
   - [syncer, table]
+  - [syncer, state]
   - [syncer, catalog]
+  - [web, ctrl]
+  - [ctrl, search]
+  - [catalog, search]
 
 steps:
-  - node: job
-    edge: null
-    aux: [state]
-    auxEdges: [[job, state]]
-    title: "Her sabah 06:00'da çalışır"
+  - id: acilis
+    node: catalog
+    edge: [table, catalog]
+    title: "Açılış: liste veritabanından belleğe yüklenir"
     what: >-
-      `InstrumentSyncJob` bir arka plan servisidir. Cron ifadesi `0 6 * * *`, Türkiye saatine göre.
-      Servis açılınca yalnız planlı bir çalışma kaçırıldıysa hemen çalışır.
+      `Program.cs` önce migration'ları çalıştırır. Sonra `InstrumentCatalog.ReloadAsync()` çağrılır.
+      `Instruments` tablosundaki aktif satırlar belleğe alınır. Twelve Data'ya gidilmez.
     why: >-
-      Liste günde bir kez değişir. Her açılışta senkron yapmak kredi harcar ve deploy'u yavaşlatır.
+      Arama ilk istekten itibaren çalışır. Senkronun bitmesi beklenmez.
+    cost: >-
+      Tablo boşsa (ilk kurulum) arama ilk senkron bitene kadar sonuç döndürmez.
+    next:
+      - { when: "Aynı anda arka plan işi başlar", to: kacirildi }
+      - { when: "Bu andan itibaren arama çalışır", to: istek }
+    terms: [in-memory, singleton]
+    file: market-service/Program.cs
+    code: |
+      # Arama ilk istekten itibaren çalışsın: liste Twelve Data'ya değil veritabanına bağlı.
+      await app.Services.GetRequiredService<InstrumentCatalog>().ReloadAsync(db, CancellationToken.None);
+
+  - id: kacirildi
+    node: job
+    edge: [job, state]
+    title: "Açılış: senkron kaçırıldı mı?"
+    what: >-
+      `InstrumentSyncJob`, servis açılınca başlayıp kapanana kadar çalışan bir arka plan işidir.
+      Önce `MissedRunAsync()` ile `InstrumentSyncState` tablosundan son senkron zamanını okur.
+      Bu tabloya bakan job'dır; `InstrumentSyncer` tabloyu yalnız 7. adımda yazar.
+    why: >-
+      Örnek: son senkron dün 06:00, servis bugün 09:00'da açıldı. Bugünkü 06:00 kaçırılmıştır, senkron hemen çalışır.
+      Servis bugün 07:00'da yeniden açılırsa bugünkü senkron yapılmıştır; tekrar çalışmaz, kredi harcanmaz.
     cost: >-
       Gün içinde halka arz olan hisse ertesi sabaha kadar aranamaz.
-    terms: [cron, hosted-service]
+    next:
+      - { when: "Tablo boş, hiç senkron yok veya 06:00 kaçırılmış → hemen", to: cagir }
+      - { when: "Tabloyu okurken hata → yine de hemen", to: cagir }
+      - { when: "Senkron güncel → \"skipped\" loglar, sonraki 06:00'ı bekler", to: cagir }
+    terms: [hosted-service, cron]
     file: market-service/Services/InstrumentSyncJob.cs
     code: |
-      # Senkronu zamanlar: cron (InstrumentSync:Cron, Türkiye saati) geldiğinde ve açılışta yalnızca
-      # bir planlı çalışma kaçırıldıysa InstrumentSyncer'ı çağırır.
-      cron = CronExpression.Parse(configuration["InstrumentSync:Cron"] ?? string.Empty);
+      # Tablo boşsa, hiç senkron yapılmadıysa ya da son senkrondan sonraki planlı zaman geçtiyse true.
+      if (state is null || !await db.Instruments.AnyAsync(ct)) return true;
+      var due = cron.GetNextOccurrence(state.LastCompletedAt, MarketClock.Istanbul);
 
-      # appsettings.json
-      "Cron": "0 6 * * *"
+  - id: cagir
+    node: syncer
+    edge: [job, syncer]
+    title: "İş, senkron metodunu çağırır"
+    what: >-
+      `InstrumentSyncJob` yalnız zamanlar; senkronun kendisi `InstrumentSyncer.SyncAsync()` metodundadır.
+      Job bu metodu açılışta (senkron kaçırıldıysa) ve sonra her gün 06:00'da (`0 6 * * *`, Türkiye saati) çağırır.
+      Her çağrıdan önce yeni bir scope açar, çağrı bitince kapatır.
+    why: >-
+      Job'dan tek bir tane vardır ve servis kapanana kadar yaşar. `InstrumentSyncer` ise her senkronda yeni oluşur ve iş bitince atılır.
+      Sebep veritabanı nesnesidir (`MarketDbContext`): senkronda okuduğu tüm satırları içinde tutar.
+      Bu nesne job ile birlikte yaşasaydı, o satırlar servis kapanana kadar bellekte kalırdı.
+      Web isteğinde bu "yeni oluştur, bitince at" işini .NET kendisi yapar. Arka planda istek yoktur; bunu job `CreateScope()` ile yapar.
+    cost: >-
+      Zamanlama ve iş iki sınıfa ayrılır. Hata ayıklarken iki dosyaya bakılır.
+    next:
+      - { when: "Senkron başlar", to: cek }
+      - { when: "Senkron sırasında herhangi bir yerde istisna → job yakalar", to: hata }
+    terms: [scoped, cron]
+    file: market-service/Services/InstrumentSyncJob.cs
+    code: |
+      using var scope = scopeFactory.CreateScope();
+      await scope.ServiceProvider.GetRequiredService<InstrumentSyncer>().SyncAsync(ct);
 
-  - node: syncer
+  - id: cek
+    node: syncer
     edge: [td, syncer]
     title: "Beş liste çekilir ve süzülür"
     what: >-
       BIST, NASDAQ ve NYSE hisseleri ile NASDAQ ve NYSE ETF'leri çekilir. Hisse listesinde tür süzülür;
       NASDAQ'ın varant, imtiyazlı ve unit sembolleri elenir.
+      Her kaynak ayrı değerlendirilir. Boş gelen kaynak atlanır.
+      Mevcut aktif satırlarının %80'inden az satır gelen kaynak da atlanır. Atlanan kaynağın satırlarına dokunulmaz.
     why: >-
       Kullanıcı yalnız alınabilecek, fiyatlanabilecek enstrümanı görür.
+      Yarım gelen bir liste, gelmeyen satırları yanlışlıkla pasife çekmez.
     cost: >-
       Her liste bir API kredisi harcar. Senkron başına en fazla 5 kredi.
+    next:
+      - { when: "En az bir kaynak başarılı", to: fark }
+      - { when: "Hiçbir kaynak başarılı değil → hiçbir şey yazılmaz", to: hata }
     terms: [api-key]
     file: market-service/Services/InstrumentSyncer.cs
     code: |
@@ -74,7 +137,8 @@ steps:
       new("etfs",   "NASDAQ", "US",   "etf"),
       new("etfs",   "NYSE",   "US",   "etf"),
 
-  - node: table
+  - id: fark
+    node: table
     edge: [syncer, table]
     title: "Yalnız fark yazılır, satır silinmez"
     what: >-
@@ -110,30 +174,107 @@ steps:
       # çakışma kalkana kadar satır aktif olmaz
       public bool IsConflict { get; set; }
 
+  - node: state
+    edge: [syncer, state]
+    title: "Son senkron zamanı aynı kayıtta yazılır"
+    what: >-
+      `InstrumentSyncer`, `InstrumentSyncState.LastCompletedAt` alanını günceller.
+      Satır değişiklikleri ve bu zaman tek `SaveChangesAsync()` çağrısıyla yazılır.
+    why: >-
+      Zaman yalnız satırlar yazılınca güncellenir. Yarım kalan senkron tamamlanmış sayılmaz.
+    cost: >-
+      Tabloda tek satır vardır. Hangi kaynağın başarılı olduğu burada değil, logda görünür.
+    terms: []
+    file: market-service/Services/InstrumentSyncer.cs
+    code: |
+      # 6) Tek kayıt, ardından son senkron zamanı ve bellek
+      if (state is null)
+          db.InstrumentSyncStates.Add(new InstrumentSyncState { LastCompletedAt = now });
+      else
+          state.LastCompletedAt = now;
+
+      await db.SaveChangesAsync(ct);
+
   - node: catalog
     edge: [syncer, catalog]
     title: "Bellek listesi yenilenir"
     what: >-
-      Değişiklikler tek kayıtta veritabanına yazılır. Ardından son senkron zamanı yazılır ve bellek listesi yeniden yüklenir.
+      Kayıttan sonra `InstrumentSyncer`, `InstrumentCatalog.ReloadAsync()` çağırır.
+      Aktif satırlar tablodan yeniden okunur. Yeni liste eski listenin yerine tek atamayla geçer.
     why: >-
-      Arama her tuşta veritabanına gitmez. Bellekteki liste anında cevap verir.
+      Tek atama sayesinde arama hiçbir zaman yarım liste görmez.
     cost: >-
-      Liste her servis örneğinin belleğinde ayrı tutulur. Servis çoğaltılırsa her örnek ayrı yükler.
-    terms: [in-memory]
+      Liste her servis örneğinin belleğinde ayrı tutulur. Servis çoğaltılırsa diğer örnekler bu senkronu görmez.
+    next:
+      - { when: "Senkron bitti → ertesi gün 06:00", to: cagir }
+      - { when: "Bundan sonraki aramalar yeni listeyi görür", to: istek }
+    terms: [in-memory, singleton]
     file: market-service/Services/InstrumentCatalog.cs
     code: |
-      logger.LogInformation("Instrument catalog loaded: {Count} active instruments", active.Count);
+      # Liste ve anahtar sözlüğü tek nesnede; yenilemede tek atamayla değişir, arama yarım liste görmez.
+      _snapshot = new Snapshot(active, byKey);
 
-  - node: job
-    edge: [job, state]
+  - id: istek
+    node: ctrl
+    edge: [web, ctrl]
+    title: "Kullanıcı arama kutusuna yazar"
+    what: >-
+      Piyasa ekranındaki (`StockPanel.jsx`) veya varlık ekleme ekranındaki (`AddAsset.jsx`) arama kutusu `GET /api/market/search?q=…` isteği atar.
+      İstek önce portfolio-service'e gider. portfolio-service isteği market-service'e iletir.
+      market-service'te `MarketController.Search()` karşılar ve `SymbolSearchService.SearchAsync()` çağırır.
+    why: >-
+      Tarayıcının konuştuğu tek API portfolio-service'tir. market-service dışarı açık değildir; yalnız Docker ağının içinden erişilir.
+    cost: >-
+      Arama iki servisten geçer. 2 harften kısa sorgu servise hiç iletilmez, boş liste döner.
+    next:
+      - { when: "Sorgu en az 2 harf", to: arama }
+    terms: []
+    file: market-service/Controllers/MarketController.cs
+    code: |
+      [HttpGet("search")]
+      public async Task<ActionResult<List<SymbolSearchResult>>> Search([FromQuery] string? q)
+      {
+          if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2)
+              return Ok(new List<SymbolSearchResult>());
+          var results = await _searchService.SearchAsync(q.Trim());
+          return Ok(results);
+      }
+
+  - id: arama
+    node: search
+    edge: [catalog, search]
+    aux: [ctrl]
+    auxEdges: [[ctrl, search]]
+    title: "Arama bellekten okur"
+    what: >-
+      `SymbolSearchService.SearchAsync()`, `InstrumentCatalog.All` listesinde arar. Veritabanına ve Twelve Data'ya gidilmez.
+      Önce sembolü tam eşleşenler, sonra sembolü sorguyla başlayanlar, sonra adında sorgu geçenler gelir.
+    why: >-
+      Arama her tuşta çalışır. Bellekteki liste veritabanı sorgusu olmadan cevap verir.
+    cost: >-
+      Sonuç en fazla 15 satırdır. Pasif satırlar bellekte yoktur, aramada çıkmaz.
+    terms: [in-memory]
+    file: market-service/Services/SymbolSearchService.cs
+    code: |
+      # Arama bellekteki enstrüman listesinde yapılır; Twelve Data'ya ve veritabanına gidilmez.
+      var results = catalog.All
+          .Select(i => (Instrument: i, Rank: Rank(i, symbolQuery, textQuery)))
+
+  - id: hata
+    node: job
+    edge: null
+    aux: [syncer, state]
     title: "Başarısız senkron tamamlanmış sayılmaz"
     what: >-
-      Hiçbir kaynak başarılı değilse (Twelve Data kapalı, limit dolu, anahtar geçersiz) son senkron zamanı yazılmaz.
-      Bir sonraki açılışta veya planlı zamanda yeniden denenir.
+      Hiçbir kaynak başarılı değilse `SyncAsync()` hiçbir şey yazmadan döner. İstisna olursa `InstrumentSyncJob` yakalar ve loglar.
+      İki durumda da `LastCompletedAt` değişmez.
     why: >-
-      Senkron hatası servisi düşürmez. Arama mevcut listeyle çalışmaya devam eder.
+      Senkron hatası servisi düşürmez. Arama bellekteki mevcut listeyle çalışmaya devam eder.
     cost: >-
       Uzun süren bir kesintide liste eskir ve bunu yalnız loglar söyler.
+    next:
+      - { when: "Servis açık kalırsa → sonraki 06:00", to: cagir }
+      - { when: "Servis yeniden açılırsa → senkron kaçırılmış sayılır", to: kacirildi }
     terms: [hosted-service]
     file: market-service/Services/InstrumentSyncJob.cs
     code: |
