@@ -113,9 +113,11 @@ for (const f of flowFiles) {
 const SCREEN_SOURCES = new Set(['db', 'server', 'client', 'external'])
 const BLOCK_FIELDS = ['id', 'label', 'h', 'source', 'hook', 'endpoint', 'chain', 'calc', 'why', 'file']
 const screensFile = path.join(contentDir, 'screens.yaml')
+let screenPageId
 if (fs.existsSync(screensFile)) {
   const where = 'screens.yaml'
   const doc = readYaml(screensFile)
+  screenPageId = doc?.id
   const missing = ['no', 'id', 'title', 'screens'].filter((k) => doc?.[k] == null)
   if (missing.length) err(where, `eksik alan: ${missing.join(', ')}`)
   else {
@@ -142,9 +144,41 @@ if (fs.existsSync(screensFile)) {
   }
 }
 
+// Akış 11 · Veri envanteri
+const DATA_SECTIONS = ['in', 'store', 'out']
+const CARD_FIELDS = ['id', 'group', 'title', 'via', 'file', 'why', ...DATA_SECTIONS]
+const dataFile = path.join(contentDir, 'data.yaml')
+if (fs.existsSync(dataFile)) {
+  const where = 'data.yaml'
+  const doc = readYaml(dataFile)
+  const missing = ['no', 'id', 'eyebrow', 'title', 'lede', 'groups', 'cards'].filter((k) => doc?.[k] == null)
+  if (missing.length) err(where, `eksik alan: ${missing.join(', ')}`)
+  else {
+    if (flowIds.has(doc.id) || doc.id === screenPageId) err(where, `id bir akışla veya ekran → veri sayfasıyla çakışıyor: ${doc.id}`)
+    const groupIds = new Set(doc.groups.map((g) => g?.id))
+    const cardIds = new Set()
+    for (const c of doc.cards) {
+      const ctx = `kart ${c?.id}`
+      const miss = CARD_FIELDS.filter((k) => c?.[k] == null)
+      if (miss.length) { err(where, `${ctx}: eksik alan: ${miss.join(', ')}`); continue }
+      if (cardIds.has(c.id)) err(where, `${ctx}: tekrar eden kart id`)
+      cardIds.add(c.id)
+      if (!groupIds.has(c.group)) err(where, `${ctx}: bilinmeyen grup: ${c.group} (${[...groupIds].join(' | ')})`)
+      if (c.flow != null && !flowIds.has(c.flow)) err(where, `${ctx}: bilinmeyen akış: ${c.flow}`)
+      if (!Array.isArray(c.why) || c.why.length === 0) err(where, `${ctx}: why en az bir madde ister`)
+      for (const k of DATA_SECTIONS) {
+        if (!c[k].text) err(where, `${ctx}/${k}: text eksik`)
+        for (const s of c[k].samples ?? []) if (!s?.label || !s.code) err(where, `${ctx}/${k}: örnek label ve code ister`)
+      }
+      const abs = path.resolve(repoRoot, String(c.file))
+      if (!abs.startsWith(repoRoot + path.sep) || !fs.existsSync(abs) || !fs.statSync(abs).isFile()) err(where, `${ctx}: dosya yok: ${c.file}`)
+    }
+  }
+}
+
 if (errors.length) {
   console.error(`İçerik hatalı (${errors.length}):`)
   for (const e of errors) console.error(`  - ${e}`)
   process.exit(1)
 }
-console.log(`İçerik geçerli: ${flowIds.size} akış, ${termIds.size} terim${fs.existsSync(screensFile) ? ', ekran → veri sayfası' : ''}`)
+console.log(`İçerik geçerli: ${flowIds.size} akış, ${termIds.size} terim${fs.existsSync(screensFile) ? ', ekran → veri sayfası' : ''}${fs.existsSync(dataFile) ? ', veri envanteri' : ''}`)

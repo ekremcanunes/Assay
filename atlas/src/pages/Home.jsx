@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { flows, screenMap, terms } from '../content'
+import { dataMap, flows, screenMap, terms } from '../content'
 import { renderInline } from '../lib/inline'
 
 const GROUPS = [
@@ -50,6 +50,14 @@ export default function Home() {
                     <span className="flow-title">{renderInline(screenMap.title.replace(/\*/g, ''))}</span>
                     <span className="flow-lede">{renderInline(firstSentence(screenMap.lede))}</span>
                     <span className="flow-meta">{screenMap.screens.flatMap((s) => s.blocks).length} öğe →</span>
+                  </Link>
+                )}
+                {g.id === 'veri' && (
+                  <Link className="flow-card" to="/veri">
+                    <span className="flow-no">{dataMap.no}</span>
+                    <span className="flow-title">{renderInline(dataMap.title.replace(/\*/g, ''))}</span>
+                    <span className="flow-lede">{renderInline(firstSentence(dataMap.lede))}</span>
+                    <span className="flow-meta">{dataMap.cards.length} kart →</span>
                   </Link>
                 )}
               </div>

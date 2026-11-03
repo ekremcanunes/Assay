@@ -1,0 +1,727 @@
+# Akış 11 · Veri envanteri. Her kart bir veri: nasıl geliyor, nerede duruyor, bundan ne üretiliyor.
+# Örnekler temsilîdir (mock). Alan adları ve biçimler koddan birebir; değerler uydurmadır.
+# Ortak senaryo: THYAO 100 × 280 (15 Eki) + 50 × 310 (28 Eki) alım, 30 × 320 satış (30 Eki). Güncel fiyat 315,50 ₺, USD/TRY 42,00.
+# Kart: in / store / out bölümü zorunlu ve `text` ister; `samples` isteğe bağlı. `flow` bir akış id'si olmalı.
+no: "11"
+id: veri
+eyebrow: "Akış 11 · Veri envanteri · Biçim ve yapı"
+title: "Sistem hangi veriyi *hangi biçimde* tutuyor?"
+lede: >-
+  Assay'ın aldığı her veri için bir kart. Her kartta verinin geliş biçimi, saklandığı yer ve
+  bundan üretilen değer var. Örnekler gerçek şemaya uyar ama değerler örnektir. Uzun ondalıklar kısaltıldı.
+
+groups:
+  - { id: dis, label: "Dış kaynaklar", desc: "Fiyat, kur ve enstrüman listesi dışarıdan gelir." }
+  - { id: kullanici, label: "Kullanıcı girişi", desc: "Kullanıcının formla gönderdiği veriler." }
+  - { id: kimlik, label: "Kimlik", desc: "Kayıt ve oturum verisi Kratos'ta durur." }
+  - { id: uretilen, label: "Üretilen görünümler", desc: "Saklanmaz; her istekte saklanan veriden hesaplanır." }
+
+cards:
+  # ---------------- Dış kaynaklar ----------------
+  - id: yahoo
+    group: dis
+    title: "Yahoo fiyat"
+    via: "Yahoo Finance · HTTPS · JSON"
+    flow: kaynaklar
+    file: market-service/Clients/YahooFinanceClient.cs
+    in:
+      where: "`GET query1.finance.yahoo.com/v8/finance/chart/{sembol}`"
+      text: >-
+        Tek uç dört şekilde çağrılır: anlık fiyat, kapanış serisi, mum ve tarihli kapanış. Sembol Yahoo yazımıyla gider
+        (`THYAO` → `THYAO.IS`). Altın için `GC=F` (USD/ons) istenir.
+      used:
+        - "Anlık: `meta.regularMarketPrice`, `previousClose` (yoksa `chartPreviousClose`), gün ve 52 hafta aralığı, `regularMarketVolume`, `currency`, `regularMarketTime`, `currentTradingPeriod.regular`"
+        - "Seri ve mum: `timestamp[]`, `indicators.quote[0].open/high/low/close/volume`"
+      dropped:
+        - "Kodun okumadığı `meta` alanları (ör. `symbol`, `timezone`, `validRanges`)"
+        - "Kapanışı `null` olan barlar (tatil, işlem durdurma)"
+      samples:
+        - label: "Yahoo cevabı · interval=1d&range=1d · kısaltılmış"
+          code: |
+            {
+              "chart": {
+                "result": [{
+                  "meta": {
+                    "currency": "TRY",
+                    "exchangeName": "IST",
+                    "regularMarketPrice": 315.5,
+                    "previousClose": 312.0,
+                    "regularMarketDayHigh": 318.0,
+                    "regularMarketDayLow": 311.25,
+                    "fiftyTwoWeekHigh": 340.0,
+                    "fiftyTwoWeekLow": 255.0,
+                    "regularMarketVolume": 18450000,
+                    "regularMarketTime": 1793361600,
+                    "currentTradingPeriod": {
+                      "regular": { "start": 1793343600, "end": 1793372400 }
+                    }
+                  },
+                  "timestamp": [1793361600],
+                  "indicators": { "quote": [{ "close": [315.5] }] }
+                }]
+              }
+            }
+    store:
+      where: "Yalnız Redis (`CacheStore`). Postgres'e yazılmaz."
+      text: >-
+        Anahtar `CacheKeys` ile üretilir: tür küçük harf, parçalar `:` ile, boş parça atlanır. Değer bir zarftır:
+        `Value` (asıl nesne) ve `ExpiresAt` (bitiş anı). Redis'te `IDistributedCache` biçiminde hash olarak durur.
+      samples:
+        - label: "Redis · stock:BIST:THYAO · süre CacheTtl.Live (5 dk)"
+          code: |
+            {
+              "Value": {
+                "Symbol": "THYAO",
+                "Market": "BIST",
+                "AssetType": "Stock",
+                "PriceInUsd": 7.5119,
+                "PriceInTry": 315.5,
+                "UpdatedAt": "2026-10-30T12:00:00Z",
+                "NativeCurrency": "TRY",
+                "PreviousClose": 312.0,
+                "DayHigh": 318.0,
+                "DayLow": 311.25,
+                "Week52High": 340.0,
+                "Week52Low": 255.0,
+                "Volume": 18450000,
+                "Exchange": "BIST"
+              },
+              "ExpiresAt": "2026-10-30T12:05:00+00:00"
+            }
+        - label: "Diğer anahtarlar · aynı zarf biçimi"
+          code: |
+            history:stock:BIST:THYAO:1y          # mum serisi · CacheTtl.Daily (1 sa); gün içi aralıklar Live
+            priceon:stock:BIST:THYAO:2026-10-29  # tek gün kapanışı · Permanent (30 gün), bulunamazsa Failure (5 dk)
+            index:XU100.IS                       # endeks · Live
+            spark:XU100.IS                       # 30 günlük kapanış listesi · Daily
+            gold:XAU                             # gram altın TL · Live
+    out:
+      where: "Sunucu · market-service"
+      text: >-
+        TL ve USD karşılığı hesaplanır. BIST fiyatı TL gelir: `PriceInUsd = fiyat ÷ USD/TRY`. ABD fiyatı USD gelir:
+        `PriceInTry = fiyat × USD/TRY`. Altın: `ons ÷ 31.1034768 × USD/TRY` = gram TL.
+    why:
+      - "Gelen → saklanan: aynı fiyat portföy, piyasa özeti ve alım formunda kullanılır. Tek anahtardan okunur, üç ekran aynı değeri gösterir."
+      - "Süre veri türüne bağlı: anlık fiyat 5 dk, geçmiş günün kapanışı 30 gün. Kapanmış bir günün kapanışı değişmez."
+      - "Postgres'e yazılmaz: fiyat dışarıdan her zaman yeniden alınabilir. Kaybı veri kaybı değildir."
+
+  - id: frankfurter
+    group: dis
+    title: "Frankfurter kur"
+    via: "Frankfurter · HTTPS · JSON"
+    flow: kaynaklar
+    file: market-service/Clients/FrankfurterClient.cs
+    in:
+      where: "v2 anlık: `GET api.frankfurter.dev/v2/rates?base=USD&quotes=TRY` · v1 aralık: `/v1/{başlangıç}..{bitiş}?base=USD&symbols=TRY`"
+      text: "Anlık kurda kod yalnız dizinin ilk öğesindeki `rate` alanını okur. Aralıkta `rates` nesnesindeki tarih → `TRY` eşlemesini okur."
+      used:
+        - "v2: `[0].rate`"
+        - "v1: `rates.{yyyy-MM-dd}.TRY`"
+      dropped:
+        - "Kodun okumadığı diğer alanlar (aşağıda `…`)"
+        - "Hafta sonu ve tatil günleri: Frankfurter bu günleri hiç döndürmez"
+      samples:
+        - label: "v2 cevabı · kısaltılmış"
+          code: |
+            [ { "rate": 42.0, … } ]
+        - label: "v1 cevabı · kısaltılmış"
+          code: |
+            {
+              …,
+              "rates": {
+                "2026-10-14": { "TRY": 41.75 },
+                "2026-10-15": { "TRY": 41.8 }
+              }
+            }
+    store:
+      where: "Yalnız Redis"
+      text: "Anlık kur bir `MarketPrice` olarak saklanır; `Market` boş olduğu için anahtara girmez. Sparkline serisi düz sayı listesidir."
+      samples:
+        - label: "Redis · currency:USD · süre CacheTtl.Live (5 dk)"
+          code: |
+            {
+              "Value": {
+                "Symbol": "USD",
+                "Market": "",
+                "AssetType": "Currency",
+                "PriceInUsd": null,
+                "PriceInTry": 42.0,
+                "UpdatedAt": "2026-10-30T12:00:00Z",
+                "NativeCurrency": "TRY",
+                "Exchange": "",
+                …
+              },
+              "ExpiresAt": "2026-10-30T12:05:00+00:00"
+            }
+        - label: "Redis · spark:USD · süre CacheTtl.Daily (1 sa)"
+          code: |
+            { "Value": [41.62, 41.7, 41.75, 41.8, …, 42.0], "ExpiresAt": "2026-10-30T13:00:00+00:00" }
+        - label: "Redis · priceon:currency:USD:2026-10-15 · süre Permanent (30 gün)"
+          code: |
+            {
+              "Value": {
+                "Symbol": "USD", "AssetType": "Currency",
+                "RequestedDate": "2026-10-15", "EffectiveDate": "2026-10-15",
+                "Available": true, "PriceKind": "close",
+                "PriceInNative": 41.8, "PriceInUsd": null, "PriceInTry": 41.8,
+                "NativeCurrency": "TRY"
+              },
+              "ExpiresAt": "2026-11-14T12:00:00+00:00"
+            }
+    out:
+      where: "Sunucu · market-service"
+      text: >-
+        USD/TRY bütün TL çevrimlerinin tek kaynağıdır: hisse, altın ve işlem kuru. Alım ve satışta işlem gününün kuru
+        `Transactions.UsdTryRate` alanına yazılır.
+    why:
+      - "Gelen → saklanan: tüm çevrimler `currency:USD` anahtarından okunur. Aynı anda iki farklı kur kullanılmaz."
+      - "Tarihli kur ayrı anahtardadır. Geçmiş bir günü bugünün kuruyla çevirmek TL değer kaybı yüzünden %60'a varan hata verir."
+
+  - id: twelvedata
+    group: dis
+    title: "Twelve Data listesi"
+    via: "Twelve Data · HTTPS · JSON · günde 1"
+    flow: katalog
+    file: market-service/Clients/TwelveDataClient.cs
+    in:
+      where: "`GET api.twelvedata.com/{stocks|etfs}?exchange={borsa}&apikey=<anahtar>` · 5 kaynak: BIST, NASDAQ ve NYSE hisse; NASDAQ ve NYSE ETF"
+      text: "Senkron her gün 06:00'da (Türkiye saati, `InstrumentSync:Cron`) çalışır. Hata cevabı HTTP 200 ile `code` ve `message` olarak gelir."
+      used:
+        - "`data[].symbol`, `name`, `currency`, `exchange`, `type` (`type` yalnız `/stocks` cevabında var)"
+      dropped:
+        - "Diğer alanlar (ör. `mic_code`, `country`)"
+        - "Kabul edilmeyen türler: yalnız `Common Stock`, `REIT`, `American Depositary Receipt`, `Depositary Receipt` alınır"
+        - "Desteklenmeyen sembol biçimi (ör. `BAC.PR.S`, `AAC.WT`) ve aynı listede tekrar eden sembol"
+      samples:
+        - label: "Twelve Data cevabı · /stocks?exchange=BIST · kısaltılmış"
+          code: |
+            {
+              "data": [
+                {
+                  "symbol": "THYAO",
+                  "name": "Turk Hava Yollari Anonim Ortakligi",
+                  "currency": "TRY",
+                  "exchange": "BIST",
+                  "mic_code": "XIST",
+                  "country": "Turkey",
+                  "type": "Common Stock"
+                },
+                …
+              ],
+              …
+            }
+    store:
+      where: "Postgres `Instruments` (anahtar `Market` + `Symbol`) ve tek satırlık `InstrumentSyncStates`. Bellekte `InstrumentCatalog`."
+      text: "Senkron yalnız farkı yazar. Listeden düşen satır silinmez, `IsActive = false` olur."
+      samples:
+        - label: "Postgres · Instruments satırı"
+          code: |
+            Market      = "BIST"
+            Symbol      = "THYAO"
+            Exchange    = "BIST"
+            Name        = "Turk Hava Yollari Anonim Ortakligi"
+            Currency    = "TRY"
+            Type        = "stock"          # stock | etf
+            Category    = "Common Stock"   # Twelve Data türü olduğu gibi
+            IsActive    = true
+            IsConflict  = false
+            UpdatedAt   = 2026-09-02 06:00:04   # içeriğin son değiştiği an (UTC)
+        - label: "Postgres · InstrumentSyncStates (tek satır)"
+          code: |
+            Id               = 1
+            LastCompletedAt  = 2026-10-30 03:00:12   # UTC; 06:00 Türkiye saati
+    out:
+      where: "Sunucu · market-service belleği"
+      text: "Aktif satırlar açılışta ve her senkrondan sonra belleğe yüklenir. Arama, alım kilidi ve piyasa özetindeki hisse adı buradan okunur."
+    why:
+      - "Gelen → saklanan: bir kaynak boş gelirse veya aktif listenin %80'inin altında kalırsa o kaynağın satırlarına dokunulmaz. Kısmi bir cevap listeyi silmez."
+      - "Hem hisse hem ETF olarak gelen sembol `IsConflict = true` ve pasif yazılır. Hangisinin doğru olduğu bilinmez."
+      - "Saklanan → bellek: arama sık çağrılır. Bellekten okunduğu için veritabanına gitmez."
+
+  # ---------------- Kullanıcı girişi ----------------
+  - id: alim
+    group: kullanici
+    title: "Alım"
+    via: "Tarayıcı · `POST /api/assets/buy` · JSON"
+    flow: turetilen
+    file: portfolio-service/Services/AssetService.cs
+    in:
+      where: "`BuyAssetDto` · formdan (`AddAsset.jsx`)"
+      text: >-
+        Controller gövdeyi doğrular: miktar ve fiyat > 0, para birimi TRY veya USD, hisse için market BIST veya US, `priceSource` zorunlu.
+        Hisse market-service'in aktif listesinde değilse alım reddedilir.
+      samples:
+        - label: "İstek gövdesi"
+          code: |
+            {
+              "assetType": "Stock",
+              "symbol": "THYAO",
+              "market": "BIST",
+              "quantity": 100,
+              "unitPrice": 280.0,
+              "currency": "TRY",
+              "date": "2026-10-15T00:00:00.000Z",
+              "priceSource": "Market"
+            }
+    store:
+      where: "Postgres `Assets` (yeni veya güncellenen satır) + `Transactions` (yeni `AssetBuy` satırı)"
+      text: >-
+        Aynı kullanıcıda aynı (`Symbol`, `Market`) varsa satır güncellenir, yoksa yenisi açılır. `Quantity` numeric(18,8),
+        `Amount` numeric(18,2) saklanır. Kur `priceon:currency:USD:{tarih}` anahtarından gelir.
+      samples:
+        - label: "Postgres · Assets · ikinci alımdan sonra"
+          code: |
+            Id            = 0000bbbb-0000-0000-0000-00000000000b
+            UserId        = 0000aaaa-0000-0000-0000-00000000000a
+            Symbol        = "THYAO"
+            Market        = "BIST"
+            AssetType     = "Stock"
+            Quantity      = 150.00000000
+            Currency      = "TRY"
+            AvgCostBasis  = 290.00000000
+            CreatedAt     = 2026-10-15 09:12:40
+        - label: "Postgres · Transactions · ilk alım"
+          code: |
+            Id             = 0000cccc-0000-0000-0000-0000000000c1
+            UserId         = 0000aaaa-0000-0000-0000-00000000000a
+            Type           = "AssetBuy"
+            Amount         = 28000.00
+            Currency       = "TRY"
+            Category       = "Stock"
+            Tags           = {}
+            Description    = "THYAO alış: 100 x 280 TRY"
+            Date           = 2026-10-15 00:00:00
+            Symbol         = "THYAO"
+            Market         = "BIST"
+            Quantity       = 100.00000000
+            UnitPrice      = 280.00000000
+            UsdTryRate     = 41.80000000
+            PriceSource    = "Market"
+            RealizedProfitLoss = null
+            AssetId        = 0000bbbb-0000-0000-0000-00000000000b
+    out:
+      where: "Sunucu · portfolio-service"
+      text: "Ağırlıklı ortalama maliyet: `(eski miktar × eski maliyet + yeni miktar × yeni fiyat) ÷ toplam miktar`. Örnek: `(100 × 280 + 50 × 310) ÷ 150 = 290`."
+    why:
+      - "Gelen → saklanan: `Assets` güncel durumu, `Transactions` olayı tutar. Ekran durumu okur, geçmiş olayı gösterir."
+      - "Para birimi karışmaz. TL ile alınmış varlığa USD ile ekleme `CURRENCY_MISMATCH` hatası verir; ortalama maliyet tek birimde kalır."
+      - "`PriceSource` bilgi amaçlıdır. Hiçbir hesap bu alana bakmaz."
+
+  - id: satis
+    group: kullanici
+    title: "Satış"
+    via: "Tarayıcı · `POST /api/assets/{id}/sell` · JSON"
+    flow: turetilen
+    file: portfolio-service/Services/AssetService.cs
+    in:
+      where: "`SellAssetDto`"
+      text: "Yalnız miktar, birim fiyat ve tarih gelir. Sembol, market ve para birimi varlık satırından alınır. Eldeki miktardan fazlası `INSUFFICIENT_QUANTITY` hatası verir."
+      samples:
+        - label: "İstek gövdesi"
+          code: |
+            {
+              "quantity": 30,
+              "unitPrice": 320.0,
+              "date": "2026-10-30T00:00:00.000Z"
+            }
+    store:
+      where: "Postgres `Transactions` (yeni `AssetSell` satırı) + `Assets.Quantity` düşer"
+      text: "Miktar 0'a inerse `Assets` satırı silinir. İşlemler kalır; `AssetId` alanları `null` olur (`OnDelete: SetNull`). `AvgCostBasis` satışta değişmez."
+      samples:
+        - label: "Postgres · Transactions · satış"
+          code: |
+            Id                 = 0000cccc-0000-0000-0000-0000000000c3
+            Type               = "AssetSell"
+            Amount             = 9600.00
+            Currency           = "TRY"
+            Quantity           = 30.00000000
+            UnitPrice          = 320.00000000
+            UsdTryRate         = 42.00000000
+            PriceSource        = "Manual"
+            RealizedProfitLoss = 900.00
+            Description        = "THYAO satış: 30 x 320 TRY"
+            AssetId            = 0000bbbb-0000-0000-0000-00000000000b
+            …
+        - label: "Postgres · Assets · satıştan sonra"
+          code: |
+            Quantity      = 120.00000000
+            AvgCostBasis  = 290.00000000
+    out:
+      where: "Sunucu · portfolio-service"
+      text: "Gerçekleşen K/Z: `(satış fiyatı − ortalama maliyet) × miktar`. Örnek: `(320 − 290) × 30 = 900`. Varlığın alış para birimindedir."
+    why:
+      - "Gelen → saklanan: K/Z satış anında hesaplanıp yazılır. Sonraki alımlar ortalamayı değiştirse de bu satışın K/Z'si değişmez."
+      - "`PriceSource` her zaman `Manual`: satış formu fiyatı boş açar, fiyatı kullanıcı yazar."
+
+  - id: duzenleme
+    group: kullanici
+    title: "Düzenleme"
+    via: "Tarayıcı · `PUT /api/assets/{id}` · JSON"
+    file: portfolio-service/Services/AssetService.cs
+    in:
+      where: "`UpdateAssetDto`"
+      text: "İki alan da isteğe bağlıdır. Gönderilmeyen alan değişmez."
+      samples:
+        - label: "İstek gövdesi · yalnız maliyet düzeltmesi"
+          code: |
+            { "purchasePrice": 288.5 }
+    store:
+      where: "Postgres `Assets` · yalnız bu satır"
+      text: "`Quantity` doğrudan yazılır. `PurchasePrice` değeri `AvgCostBasis` alanına yazılır. `Transactions` tablosuna satır eklenmez."
+      samples:
+        - label: "Postgres · Assets · önce → sonra"
+          code: |
+            AvgCostBasis  = 290.00000000  →  288.50000000
+            Quantity      = 120.00000000  (değişmedi)
+    out:
+      where: "—"
+      text: "Yok. Yeni değer bir sonraki varlık listesi ve özet hesabında kullanılır."
+    why:
+      - "Gelen → saklanan: düzenleme bir düzeltmedir, işlem değildir. Bu yüzden işlem geçmişine yazılmaz."
+      - "Sonuç: düzenlemeden sonra `Assets` ile `Transactions` toplamı farklı olabilir. Ortalama maliyet işlemlerden yeniden hesaplanmaz."
+
+  - id: silme
+    group: kullanici
+    title: "Silme"
+    via: "Tarayıcı · `DELETE` · gövde yok"
+    file: portfolio-service/Services/TransactionService.cs
+    in:
+      where: "`DELETE /api/assets/{id}` · `DELETE /api/transactions/{id}`"
+      text: "Yalnız yoldaki id gelir. Satır başka kullanıcıya aitse bulunamaz sayılır (404)."
+    store:
+      where: "Postgres `Assets` veya `Transactions`"
+      text: >-
+        Varlık silinince `Assets` satırı gider. İşlemleri kalır, `AssetId` alanları `null` olur (`AppDbContext`: `SetNull`).
+        İşlem silinince yalnız o `Transactions` satırı gider. `Assets` satırının miktarı ve maliyeti değişmez.
+      samples:
+        - label: "Varlık silindikten sonra · Transactions"
+          code: |
+            Id = 0000cccc-…-0000000000c1   Symbol = "THYAO"   AssetId = null
+            Id = 0000cccc-…-0000000000c3   Symbol = "THYAO"   AssetId = null
+        - label: "Satış işlemi silindikten sonra · Assets"
+          code: |
+            Quantity      = 120.00000000   # satılan 30 geri eklenmez
+            AvgCostBasis  = 290.00000000
+    out:
+      where: "—"
+      text: "Yok. Cevap gövdesiz `204 No Content`."
+    why:
+      - "Varlık silme geçmişi silmez. Lot geçmişi (`Symbol`, `Market`) ile bulunur, bu yüzden `AssetId` olmadan da okunur."
+      - "İşlem silme varlığı yeniden hesaplamaz. Silinen işlemin etkisi `Assets` üzerinde kalır."
+
+  # ---------------- Kimlik ----------------
+  - id: kratos
+    group: kimlik
+    title: "Kratos kimliği"
+    via: "Tarayıcı → Kratos · JSON · çerez"
+    flow: kimlik
+    file: kratos/identity.schema.json
+    in:
+      where: "Kayıt akışı · `Register.jsx` → Kratos `registration` (yöntem `password`)"
+      text: "Alanlar `identity.schema.json` ile doğrulanır: dördü de zorunlu, şemada olmayan alan reddedilir. Telefon kuralı `^\\+905[0-9]{9}$`."
+      samples:
+        - label: "Kayıt isteği gövdesi"
+          code: |
+            {
+              "method": "password",
+              "password": "<şifre>",
+              "csrf_token": "<csrf>",
+              "traits": {
+                "email": "ornek@example.com",
+                "phone": "+905XX XXX XX XX",
+                "name": { "first": "Ayşe", "last": "Örnek" },
+                "consent": true
+              }
+            }
+    store:
+      where: "Kratos'un kendi tabloları (`KRATOS_DSN`): kimlik, kimlik bilgisi, oturum"
+      text: "`traits` kimlik satırında JSON olarak durur. Şifre düz metin saklanmaz, yalnız hash'i saklanır. Oturum çerezle taşınır."
+      samples:
+        - label: "Kratos `whoami` cevabı · kısaltılmış"
+          code: |
+            {
+              "active": true,
+              "authenticator_assurance_level": "aal1",
+              "identity": {
+                "id": "0000aaaa-0000-0000-0000-00000000000a",
+                "traits": {
+                  "email": "ornek@example.com",
+                  "phone": "+905XX XXX XX XX",
+                  "name": { "first": "Ayşe", "last": "Örnek" },
+                  "consent": true
+                }
+              },
+              …
+            }
+    out:
+      where: "Sunucu · iki serviste de `KratosMiddleware`"
+      text: >-
+        Servis her istekte `/sessions/whoami` çağırır. portfolio-service yalnız `identity.id` ve `authenticator_assurance_level` alanını okur.
+        `identity.id`, `Assets` ve `Transactions` satırlarında `UserId` olur. market-service yalnız oturumu doğrular. Tarayıcı menüde `traits.email` gösterir.
+    why:
+      - "Gelen → saklanan: kimlik verisi uygulama tablolarına kopyalanmaz. E-posta veya ad değişince uygulamada güncellenecek satır yoktur."
+      - "Saklanan → üretilen: servisler yalnız bir kimlik id'si bilir. Portföy verisi ile kişisel veri ayrı veritabanında durur."
+
+  # ---------------- Üretilen görünümler ----------------
+  - id: varliklar
+    group: uretilen
+    title: "Varlık listesi"
+    via: "`GET /api/assets` · JSON"
+    flow: turetilen
+    file: portfolio-service/DTOs/AssetHoldingDto.cs
+    in:
+      where: "Postgres `Assets` (kullanıcının satırları) + market-service `/prices` (Redis fiyatları)"
+      text: "Fiyatlar (`Market`, `Symbol`) kimliğiyle tek istekte alınır: `BIST:THYAO`, `XAU`, `USD`."
+    store:
+      where: "Saklanmaz"
+      text: "Her istekte yeniden üretilir."
+    out:
+      where: "Sunucu · `AssetService.MapToHolding`"
+      text: >-
+        `ValueInTry = Quantity × PriceInTry`. `UnrealizedProfitLoss = (güncel fiyat − AvgCostBasis) × Quantity`; güncel fiyat varlığın
+        alış para birimindedir. Fiyat alınamazsa `PriceAvailable = false` ve değer 0 olur. Gerçek cevapta decimal ölçeği korunur (ör. `120.00000000`).
+      samples:
+        - label: "Cevap · bir öğe"
+          code: |
+            {
+              "id": "0000bbbb-0000-0000-0000-00000000000b",
+              "symbol": "THYAO",
+              "market": "BIST",
+              "assetType": "Stock",
+              "quantity": 120,
+              "currency": "TRY",
+              "avgCostBasis": 290,
+              "totalCost": 34800,
+              "priceInUsd": 7.5119,
+              "priceInTry": 315.5,
+              "valueInTry": 37860,
+              "unrealizedProfitLoss": 3060,
+              "unrealizedProfitLossPercent": 8.7931,
+              "priceAvailable": true,
+              "nativeCurrency": "TRY",
+              "nativePrice": 315.5,
+              "previousClose": 312,
+              …
+              "exchange": "BIST"
+            }
+    why:
+      - "Saklanmaz: değer fiyata bağlıdır ve fiyat 5 dakikada bir değişir. Saklanan bir değer hemen eskir."
+      - "K/Z alış para biriminde hesaplanır. USD ile alınmış hissede TL dalgalanması K/Z'ye girmez."
+
+  - id: islemler
+    group: uretilen
+    title: "İşlem geçmişi"
+    via: "`GET /api/transactions` · JSON · sayfalı"
+    file: portfolio-service/Services/TransactionService.cs
+    in:
+      where: "Postgres `Transactions` · süzgeç `TransactionFilterDto`"
+      text: "Süzgeçler: `type`, `symbol`, `market`, `category`, `tag`, `from`, `to`, `search`. Sayfa boyu 1 ile 100 arasına kırpılır, varsayılan 50."
+    store:
+      where: "Saklanmaz"
+      text: "Satırlar olduğu gibi okunur. Sıralama `Date` azalan, sonra `CreatedAt` azalan."
+    out:
+      where: "Sunucu · `TransactionService.MapToDto`"
+      text: "Hesap yok; olduğu gibi sunulur. `UsdTryRate`, `PriceSource`, `UserId` ve `UpdatedAt` cevaba girmez."
+      samples:
+        - label: "Cevap · PagedResultDto"
+          code: |
+            {
+              "items": [
+                {
+                  "id": "0000cccc-0000-0000-0000-0000000000c3",
+                  "type": "AssetSell",
+                  "amount": 9600,
+                  "currency": "TRY",
+                  "category": "Stock",
+                  "tags": [],
+                  "description": "THYAO satış: 30 x 320 TRY",
+                  "date": "2026-10-30T00:00:00Z",
+                  "symbol": "THYAO",
+                  "market": "BIST",
+                  "quantity": 30,
+                  "unitPrice": 320,
+                  "realizedProfitLoss": 900,
+                  "assetId": "0000bbbb-0000-0000-0000-00000000000b",
+                  "createdAt": "2026-10-30T10:41:07Z"
+                },
+                …
+              ],
+              "total": 3,
+              "page": 1,
+              "pageSize": 50
+            }
+    why:
+      - "Saklanan → sunulan: işlem bir olaydır ve değişmez. Hesaplanacak bir şey yoktur."
+      - "`total` ayrı sayılır. Tarayıcı sayfa sayısını bu alandan hesaplar."
+
+  - id: grafik
+    group: uretilen
+    title: "Grafik ve tarihli fiyat"
+    via: "`GET /api/market/history/{symbol}` · `GET /api/market/price-on/{symbol}` · JSON"
+    flow: cache
+    file: market-service/Services/PriceHistoryService.cs
+    in:
+      where: "Yahoo mum ve kapanış serisi, Frankfurter kur serisi"
+      text: "Aralık beyaz listeden seçilir: `1d`, `1w`, `1mo`, `3mo`, `1y`, `5y`. Dışarıdan gelen değer doğrudan Yahoo'ya geçmez."
+    store:
+      where: "Saklanmaz; parçaları Redis'te (`history:…`, `priceon:…`)"
+      text: "Bkz. Yahoo fiyat kartı. portfolio-service cevabı aynı alanlarla iletir; market-service'in 4xx cevabını da aynen iletir."
+    out:
+      where: "Sunucu · market-service"
+      text: >-
+        Altın mumları her mumun kendi gününün kuruyla gram TL'ye çevrilir. Döviz için Frankfurter yalnız kapanış verir; dört OHLC alanı aynıdır.
+        Tarihli fiyatta istenen gün tatilse önceki işlem günü alınır (`EffectiveDate`).
+      samples:
+        - label: "Cevap · history/THYAO?range=1y · kısaltılmış"
+          code: |
+            {
+              "symbol": "THYAO",
+              "range": "1y",
+              "currency": "TRY",
+              "candles": [
+                { "time": 1793188800, "open": 309.0, "high": 312.75, "low": 307.5, "close": 312.0, "volume": 16200000 },
+                { "time": 1793361600, "open": 312.5, "high": 318.0, "low": 311.25, "close": 315.5, "volume": 18450000 }
+              ]
+            }
+        - label: "Cevap · price-on/THYAO?date=2026-10-29 (tatil)"
+          code: |
+            {
+              "symbol": "THYAO",
+              "assetType": "Stock",
+              "requestedDate": "2026-10-29",
+              "effectiveDate": "2026-10-28",
+              "available": true,
+              "priceKind": "close",
+              "priceInNative": 310.0,
+              "priceInUsd": 7.39,
+              "priceInTry": 310.0,
+              "nativeCurrency": "TRY"
+            }
+    why:
+      - "Tatil takvimi tutulmaz. \"Tarihi istenen günden küçük veya eşit olan son kayıt\" kuralı tatili verinin kendisinden çıkarır."
+      - "Bugünün tarihi istenirse kapanış yoktur. Anlık fiyat `stock:…` anahtarından okunur ve `priceKind = \"live\"` döner."
+
+  - id: ozet
+    group: uretilen
+    title: "Özet panosu"
+    via: "`GET /api/dashboard` · JSON"
+    file: portfolio-service/DTOs/DashboardDto.cs
+    in:
+      where: "Varlık listesinin kendisi (`GetHoldingsAsync`)"
+      text: "Ayrı bir sorgu yoktur. Varlık listesi kartındaki hesap aynen kullanılır."
+    store:
+      where: "Saklanmaz"
+      text: "Her istekte yeniden üretilir."
+    out:
+      where: "Sunucu toplar; altın payını tarayıcı hesaplar"
+      text: >-
+        Sunucu üç toplam ve varlık sayısı döner. Altın ayrı gelmez: `Overview.jsx` altını `toplam − hisse − nakit` olarak hesaplar.
+        Örnekte THYAO 37.860 ₺, 1.000 USD 42.000 ₺, 5 gram altın 17.891,89 ₺.
+      samples:
+        - label: "Cevap"
+          code: |
+            {
+              "totalValueInTry": 97751.89,
+              "assetCount": 3,
+              "cashValueInTry": 42000,
+              "stockValueInTry": 37860
+            }
+    why:
+      - "Varlık listesiyle aynı fonksiyon kullanılır. Özet ile liste birbiriyle çelişmez."
+
+  - id: piyasa
+    group: uretilen
+    title: "Piyasa özeti"
+    via: "`GET /api/market/overview` · JSON"
+    flow: cache
+    file: market-service/Services/MarketOverviewService.cs
+    in:
+      where: "Redis fiyatları (`stock:BIST:*`, `currency:*`, `gold:XAU`, `index:*`, `spark:*`) + bellekteki enstrüman adları"
+      text: "BIST 30 üyeliği API'den gelmez. 30 sembol kodda elle tutulur."
+    store:
+      where: "Saklanmaz; parçaları Redis'te"
+      text: "Endeks ve sparkline yalnız bu ekranda kullanıldığı için kendi anahtarlarındadır. Hisse, döviz ve altın portföyle aynı anahtardan okunur."
+    out:
+      where: "Sunucu · market-service"
+      text: "`ChangePercent = (fiyat − önceki kapanış) ÷ önceki kapanış × 100`. Dövizde önceki kapanış sparkline serisinin sondan ikinci değeridir."
+      samples:
+        - label: "Cevap · her listeden bir öğe · kısaltılmış"
+          code: |
+            {
+              "indices": [
+                { "symbol": "XU100.IS", "name": "BIST 100", "price": 10850.4, "changePercent": 0.62,
+                  "asOf": "2026-10-30T12:00:00+00:00", "spark": [10720.1, …, 10850.4], … }
+              ],
+              "strip": [
+                { "symbol": "USD", "name": "USD/TRY", "price": 42.0, "previousClose": 41.95,
+                  "changePercent": 0.1192, "spark": [41.62, …, 42.0], … }
+              ],
+              "stocks": [
+                { "symbol": "THYAO", "name": "Turk Hava Yollari Anonim Ortakligi", "price": 315.5,
+                  "previousClose": 312.0, "changePercent": 1.1218, "spark": [], … }
+              ]
+            }
+    why:
+      - "Hisselerin `spark` listesi boştur. 30 hisse için ayrı seri çekmek 30 ek istek demektir."
+      - "Altın sparkline'ı bugünün kuruyla çevrilir. Eğilimi gösterir, kesin tarihsel fiyatı göstermez."
+
+  - id: arama
+    group: uretilen
+    title: "Arama sonucu"
+    via: "`GET /api/market/search?q=…` · JSON"
+    flow: katalog
+    file: market-service/Services/SymbolSearchService.cs
+    in:
+      where: "Bellekteki aktif enstrüman listesi (`InstrumentCatalog`)"
+      text: "Twelve Data'ya ve veritabanına gidilmez."
+    store:
+      where: "Saklanmaz"
+      text: "Her aramada bellekteki listeden süzülür."
+    out:
+      where: "Sunucu · market-service"
+      text: >-
+        Sıra: sembol tam eşit, sonra sembol sorguyla başlıyor, sonra ad içeriyor. Aynı grupta hisse ETF'ten önce, kısa sembol önce.
+        En çok 15 sonuç. Ad araması aksan duyarsızdır: `turk hava` = `Türk Hava`.
+      samples:
+        - label: "Cevap · q=thy"
+          code: |
+            [
+              {
+                "symbol": "THYAO",
+                "market": "BIST",
+                "name": "Turk Hava Yollari Anonim Ortakligi",
+                "exchange": "BIST",
+                "currency": "TRY"
+              }
+            ]
+    why:
+      - "`Instruments` tablosundaki `IsActive`, `IsConflict`, `Category` ve `UpdatedAt` cevaba girmez. Arama yalnız seçilebilir satırları gösterir."
+      - "`market` kimliğin parçasıdır. Alım bu alanı tarayıcıdan değil, bu cevaptan alır."
+
+  - id: sistem
+    group: uretilen
+    title: "Sistem durumu"
+    via: "`GET /api/system/status` · JSON"
+    file: portfolio-service/Controllers/SystemController.cs
+    in:
+      where: "Ortam değişkenleri (`DEPLOY_ENV`, `DEPLOY_REGION`, `APP_VERSION`) + her istekte `SELECT 1`"
+      text: "Bağlantı dizesinden yalnız sağlayıcı adı çıkarılır. Host adı cevaba girmez."
+    store:
+      where: "Saklanmaz"
+      text: "Değerler her istekte okunur ve ölçülür."
+    out:
+      where: "Sunucu · portfolio-service"
+      text: "Sürüm commit SHA'nın ilk 7 karakteridir. Veritabanı süresi `SELECT 1` için ölçülen milisaniyedir. Veritabanı cevap vermezse hata değil `databaseOk: false` döner."
+      samples:
+        - label: "Cevap · local ortam"
+          code: |
+            {
+              "environment": "local",
+              "region": null,
+              "version": "dev",
+              "databaseProvider": "PostgreSQL",
+              "databaseOk": true,
+              "databaseMs": 4
+            }
+    why:
+      - "Panelin durum şeridi gerçek değer gösterir. Değerler sabit yazılmaz, her istekte ölçülür."

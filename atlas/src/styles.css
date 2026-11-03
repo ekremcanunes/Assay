@@ -505,6 +505,41 @@ code {
 .lin-chain .chain-packet { animation-iteration-count: infinite; animation-duration: 1.6s; }
 .lin-cols { grid-template-columns: 1fr 1fr; }
 
+/* ---------- Veri envanteri ---------- */
+.g-dis { --g: var(--lane-ext); }
+.g-kullanici { --g: var(--lane-client); }
+.g-kimlik { --g: var(--lane-edge); }
+.g-uretilen { --g: var(--lane-app); }
+.stat[class*="g-"] { border-top: 2px solid var(--g); }
+
+.dnav { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.dnav a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 1px solid var(--line2); border-radius: 999px; background: rgba(15, 23, 42, .6); color: var(--ink2); font-size: 13px; font-weight: 600; }
+.dnav a:hover { border-color: var(--g); text-decoration: none; }
+.dnav i { width: 8px; height: 8px; border-radius: 50%; background: var(--g); }
+
+.dcard { margin-top: 14px; border-left: 3px solid var(--g); scroll-margin-top: 16px; }
+.dcard-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.dcard-head h3 { margin: 0; font-size: 22px; letter-spacing: -.02em; }
+.dcard-via { flex-basis: 100%; font-size: 13px; color: var(--mute); }
+.dcard-via code { overflow-wrap: anywhere; }
+.dcard-flow { display: inline-flex; align-items: center; min-height: 44px; font-size: 12px; font-weight: 700; }
+.sample-tag { flex: none; padding: 2px 8px; border: 1px solid var(--amb); border-radius: 999px; color: var(--amb); font-size: 10px; font-weight: 800; letter-spacing: .12em; }
+
+.drow { display: grid; grid-template-columns: 150px 1fr; gap: 16px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
+.drow-k { font-size: 10px; font-weight: 800; letter-spacing: .14em; color: var(--cob2); }
+.drow-k.why { color: var(--em); }
+.drow-v { min-width: 0; }
+.drow-v p { margin: 6px 0 0; font-size: 13.5px; line-height: 1.55; color: var(--ink2); }
+.dwhere { font-size: 13.5px; font-weight: 700; line-height: 1.5; overflow-wrap: anywhere; }
+.dfields { display: grid; grid-template-columns: 92px 1fr; gap: 8px; margin-top: 10px; font-size: 13px; line-height: 1.5; color: var(--ink2); }
+.dfields > span { font-size: 11px; font-weight: 700; color: var(--dim); }
+.dfields ul, .dwhy { display: grid; gap: 4px; margin: 0; padding-left: 18px; }
+.dwhy { font-size: 13.5px; line-height: 1.55; color: var(--ink2); }
+
+.sample { margin: 12px 0 0; overflow: hidden; border: 1px solid var(--line2); border-radius: 12px; background: #060A12; }
+.sample figcaption { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: #0B1220; font: 500 11px var(--mono); color: var(--dim); overflow-wrap: anywhere; }
+.sample pre { margin: 0; padding: 12px 14px; overflow-x: auto; font: 400 12.5px/1.65 var(--mono); color: #CBD5E1; white-space: pre; }
+
 /* ---------- 404 ---------- */
 .notfound { min-height: 60vh; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
 .btnlink {
@@ -560,6 +595,9 @@ code {
   .phone { position: static; border-radius: 22px; }
   .lin-cols { grid-template-columns: 1fr; }
   .legend { flex-direction: column; gap: 6px; }
+  .drow { grid-template-columns: 1fr; gap: 8px; }
+  .dfields { grid-template-columns: 1fr; gap: 2px; }
+  .dcard-head h3 { font-size: 19px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

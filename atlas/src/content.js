@@ -1,6 +1,7 @@
 import yaml from 'js-yaml'
 import termsRaw from '../content/terms.yaml?raw'
 import screensRaw from '../content/screens.yaml?raw'
+import dataRaw from '../content/data.yaml?raw'
 
 // İçerik build sırasında dosyaya gömülür; doğrulamayı scripts/check-content.mjs yapar.
 const flowFiles = import.meta.glob('../content/flows/*.yaml', { query: '?raw', import: 'default', eager: true })
@@ -17,6 +18,9 @@ export const terms = new Map(yaml.load(termsRaw).map((t) => [t.id, { term: t.ter
 
 // Akış 10 · Ekran → veri (ayrı sayfa tipi)
 export const screenMap = yaml.load(screensRaw)
+
+// Akış 11 · Veri envanteri (ayrı sayfa tipi)
+export const dataMap = yaml.load(dataRaw)
 
 export function flowsUsingTerm(id) {
   return flows.filter((f) => f.steps.some((s) => s.terms.includes(id)))

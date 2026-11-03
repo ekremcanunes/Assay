@@ -15,6 +15,7 @@ npm run build   # check + üretim derlemesi (dist/)
 ## İçerik
 
 - Akışlar `content/flows/*.yaml`, sözlük `content/terms.yaml`, ekran → veri sayfası `content/screens.yaml` (`/ekran-veri`).
+- Veri envanteri `content/data.yaml` (`/veri`): her kartta `in` / `store` / `out` bölümü (`text` zorunlu, `samples` isteğe bağlı), `why` ve `file`. Örnek değerler temsilîdir; alan adları koddan birebir yazılır.
 - Ekran öğesinin `source` alanı: `db` (olduğu gibi), `server` (serviste hesap), `client` (tarayıcıda hesap), `external` (dış kaynaktan olduğu gibi).
 - Adımın isteğe bağlı `next` alanı dallanmayı yazar: `{ when: "koşul", to: <adım id> }`. Hedef adıma `id` verilir.
 - Her adımın `file` alanı repoda gerçek bir dosyayı gösterir. Dosya yoksa build düşer.
