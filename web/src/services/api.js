@@ -32,9 +32,17 @@ export const transactionApi = {
   delete: (id) => api.delete(`/api/transactions/${id}`),
 }
 
+export const watchlistApi = {
+  getAll: () => api.get('/api/watchlist'),
+  add: (data) => api.post('/api/watchlist', data),
+  remove: (id) => api.delete(`/api/watchlist/${id}`),
+}
+
 export const marketApi = {
   search: (q) => api.get('/api/market/search', { params: { q } }),
   overview: () => api.get('/api/market/overview'),
+  quote: (market, symbol) => api.get('/api/market/quote', { params: { market, symbol } }),
+  instrument: (market, symbol) => api.get('/api/market/instrument', { params: { market, symbol } }),
   // market: hisse için BIST/US (kimliğin parçası), altın ve dövizde ''. Yahoo yazımını (.IS vb.) backend üretir.
   history: (market, symbol, assetType, range) =>
     api.get(`/api/market/history/${encodeURIComponent(symbol)}`, { params: { market, assetType, range } }),

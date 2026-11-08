@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { assetApi, dashboardApi, transactionApi, marketApi, systemApi } from '@/services/api'
+import { assetApi, dashboardApi, transactionApi, marketApi, systemApi, watchlistApi } from '@/services/api'
 
 export const queryKeys = {
   holdings: ['holdings'],
+  watchlist: ['watchlist'],
   dashboard: ['dashboard'],
   transactions: ['transactions'],
   marketOverview: ['market-overview'],
@@ -44,6 +45,50 @@ export function useSymbolSearch(q) {
     queryKey: ['symbol-search', q],
     ...serverCached(() => marketApi.search(q)),
     enabled: !!q && q.length >= 2,
+  })
+}
+
+// İzleme listesi: kalemler + güncel fiyat. Tazeliği fiyatların cache ömrü belirler (serverCached).
+export function useWatchlist() {
+  return useQuery({
+    queryKey: queryKeys.watchlist,
+    ...serverCached(() => watchlistApi.getAll()),
+  })
+}
+
+export function useAddWatch() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => watchlistApi.add(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.watchlist }),
+  })
+}
+
+export function useRemoveWatch() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => watchlistApi.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.watchlist }),
+  })
+}
+
+// Varlık sayfası: tek varlığın fiyatı + gün/52H istatistikleri. Bulunamazsa (404) tekrar denenmez.
+export function useQuote(market, symbol) {
+  return useQuery({
+    queryKey: ['quote', market, symbol],
+    ...serverCached(() => marketApi.quote(market, symbol)),
+    enabled: !!symbol,
+    retry: false,
+  })
+}
+
+// Varlık sayfası: ad, borsa, para birimi (enstrüman kataloğundan).
+export function useInstrument(market, symbol) {
+  return useQuery({
+    queryKey: ['instrument', market, symbol],
+    ...serverCached(() => marketApi.instrument(market, symbol)),
+    enabled: !!market && !!symbol,
+    retry: false,
   })
 }
 

@@ -1,15 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { NavLink, Outlet, useLocation, useNavigationType } from 'react-router-dom'
-import { LayoutDashboard, CandlestickChart, Wallet, LogOut, Globe, Menu, X } from 'lucide-react'
+import { LayoutDashboard, CandlestickChart, Wallet, Menu, Settings, Star, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { APP_NAME } from '@/lib/app'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { AssayMark } from '@/components/AssayMark'
-import { ThemeSwitch } from '@/components/ThemeSwitch'
 import { StatusBar } from '@/components/StatusBar'
 
-// Canlı sistem tarih/saati (sidebar alt bilgisi)
+// Canlı sistem tarih/saati (durum şeridi)
 function useClock() {
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
@@ -21,7 +20,7 @@ function useClock() {
 
 const sectionCls = 'px-2.5 pb-1.5 pt-4 label text-muted-foreground'
 
-function NavItem({ to, label, icon: Icon, end }) {
+function NavItem({ to, label, icon: Icon, end, className }) {
   return (
     <NavLink
       to={to}
@@ -29,6 +28,7 @@ function NavItem({ to, label, icon: Icon, end }) {
       className={({ isActive }) =>
         cn(
           'relative flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-ui',
+          className,
           isActive
             ? 'nav-active font-semibold text-primary'
             : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
@@ -66,8 +66,8 @@ function TabItem({ to, label, icon: Icon, end }) {
 }
 
 export default function Layout() {
-  const { logout, session } = useAuth()
-  const { t, lang, switchLang } = useLanguage()
+  const { session } = useAuth()
+  const { t } = useLanguage()
   const now = useClock()
   const [menuOpen, setMenuOpen] = useState(false)
   const mainRef = useRef(null)
@@ -92,37 +92,25 @@ export default function Layout() {
   const marketNav = [
     { to: '/market', label: t('nav.market'), short: t('nav.marketShort'), icon: CandlestickChart },
   ]
+  // Alt çubuk 4 sekmede kalır (MB-03): izleme listesi masaüstünde kenar çubuğunda, mobilde Menü'de.
+  const watchItem = { to: '/watchlist', label: t('nav.watchlist'), icon: Star }
 
-  const clock = `${now.toLocaleDateString('tr-TR')} · ${now.toLocaleTimeString('tr-TR')}`
-
-  const langButton = (
-    <button
-      onClick={() => switchLang(lang === 'tr' ? 'en' : 'tr')}
-      className="flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-ui text-muted-foreground hover:bg-secondary hover:text-foreground"
+  // Hesap, tema ve dil Ayarlar sayfasında (/account). Kenar çubuğunda yalnız baş harfli tek satır:
+  // e-posta burada yazılmaz, kırpılmaz; tamamı Ayarlar'da görünür.
+  const settingsItem = (
+    <NavLink
+      to="/account"
+      className={({ isActive }) =>
+        cn(
+          'flex h-11 items-center gap-2.5 rounded-lg px-2 text-ui',
+          isActive ? 'nav-active font-semibold text-primary' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+        )
+      }
     >
-      <Globe className="h-4 w-4 shrink-0" />
-      {lang === 'tr' ? 'English' : 'Türkçe'}
-    </button>
-  )
-
-  const userCard = (
-    <div className="mt-1 flex items-center gap-2.5 rounded-xl border border-border bg-card px-2.5 py-2">
-      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-secondary text-micro font-bold text-foreground">
-        {initials}
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-ui leading-tight text-foreground">{email.split('@')[0] || '—'}</div>
-        <div className="truncate text-micro text-muted-foreground">{email}</div>
-      </div>
-      <button
-        onClick={logout}
-        title={t('nav.logout')}
-        aria-label={t('nav.logout')}
-        className="shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-secondary hover:text-foreground"
-      >
-        <LogOut className="h-4 w-4" />
-      </button>
-    </div>
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-secondary text-micro font-bold text-foreground">{initials}</span>
+      <span className="min-w-0 flex-1 truncate">{t('nav.settings')}</span>
+      <Settings className="h-4 w-4 shrink-0" />
+    </NavLink>
   )
 
   return (
@@ -146,15 +134,11 @@ export default function Layout() {
           {marketNav.map((item) => (
             <NavItem key={item.to} {...item} />
           ))}
+          <NavItem {...watchItem} />
         </nav>
 
-        {/* Alt blok: saat + ayarlar + kullanıcı kartı */}
-        <div className="mt-auto flex flex-col gap-0.5">
-          <div className="tabular px-2.5 pb-1 text-micro leading-relaxed text-muted-foreground">{clock}</div>
-          <ThemeSwitch className="mx-0.5 my-1" />
-          {langButton}
-          {userCard}
-        </div>
+        {/* Alt blok: Ayarlar (hesap, tema, dil) */}
+        <div className="mt-auto">{settingsItem}</div>
       </aside>
 
       {/* Bone içerik tuvali — padding'i Page bileşeni yönetir (başlık kenara yapışsın diye) */}
@@ -198,10 +182,10 @@ export default function Layout() {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="tabular px-2.5 pb-1 text-micro leading-relaxed text-muted-foreground">{clock}</div>
-            <ThemeSwitch className="mx-0.5 my-1" />
-            {langButton}
-            {userCard}
+            <div className="flex flex-col gap-0.5" onClick={() => setMenuOpen(false)}>
+              <NavItem {...watchItem} className="h-11" />
+              {settingsItem}
+            </div>
           </div>
         </div>
       )}

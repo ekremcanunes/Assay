@@ -1,4 +1,7 @@
 import { useState, useMemo } from 'react'
+import { Link } from 'react-router-dom'
+import { assetPath } from '@/lib/assetPath'
+import { WatchStar } from '@/components/WatchButton'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useSymbolSearch } from '@/hooks/queries'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -198,8 +201,8 @@ export default function StockPanel({ stocks, bist30, bist100, selected, onSelect
         {/* Mobil: satır listesi */}
         <ul className="divide-y divide-border border-t border-border md:hidden">
           {sorted.map((s) => (
-            <li key={s.symbol}>
-              <button onClick={() => open(s)} className="press flex min-h-14 w-full items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-secondary/60">
+            <li key={s.symbol} className="flex items-center pr-2">
+              <button onClick={() => open(s)} className="press flex min-h-14 min-w-0 flex-1 items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-secondary/60">
                 <span className="flex min-w-0 items-center gap-3">
                   <SymbolBadge symbol={s.symbol} size="h-9 w-9" />
                   <span className="min-w-0">
@@ -214,6 +217,7 @@ export default function StockPanel({ stocks, bist30, bist100, selected, onSelect
                   </span>
                 </span>
               </button>
+              <WatchStar assetType="Stock" market="BIST" symbol={s.symbol} className="h-11 w-11" />
             </li>
           ))}
         </ul>
@@ -223,6 +227,7 @@ export default function StockPanel({ stocks, bist30, bist100, selected, onSelect
           <table className="w-full text-left text-ui">
             <thead>
               <tr className="label border-y border-border bg-secondary/40 text-muted-foreground">
+                <th className="w-10 py-2.5 pl-2"><span className="sr-only">{t('nav.watchlist')}</span></th>
                 <th className="px-3 py-2.5 font-semibold">{t('assets.symbol')}</th>
                 <th className="px-3 py-2.5 font-semibold">{t('market.company')}</th>
                 <th className="px-3 py-2.5 text-right font-semibold">{t('assets.price')}</th>
@@ -243,6 +248,9 @@ export default function StockPanel({ stocks, bist30, bist100, selected, onSelect
                     aria-selected={sel || undefined}
                     className={cn('group cursor-pointer', sel ? 'bg-primary/5 shadow-[inset_3px_0_0_hsl(var(--primary))]' : 'hover:bg-primary/5')}
                   >
+                    <td className="py-1.5 pl-2">
+                      <WatchStar assetType="Stock" market="BIST" symbol={s.symbol} className="h-8 w-8" />
+                    </td>
                     <td className="px-3 py-3">
                       <span className={cn('inline-flex items-center gap-2 font-semibold', sel ? 'text-primary' : 'text-foreground')}>
                         <SymbolBadge symbol={s.symbol} />
@@ -278,12 +286,16 @@ export default function StockPanel({ stocks, bist30, bist100, selected, onSelect
               <div className="mx-auto mt-4 max-w-sm space-y-1 text-left">
                 <div className="label text-muted-foreground">{t('market.wideSearch')}</div>
                 {wideResults.slice(0, 8).map((r) => (
-                  <div key={`${r.symbol}-${r.exchange}`} className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-ui">
+                  <Link
+                    key={`${r.symbol}-${r.exchange}`}
+                    to={assetPath(r.market, r.symbol)}
+                    className="flex min-h-11 items-center gap-2 rounded-lg px-2 py-1.5 text-ui hover:bg-secondary"
+                  >
                     <SymbolBadge symbol={r.symbol} />
                     <span className="font-semibold text-foreground">{r.symbol}</span>
                     <span className="truncate text-muted-foreground">{r.name}</span>
                     <span className="tabular ml-auto text-micro text-muted-foreground">{r.exchange}</span>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

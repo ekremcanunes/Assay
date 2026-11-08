@@ -19,7 +19,7 @@ Bir değişikliği denetlerken tüm dosyayı okuma. Diff'teki işarete göre yal
 | `KS` | Köşe | §5 | `rounded-*` |
 | `GL` | Gölge | §6 | `shadow-*` |
 | `AK` | Aksan (kobalt) | §7 | `primary` |
-| `BL` | Bileşen | §8 | `components/ui/*`, `Page`, `Modal`, `Section`, `<input`, `<button`, `<img`, `window.confirm` |
+| `BL` | Bileşen | §8 | `components/ui/*`, `Page`, `Modal`, `Section`, `<input`, `<button`, `<img`, `window.confirm`, `toast`, `alert(` |
 | `HR` | Hareket | §9 | `transition`, `animate-`, `@keyframes`, `viewTransition` |
 | `MB` | Mobil | §10 | `md:`, `fixed`, `createPortal`, `h-*`, `min-h-*`, `px-*` |
 | `VR` | Veri dürüstlüğü | §11 | yeni veri alanı, grafik, demo veya canlandırma |
@@ -235,6 +235,7 @@ Koyu tema `body` zemini: sağ üstte `#3B82F6` `%12`, sol altta `#10B981` `%8` r
 - `BL-10` Segment oluğu: `bg-secondary p-1 rounded-[10px]`.
 - `BL-11` Aktif dilim: `border-border bg-card shadow-card font-bold`. Pasif dilim: `border-transparent text-muted-foreground`.
 - `BL-12` Hap: `rounded-full border`. Seçili hap: `AK-02`.
+- `BL-24` Kart seçici (az seçenek, açıklama gerekiyorsa; ör. Alım türü): `rounded-xl border p-3`, kategori tonunda ikon kutusu + ad + `text-micro` ipucu. Seçili kart: `border-primary/30 bg-primary/10`, ad `text-primary`. Kategori rengi yalnız ikonda.
 
 ### Kart ve liste
 
@@ -248,10 +249,15 @@ Koyu tema `body` zemini: sağ üstte `#3B82F6` `%12`, sol altta `#10B981` `%8` r
 
 - `BL-18` Her panel sayfasını [`Page`](../../web/src/components/Page.jsx) ile yaz. Ayrı `<h1>` yazma.
 - `BL-19` Modal için [`ui/modal`](../../web/src/components/ui/modal.jsx) kullan. `window.confirm` kullanma.
-- `BL-20` Varlık detayı için [`AssetDrawer`](../../web/src/components/AssetDrawer.jsx) kullan.
+- `BL-20` Liste içinden hızlı bakış için [`AssetDrawer`](../../web/src/components/AssetDrawer.jsx) kullan. Varlığın tam sayfası [`AssetDetail`](../../web/src/pages/AssetDetail.jsx) (`/market/:market/:symbol`); drawer ve panel ona bağlantı verir.
 - `BL-21` Tam ekran yükleme için [`PageLoader`](../../web/src/components/PageLoader.jsx) kullan. Metni yalnız `sr-only` yaz.
 - `BL-22` Kenar çubuğunda aktif öğe: `.nav-active text-primary`.
 - `BL-23` Logoyu [`AssayMark`](../../web/src/components/AssayMark.jsx) ile ekle. `<img>` kullanma. Neden: koyu temada görünmez olur.
+- `BL-25` Bir eylemin sonucunu bildirmek için [`toast`](../../web/src/lib/toast.js) kullan: `toast.success` / `toast.error` / `toast.info`. Ayrı bildirim bileşeni yazma; `alert()` kullanma. Görünüm [`Toaster`](../../web/src/components/Toaster.jsx)'da: md+ sağ üst, mobilde üstte tam genişlik; `bg-popover`, `shadow-float`, `rounded-xl`; başarı ikonu `text-primary`, hata `text-destructive`, bilgi `text-muted-foreground`. 4 sn sonra kapanır; imleç üstündeyken süre durur. md+ sağdan kayarak, mobilde yukarıdan girer; solda 3px tür şeridi, altta kalan süre çubuğu. Kâr/zarar renkleri kullanılmaz (`IL-04`).
+- `BL-26` Hata mesajını `apiErrorMessage(err, t)` ile üret. Form içi hata alanda kalır; formsuz eylemin (ör. izleme yıldızı) hatası `toast.error` ile gösterilir.
+- `BL-27` İstek süren düğmede ikonun yerine `Loader2` + `animate-spin motion-reduce:animate-none` göster ve düğmeyi `disabled` yap.
+- `BL-28` Sayfa içinde kendi kaydırması olan sabit panel/drawer `.scroll-quiet` alır: çubuk yalnız imleç üstündeyken görünür. Genel kaydırma çubuğu `index.css`'te ince ve `--input` renginde.
+- `BL-29` Hesap, tema ve dil ayarları yalnız Ayarlar sayfasında ([`Account`](../../web/src/pages/Account.jsx), `/account`). Kenar çubuğu ve mobil Menü yalnız "Ayarlar" satırını gösterir; e-posta orada yazılmaz.
 
 ### Yardımcı sınıflar — [`index.css`](../../web/src/index.css)
 
@@ -281,7 +287,7 @@ Koyu tema `body` zemini: sağ üstte `#3B82F6` `%12`, sol altta `#10B981` `%8` r
 - `MB-03` Alt gezinme çubuğu: `min-h-16` (64px), 4 sekme (Özet, Portföy, Piyasa, Menü), `env(safe-area-inset-bottom)` payı.
 - `MB-04` Sayfa kenar boşluğu: mobilde `px-4` (16px), md+ `px-8` (32px).
 - `MB-05` Dokunma alanı en az 44px olsun.
-- `MB-06` Ana eylemi (Al, Giriş yap, Hesap oluştur) altta sabit tut. Eylemi metinde yaz: "25 gram al".
+- `MB-06` Ana eylemi (Alımı kaydet, Giriş yap, Hesap oluştur) altta sabit tut. Buton yaptığı işi fiille söyler ("Alımı kaydet", "Portföyüme ekle"); adet/birim sayısı butona değil özet karta yazılır.
 - `MB-07` Açılır katmanı `createPortal` ile sayfa köküne çiz. Neden: `transform` taşıyan ata `fixed` öğeyi yanlış konumlar.
 - `MB-08` Açılır katman açıkken arka sayfayı kaydırma. Odağı katmana taşı.
 - `MB-09` Sheet tutamağı: 36×4px, `bg-input`.

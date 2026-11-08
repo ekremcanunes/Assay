@@ -22,6 +22,26 @@ public class MarketController(IMarketServiceClient marketServiceClient) : Contro
         return await ForwardAsync(() => marketServiceClient.GetOverviewAsync());
     }
 
+    // Varlık sayfası: tek varlığın anlık fiyatı ve gün/52H istatistikleri. Kimlik (market, symbol);
+    // hisse "BIST:THYAO", altın/döviz market boş ("XAU", "USD"). Fiyat bulunamazsa 404.
+    [HttpGet("quote")]
+    public async Task<ActionResult<MarketPriceResponse>> Quote([FromQuery] string? market, [FromQuery] string? symbol)
+    {
+        if (string.IsNullOrWhiteSpace(symbol)) return BadRequest();
+        var entry = string.IsNullOrWhiteSpace(market) ? symbol.Trim() : $"{market.Trim()}:{symbol.Trim()}";
+        var prices = await marketServiceClient.GetPricesAsync([entry]);
+        return prices.Count > 0 ? Ok(prices[0]) : NotFound();
+    }
+
+    // Varlık sayfası: enstrümanın adı, borsası, para birimi. Katalogda yoksa 404.
+    [HttpGet("instrument")]
+    public async Task<ActionResult<SymbolSearchResponse>> Instrument([FromQuery] string? market, [FromQuery] string? symbol)
+    {
+        if (string.IsNullOrWhiteSpace(market) || string.IsNullOrWhiteSpace(symbol)) return BadRequest();
+        var instrument = await marketServiceClient.GetInstrumentAsync(market.Trim(), symbol.Trim());
+        return instrument is null ? NotFound() : Ok(instrument);
+    }
+
     // Grafik serisi
     [HttpGet("history/{symbol}")]
     public async Task<ActionResult<PriceHistoryResponse>> History(string symbol,

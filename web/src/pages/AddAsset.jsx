@@ -17,9 +17,11 @@ import { catOf } from '@/lib/assetColors'
 import { formatPct } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { apiErrorMessage } from '@/lib/apiError'
-import { AlertTriangle, CalendarDays, Search, X } from 'lucide-react'
+import { AlertTriangle, Banknote, CalendarDays, Coins, Loader2, Search, TrendingUp, X } from 'lucide-react'
+import BuySummary from '@/components/BuySummary'
 
 const assetTypes = ['Gold', 'Stock', 'Currency']
+const TYPE_ICONS = { Gold: Coins, Stock: TrendingUp, Currency: Banknote }
 const currencySymbols = ['USD', 'EUR', 'GBP']
 const currencies = ['TRY', 'USD']
 const stockMarkets = ['BIST', 'US']
@@ -72,7 +74,6 @@ export default function AddAsset() {
   const sinceThen = thenPrice != null && nowPrice != null && date !== today ? ((nowPrice - thenPrice) / thenPrice) * 100 : null
   const totalCost = quantity && unitPrice ? parseFloat(quantity) * parseFloat(unitPrice) : null
   const money = (v) => new Intl.NumberFormat(currency === 'TRY' ? 'tr-TR' : 'en-US', { style: 'currency', currency }).format(v)
-  const unitWord = assetType === 'Gold' ? t('buy.unitGram') : assetType === 'Stock' ? t('buy.unitPiece') : (symbol || '')
 
   const refPrice = reference?.available
     ? (currency === 'USD' ? reference.priceInUsd : reference.priceInTry)
@@ -173,29 +174,41 @@ export default function AddAsset() {
       // Geri = geldiği sayfa (Piyasa, kategori…); doğrudan açıldıysa Portföy
       back={{ label: t('common.back'), onClick: () => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/assets')) }}
     >
+      {/* lg+: sağdaki boş alan seçili varlığın özeti olur */}
+      <div className="lg:grid lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:items-start lg:gap-8">
       <form onSubmit={handleSubmit} className="max-w-md space-y-4 pb-24 md:pb-0">
         {error && (
           <div className="rounded-xl border border-destructive/25 bg-destructive/10 px-3.5 py-2.5 text-ui text-destructive">{error}</div>
         )}
 
-        {/* Tür — açılır menü yerine üç düğme: tek dokunuş, seçim hep görünür */}
+        {/* Tür — üç kart: tek dokunuş, seçim hep görünür. Kategori rengi yalnız ikonda; seçim kobalt (AK-02). */}
         <div className="space-y-1.5">
           <Label>{t('common.type')}</Label>
-          <div role="radiogroup" aria-label={t('common.type')} className="grid grid-cols-3 gap-1 rounded-[10px] bg-secondary p-1">
-            {assetTypes.map((type) => (
-              <button
-                key={type}
-                type="button"
-                role="radio"
-                aria-checked={assetType === type}
-                onClick={() => handleTypeChange(type)}
-                className={cn('press flex h-10 items-center justify-center gap-1.5 rounded-lg border text-ui',
-                  assetType === type ? 'border-border bg-card font-bold text-foreground shadow-card' : 'border-transparent font-medium text-muted-foreground hover:text-foreground')}
-              >
-                <i className={cn('h-2 w-2 rounded-full', catOf(type).dot)} />
-                {t(`assets.${type.toLowerCase()}`)}
-              </button>
-            ))}
+          <div role="radiogroup" aria-label={t('common.type')} className="grid grid-cols-3 gap-2">
+            {assetTypes.map((type) => {
+              const on = assetType === type
+              const Icon = TYPE_ICONS[type]
+              const cat = catOf(type)
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => handleTypeChange(type)}
+                  className={cn('press flex min-h-[88px] flex-col items-start gap-2 rounded-xl border p-3 text-left',
+                    on ? 'border-primary/30 bg-primary/10' : 'border-border bg-card hover:border-input hover:bg-secondary')}
+                >
+                  <span className={cn('grid h-8 w-8 place-items-center rounded-lg', cat.tint, cat.text)}>
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className={cn('block text-ui font-semibold', on ? 'text-primary' : 'text-foreground')}>{t(`assets.${type.toLowerCase()}`)}</span>
+                    <span className="block text-micro text-muted-foreground">{t(`buy.typeHint.${type}`)}</span>
+                  </span>
+                </button>
+              )
+            })}
           </div>
         </div>
 
@@ -403,13 +416,14 @@ export default function AddAsset() {
         <div className="fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 border-t border-border bg-background/95 px-4 py-3 backdrop-blur md:static md:border-0 md:bg-transparent md:p-0 md:pt-2 md:backdrop-blur-none">
           <Button type="submit" className="h-12 w-full text-body" disabled={!canBuy}>
             {buyMutation.isPending
-              ? '...'
-              : quantity
-                ? t('buy.cta').replace('{qty}', Number(quantity).toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US')).replace('{unit}', unitWord)
-                : t('assets.buy')}
+              ? <Loader2 className="h-5 w-5 animate-spin motion-reduce:animate-none" aria-label={t('common.loading')} />
+              : t('buy.cta')}
           </Button>
         </div>
       </form>
+
+      <BuySummary assetType={assetType} market={market} symbol={symbol} name={selectedName} />
+      </div>
 
       <PriceCalendar
         open={calOpen}

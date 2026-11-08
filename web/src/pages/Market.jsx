@@ -8,6 +8,7 @@ import { Page, PageTab } from '@/components/Page'
 import StockPanel from '@/components/market/StockPanel'
 import StockDetail from '@/components/market/StockDetail'
 import GoldFxPanel from '@/components/market/GoldFxPanel'
+import WatchlistPanel from '@/components/market/WatchlistPanel'
 import { num, pct, pctCls } from '@/components/market/marketFormat'
 import { sessionOf, formatAsOf } from '@/lib/marketSession'
 
@@ -23,7 +24,7 @@ function Ticker({ label, quote }) {
   )
 }
 
-// Piyasa: iki sekme (Borsa · Altın & Döviz), seçili sekme adreste (?tab=goldfx) — yenileyince aynısı açılır.
+// Piyasa: üç sekme (Borsa · Altın & Döviz · İzlediklerim), seçili sekme adreste (?tab=goldfx|watch) — yenileyince aynısı açılır.
 // Borsa'da lg+ ekranda sağda seçili hissenin sabit paneli; ilk açılışta en çok yükselen seçilidir.
 export default function Market() {
   const { t } = useLanguage()
@@ -31,8 +32,8 @@ export default function Market() {
   const { data, isLoading } = useMarketOverview()
   const [params, setParams] = useSearchParams()
   const [selectedSymbol, setSelectedSymbol] = useState(null)
-  const tab = params.get('tab') === 'goldfx' ? 'goldfx' : 'stocks'
-  const setTab = (next) => setParams(next === 'goldfx' ? { tab: 'goldfx' } : {}, { replace: true })
+  const tab = ['goldfx', 'watch'].includes(params.get('tab')) ? params.get('tab') : 'stocks'
+  const setTab = (next) => setParams(next === 'stocks' ? {} : { tab: next }, { replace: true })
 
   const stocks = data?.stocks ?? []
   const bist100 = data?.indices?.find((i) => i.symbol === 'XU100.IS')
@@ -68,10 +69,14 @@ export default function Market() {
         <>
           <PageTab active={tab === 'stocks'} onClick={() => setTab('stocks')}>{t('market.tileStocks')}</PageTab>
           <PageTab active={tab === 'goldfx'} onClick={() => setTab('goldfx')}>{t('market.tileGoldFx')}</PageTab>
+          <PageTab active={tab === 'watch'} onClick={() => setTab('watch')}>{t('watch.tab')}</PageTab>
         </>
       }
     >
-      {isLoading ? (
+      {/* İzlediklerim piyasa özetini beklemez: kendi verisi var */}
+      {tab === 'watch' ? (
+        <WatchlistPanel />
+      ) : isLoading ? (
         <div className="space-y-4">
           <Skeleton className="h-72 w-full" />
           <Skeleton className="h-64 w-full" />
@@ -83,7 +88,7 @@ export default function Market() {
           </div>
           {/* Sağ panel: başlığın altında yapışık kalır, uzunsa kendi içinde kayar */}
           {wide && selected && (
-            <div className="sticky top-36 max-h-[calc(100dvh-10rem)] overflow-y-auto overscroll-contain">
+            <div className="scroll-quiet sticky top-36 max-h-[calc(100dvh-10rem)] overflow-y-auto overscroll-contain">
               <StockDetail stock={selected} volumeRank={volumeRank} />
             </div>
           )}

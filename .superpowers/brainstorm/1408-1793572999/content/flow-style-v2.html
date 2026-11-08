@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Atlas — Teslimat akışı</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070B14; --bg2:#0B1120; --card:#0F172A; --line:#1E293B; --line2:#273449;
+    --ink:#E2E8F0; --mute:#8B9BB4; --dim:#56657E;
+    --cob:#3B82F6; --cob2:#60A5FA; --em:#10B981; --amb:#FBBF24; --ros:#F43F5E;
+    --gh:#A78BFA; --aws:#FB923C; --ec2:#34D399;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,sans-serif}
+  body{min-height:100vh;
+    background:
+      radial-gradient(900px 500px at 85% -10%, rgba(59,130,246,.18), transparent 60%),
+      radial-gradient(700px 500px at -10% 110%, rgba(16,185,129,.10), transparent 60%),
+      var(--bg);}
+  .wrap{max-width:1240px;margin:0 auto;padding:28px 28px 40px}
+
+  /* başlık */
+  .top{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--cob2)}
+  .eyebrow b{color:var(--mute);font-weight:600}
+  h1{margin:8px 0 6px;font-size:44px;line-height:1.05;letter-spacing:-.035em;font-weight:800}
+  h1 em{font-style:normal;background:linear-gradient(90deg,var(--cob2),#a5b4fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{color:var(--mute);font-size:15px;max-width:620px;line-height:1.55;margin:0}
+  .stats{display:flex;gap:10px}
+  .stat{border:1px solid var(--line);background:rgba(15,23,42,.6);border-radius:14px;padding:10px 14px;min-width:104px}
+  .stat .n{font-size:24px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .stat .l{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:700}
+
+  /* sahne */
+  .stage{position:relative;margin-top:22px;border:1px solid var(--line);border-radius:20px;overflow:hidden;
+    background:linear-gradient(180deg,rgba(15,23,42,.75),rgba(11,17,32,.9));}
+  .stage::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:linear-gradient(rgba(148,163,184,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.06) 1px,transparent 1px);
+    background-size:28px 28px;mask-image:radial-gradient(120% 90% at 50% 40%,#000 30%,transparent 85%)}
+  svg{display:block;width:100%;height:auto}
+  .lane-t{font:700 10px "Plus Jakarta Sans";letter-spacing:.16em;fill:var(--dim);text-transform:uppercase}
+  .edge{fill:none;stroke:var(--line2);stroke-width:1.5}
+  .edge.on{stroke:url(#gEdge);stroke-width:2.5;stroke-dasharray:6 8;animation:flow 1s linear infinite}
+  .edge.done{stroke:#2b4a7a;stroke-width:1.8}
+  @keyframes flow{to{stroke-dashoffset:-28}}
+  .node rect.box{fill:#0d1526;stroke:var(--line2);stroke-width:1.2;transition:all .35s}
+  .node .ttl{font:700 14px "Plus Jakarta Sans";fill:var(--ink)}
+  .node .sub{font:500 11px "JetBrains Mono";fill:var(--dim)}
+  .node .ico{transition:all .35s}
+  .node{cursor:pointer;transition:opacity .35s}
+  .node.idle{opacity:.55}
+  .node.done rect.box{stroke:#2b4a7a}
+  .node.on rect.box{fill:#0f1e3a;stroke:var(--cob);stroke-width:2;filter:url(#glow)}
+  .node.aux rect.box{stroke:var(--amb);stroke-dasharray:4 4}
+  .node.aux{opacity:1}
+  .stepnum{font:800 11px "JetBrains Mono";fill:var(--dim)}
+  .node.on .stepnum{fill:var(--cob2)}
+
+  /* panel */
+  .deck{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-top:16px}
+  .card{border:1px solid var(--line);background:rgba(15,23,42,.72);border-radius:18px;padding:20px 22px;backdrop-filter:blur(6px)}
+  .stephead{display:flex;align-items:baseline;gap:14px}
+  .big{font-size:56px;font-weight:800;letter-spacing:-.05em;line-height:.9;font-variant-numeric:tabular-nums;
+    background:linear-gradient(180deg,#fff,#5b7bb5);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .big small{font-size:18px;color:var(--dim);-webkit-text-fill-color:var(--dim);letter-spacing:0}
+  .stephead h2{margin:0;font-size:24px;letter-spacing:-.02em;line-height:1.2}
+  .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+  .col{border-top:2px solid var(--line2);padding-top:10px}
+  .col .k{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px}
+  .col p{margin:0;font-size:13.5px;line-height:1.55;color:#c6d0de}
+  .k.what{color:var(--cob2)} .k.why{color:var(--em)} .k.cost{color:var(--amb)}
+  .col.what{border-color:var(--cob)} .col.why{border-color:var(--em)} .col.cost{border-color:var(--amb)}
+  .terms{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .term{position:relative;font-size:12px;font-weight:600;padding:5px 10px;border-radius:999px;border:1px solid #2b3e60;background:rgba(59,130,246,.08);color:var(--cob2);cursor:help}
+  .term .tip{position:absolute;left:0;bottom:calc(100% + 8px);width:260px;padding:10px 12px;border-radius:12px;background:#111c33;border:1px solid var(--line2);color:var(--ink);font-weight:500;font-size:12px;line-height:1.5;opacity:0;transform:translateY(4px);pointer-events:none;transition:.18s;box-shadow:0 18px 40px -10px rgba(0,0,0,.6);z-index:5}
+  .term:hover .tip{opacity:1;transform:none}
+
+  .term-win{border-radius:14px;overflow:hidden;border:1px solid var(--line2);background:#060a12}
+  .term-bar{display:flex;align-items:center;gap:6px;padding:9px 12px;border-bottom:1px solid var(--line);background:#0b1220}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .term-bar span.f{margin-left:8px;font:500 11px "JetBrains Mono";color:var(--dim)}
+  pre{margin:0;padding:14px 16px;font:400 12.5px/1.65 "JetBrains Mono";color:#cbd5e1;white-space:pre-wrap;min-height:170px}
+  .c{color:#56657e}.p{color:var(--em)}.s{color:#fca5a5}.v{color:var(--amb)}.kw{color:#c4b5fd}
+  .caret{display:inline-block;width:7px;height:14px;background:var(--cob2);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .src{margin-top:12px;font-size:12px;color:var(--mute)}
+  .src code{font-family:"JetBrains Mono";font-size:11.5px;color:var(--cob2)}
+
+  /* kontrol */
+  .ctrl{display:flex;align-items:center;justify-content:space-between;margin-top:16px;gap:12px}
+  .dots{display:flex;gap:6px}
+  .dots i{width:28px;height:4px;border-radius:4px;background:var(--line2);cursor:pointer;transition:.3s}
+  .dots i.on{background:var(--cob);width:44px}
+  .dots i.done{background:#2b4a7a}
+  .btns{display:flex;gap:8px}
+  button{font:600 13px "Plus Jakarta Sans";color:var(--ink);background:#0f172a;border:1px solid var(--line2);border-radius:10px;padding:9px 14px;cursor:pointer}
+  button.pri{background:var(--cob);border-color:var(--cob);box-shadow:0 0 22px -4px rgba(59,130,246,.55)}
+  button:hover{filter:brightness(1.15)}
+  .kbd{font:500 11px "JetBrains Mono";color:var(--dim)}
+  .fade{animation:fade .45s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div>
+      <div class="eyebrow">Akış 02 · Teslimat <b>· CI/CD</b></div>
+      <h1>Kod <em>prod'a</em> nasıl çıkar?</h1>
+      <p class="lede"><code style="font-family:JetBrains Mono;color:#93c5fd">main-prod</code>'a yapılan bir push'tan, EC2'de yeni container'ların çalışmasına kadar altı adım. Hiçbir adımda elle müdahale yok; hiçbir yerde uzun ömürlü AWS anahtarı saklanmıyor.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="n">6</div><div class="l">adım</div></div>
+      <div class="stat"><div class="n">5</div><div class="l">AWS servisi</div></div>
+      <div class="stat"><div class="n">3</div><div class="l">image</div></div>
+      <div class="stat"><div class="n">0</div><div class="l">kalıcı anahtar</div></div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <svg id="svg" viewBox="0 0 1180 400">
+      <defs>
+        <linearGradient id="gEdge" x1="0" x2="1"><stop offset="0" stop-color="#3B82F6"/><stop offset="1" stop-color="#A5B4FC"/></linearGradient>
+        <filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <radialGradient id="pk"><stop offset="0" stop-color="#fff"/><stop offset=".4" stop-color="#93c5fd"/><stop offset="1" stop-color="#3B82F6" stop-opacity="0"/></radialGradient>
+      </defs>
+      <!-- şeritler -->
+      <g>
+        <rect x="14" y="22" width="1152" height="108" rx="14" fill="rgba(167,139,250,.04)" stroke="rgba(167,139,250,.14)"/>
+        <rect x="14" y="146" width="1152" height="108" rx="14" fill="rgba(251,146,60,.04)" stroke="rgba(251,146,60,.14)"/>
+        <rect x="14" y="270" width="1152" height="108" rx="14" fill="rgba(52,211,153,.04)" stroke="rgba(52,211,153,.14)"/>
+        <text class="lane-t" x="30" y="44" style="fill:#8b7fd1">GitHub</text>
+        <text class="lane-t" x="30" y="168" style="fill:#c9834f">AWS · kontrol düzlemi</text>
+        <text class="lane-t" x="30" y="292" style="fill:#3fa883">AWS · EC2 sunucu</text>
+      </g>
+      <g id="edges"></g>
+      <g id="nodes"></g>
+      <circle id="packet" r="9" fill="url(#pk)" opacity="0">
+        <animateMotion id="mv" dur="1.1s" fill="freeze" calcMode="spline" keySplines=".4 0 .2 1" keyTimes="0;1" path="M0 0"/>
+      </circle>
+    </svg>
+  </div>
+
+  <div class="deck">
+    <div class="card" id="story"></div>
+    <div class="card">
+      <div class="term-win">
+        <div class="term-bar"><span class="dot" style="background:#f43f5e"></span><span class="dot" style="background:#fbbf24"></span><span class="dot" style="background:#10b981"></span><span class="f" id="fname"></span></div>
+        <pre id="code"></pre>
+      </div>
+      <div class="src" id="src"></div>
+    </div>
+  </div>
+
+  <div class="ctrl">
+    <div class="dots" id="dots"></div>
+    <div class="btns">
+      <span class="kbd">← → ile gez</span>
+      <button id="prev">Geri</button>
+      <button id="play">▶ Oynat</button>
+      <button class="pri" id="next">İleri</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ICON = {
+  git:'<circle cx="0" cy="-6" r="3.2" fill="none" stroke="#A78BFA" stroke-width="2"/><circle cx="0" cy="8" r="3.2" fill="none" stroke="#A78BFA" stroke-width="2"/><circle cx="9" cy="0" r="3.2" fill="none" stroke="#A78BFA" stroke-width="2"/><path d="M0-3v8M3 -5c4 1 6 2 6 2" stroke="#A78BFA" stroke-width="2" fill="none"/>',
+  gear:'<circle r="4" fill="none" stroke="#A78BFA" stroke-width="2"/><path d="M0-10v4M0 6v4M-10 0h4M6 0h4M-7-7l3 3M4 4l3 3M-7 7l3-3M4-4l3-3" stroke="#A78BFA" stroke-width="2"/>',
+  box:'<path d="M-9-5l9-5 9 5v10l-9 5-9-5z" fill="none" stroke="#FB923C" stroke-width="2"/><path d="M-9-5l9 5 9-5M0 0v10" stroke="#FB923C" stroke-width="2" fill="none"/>',
+  bucket:'<path d="M-9-7h18l-3 16h-12z" fill="none" stroke="#FB923C" stroke-width="2"/><ellipse cx="0" cy="-7" rx="9" ry="3" fill="none" stroke="#FB923C" stroke-width="2"/>',
+  pipe:'<path d="M-10 0h6M4 0h6" stroke="#FB923C" stroke-width="2"/><circle r="4" fill="none" stroke="#FB923C" stroke-width="2"/><path d="M-10-6v12M10-6v12" stroke="#FB923C" stroke-width="2"/>',
+  server:'<rect x="-10" y="-9" width="20" height="8" rx="2" fill="none" stroke="#34D399" stroke-width="2"/><rect x="-10" y="2" width="20" height="8" rx="2" fill="none" stroke="#34D399" stroke-width="2"/><circle cx="-5" cy="-5" r="1.4" fill="#34D399"/><circle cx="-5" cy="6" r="1.4" fill="#34D399"/>',
+  key:'<circle cx="-4" cy="0" r="5" fill="none" stroke="#FBBF24" stroke-width="2"/><path d="M1 0h10M7 0v4M10 0v3" stroke="#FBBF24" stroke-width="2"/>',
+};
+const N = {
+  push:{x:150,y:76,t:'git push',s:'main-prod',i:'git'},
+  act:{x:420,y:76,t:'GitHub Actions',s:'build-push.yml',i:'gear'},
+  ecr:{x:420,y:200,t:'Amazon ECR',s:'3 image · tag=SHA',i:'box'},
+  s3:{x:690,y:200,t:'Amazon S3',s:'release.zip',i:'bucket'},
+  cp:{x:960,y:200,t:'CodePipeline',s:'S3 kaynağı → EC2',i:'pipe'},
+  ec2:{x:960,y:324,t:'EC2 · deploy.sh',s:'compose pull / up',i:'server'},
+  sm:{x:690,y:324,t:'Secrets Manager',s:'.env + TLS',i:'key'},
+};
+const E = [
+  ['push','act'],['act','ecr'],['act','s3'],['s3','cp'],['cp','ec2'],['sm','ec2'],['ecr','ec2']
+];
+const S = [
+  {n:'push', edge:null, aux:[],
+   h:'Push, workflow\'u tetikler',
+   what:'<code>main-prod</code>\'a yapılan push (merge de bir push\'tur) GitHub Actions\'taki <b>Build and Push to ECR</b> workflow\'unu başlatır.',
+   why:'Prod yalnız tek branch\'ten çıkar. <code>test</code>\'e push WSL\'deki self-hosted runner\'a gider; iki yol karışmaz.',
+   cost:'Yanlış merge doğrudan prod\'a gider. Önlem: PR ile birleştirme ve her push\'ta CodeQL taraması.',
+   terms:[['workflow','GitHub Actions\'ta YAML ile tanımlı, olaylarla tetiklenen otomasyon.'],['trigger','Workflow\'u başlatan olay; burada belirli branch\'e push.']],
+   file:'.github/workflows/build-push.yml',
+   code:'<span class="kw">on</span>:\n  <span class="kw">push</span>:\n    <span class="kw">branches</span>: [ <span class="s">main-prod</span> ]\n\n<span class="c"># test → wsl-deploy.yml (self-hosted)</span>\n<span class="c"># test, main-prod → codeql.yml</span>'},
+  {n:'act', edge:['push','act'], aux:[],
+   h:'Actions, AWS\'ye OIDC ile girer',
+   what:'Runner, GitHub\'dan kısa ömürlü bir kimlik token\'ı alır ve AWS\'de deploy rolünü bununla üstlenir.',
+   why:'Repoda veya GitHub secret\'larında uzun ömürlü AWS erişim anahtarı tutulmaz. Token dakikalar içinde geçersizleşir.',
+   cost:'İlk kurulum zordur: IAM trust policy\'deki <code>sub</code> koşulu branch\'le birebir eşleşmeli.',
+   terms:[['OIDC','Bir servisin, başka bir servise kim olduğunu imzalı kısa ömürlü token ile kanıtladığı kimlik protokolü.'],['IAM role','AWS\'de anahtarı olmayan, geçici olarak üstlenilen yetki seti.'],['trust policy','Rolü kimin, hangi koşulla üstlenebileceğini söyleyen kural.']],
+   file:'build-push.yml · job: build',
+   code:'- <span class="kw">uses</span>: aws-actions/configure-aws-credentials<span class="c">@v5</span>\n  <span class="kw">with</span>:\n    <span class="kw">role-to-assume</span>: <span class="v">&lt;deploy rolü&gt;</span>\n    <span class="kw">aws-region</span>: <span class="v">${{ env.AWS_REGION }}</span>\n\n<span class="c"># anahtar yok — token istek anında üretilir</span>'},
+  {n:'ecr', edge:['act','ecr'], aux:[],
+   h:'Üç image build edilir, ECR\'a gönderilir',
+   what:'<code>market-service</code>, <code>portfolio-service</code> ve <code>web</code> image\'ları build edilir. Tag olarak commit SHA kullanılır.',
+   why:'SHA tag\'i her sürümü tekil yapar. EC2\'de, CI\'da build edilen image\'ın byte\'ı byte\'ına aynısı çalışır (immutable deploy).',
+   cost:'<code>latest</code> daha basittir ama hangi sürümün çalıştığı bilinmez, geri dönüş belirsizleşir. Bedel: ECR\'da biriken image\'lar → lifecycle kuralı gerekir.',
+   terms:[['image','Uygulamanın çalışması için gereken her şeyi içeren, değişmez paket.'],['registry','Image\'ların saklandığı depo; ECR AWS\'nin private registry\'si.'],['immutable deploy','CI\'da üretilen artefaktın sunucuda olduğu gibi çalıştırılması; sunucuda yeniden build yok.']],
+   file:'build-push.yml · job: build',
+   code:'<span class="p">$</span> aws ecr get-login-password | docker login <span class="v">$REG</span>\n<span class="p">$</span> docker build -t <span class="v">$REG</span>/assay/web:<span class="s">$SHA</span> ./web\n<span class="p">$</span> docker push <span class="v">$REG</span>/assay/web:<span class="s">$SHA</span>\n<span class="c"># aynısı market-service ve portfolio-service için</span>'},
+  {n:'s3', edge:['act','s3'], aux:[],
+   h:'Sürüm bilgisi S3\'e bırakılır',
+   what:'İkinci job, commit SHA\'yı <code>release.env</code>\'e yazar, <code>run.sh</code> ile zip\'leyip S3\'e yükler.',
+   why:'CodePipeline, ECR\'a gelen SHA tag\'li image\'larla tetiklenmiyordu. S3\'teki nesnenin değişmesi pipeline\'ı güvenilir şekilde tetikler.',
+   cost:'Zincire bir halka daha eklenir: bucket, zip ve onu okuyan betik. Karşılığında tetikleme deterministik olur.',
+   terms:[['artifact','Bir adımın ürettiği ve sonraki adıma devrettiği dosya.'],['source action','Pipeline\'ı başlatan, değişikliği izlenen kaynak (burada S3 nesnesi).']],
+   file:'build-push.yml · job: release',
+   code:'<span class="p">$</span> echo <span class="s">"IMAGE_TAG=$GITHUB_SHA"</span> &gt; bundle/release.env\n<span class="p">$</span> zip release.zip run.sh release.env\n<span class="p">$</span> aws s3 cp release.zip s3://<span class="v">$RELEASE_BUCKET</span>/release.zip'},
+  {n:'cp', edge:['s3','cp'], aux:[],
+   h:'CodePipeline, sürümü EC2\'ye taşır',
+   what:'Yeni zip pipeline\'ı başlatır. EC2 deploy action\'ı zip\'i sunucuya taşır ve <code>run.sh</code>\'ı çalıştırır.',
+   why:'GitHub, EC2\'ye doğrudan bağlanmaz. Deploy, AWS\'nin içinden tetiklenir; sunucuya dışarıdan kapı açılmaz.',
+   cost:'Hata ayıklama AWS konsoluna taşınır. <code>run.sh</code> bu yüzden girdiyi sıkı doğrular: SHA 40 karakter değilse durur.',
+   terms:[['pipeline','Kaynak → derleme → deploy gibi aşamaları sırayla çalıştıran hat.'],['deploy action','Pipeline\'da artefaktı hedef sunucuya uygulayan aşama.']],
+   file:'deploy/scripts/run.sh',
+   code:'IMAGE_TAG=$(sed -n <span class="s">\'s/^IMAGE_TAG=//p\'</span> release.env)\n<span class="kw">if</span> [[ ! <span class="s">"$IMAGE_TAG"</span> =~ ^[0-9a-f]{40}$ ]]; <span class="kw">then</span>\n  echo <span class="s">"release.env gecersiz"</span> &gt;&amp;2; exit 1\n<span class="kw">fi</span>\nexec /opt/assay/deploy/scripts/deploy.sh'},
+  {n:'ec2', edge:['cp','ec2'], aux:['sm','ecr'], auxEdges:[['sm','ec2'],['ecr','ec2']],
+   h:'deploy.sh yeni sürümü ayağa kaldırır',
+   what:'Secrets Manager\'dan <code>.env</code> ve TLS sertifikası alınır, ECR\'a login olunur, <code>compose pull</code> ve <code>up -d</code> çalışır.',
+   why:'Secret diske yalnız deploy anında yazılır. Override dosyası okunmasın diye her komut <code>-f docker-compose.yml</code> ile verilir.',
+   cost:'Tek EC2: <code>up -d</code> container\'ları yeniden başlatırken kısa bir kesinti olur. Sıfır kesinti için ikinci sunucu ve yük dengeleyici gerekir.',
+   terms:[['Secrets Manager','AWS\'de parolaları şifreli tutan, IAM ile erişilen servis.'],['docker compose','Birden çok container\'ı tek YAML ile tanımlayıp birlikte yöneten araç.'],['override dosyası','Compose\'un otomatik okuduğu, dev farklarını taşıyan ikinci dosya.']],
+   file:'deploy/scripts/deploy.sh',
+   code:'<span class="p">$</span> aws secretsmanager get-secret-value --secret-id <span class="v">$SECRET_ID</span> …\n<span class="p">$</span> aws ecr get-login-password | docker login <span class="v">$REG</span>\n<span class="p">$</span> docker compose <span class="s">-f docker-compose.yml</span> pull\n<span class="p">$</span> docker compose <span class="s">-f docker-compose.yml</span> up -d --remove-orphans\n<span class="p">$</span> docker compose <span class="s">-f docker-compose.yml</span> ps'},
+];
+
+const W=200,H=64;
+const pathOf=(a,b)=>{const A=N[a],B=N[b];
+  if(A.y===B.y){const s=A.x<B.x?1:-1;return `M${A.x+s*W/2} ${A.y} L${B.x-s*W/2} ${B.y}`}
+  if(A.x===B.x){const s=A.y<B.y?1:-1;return `M${A.x} ${A.y+s*H/2} L${B.x} ${B.y-s*H/2}`}
+  const x1=A.x+(B.x>A.x?W/2:-W/2), y1=A.y, x2=B.x, y2=B.y+(B.y>A.y?-H/2:H/2);
+  return `M${x1} ${y1} C${x2} ${y1}, ${x2} ${y1}, ${x2} ${y2}`;
+};
+const eg=document.getElementById('edges'), ng=document.getElementById('nodes');
+E.forEach(([a,b])=>{const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d',pathOf(a,b));p.setAttribute('class','edge');p.dataset.k=a+'>'+b;eg.appendChild(p)});
+const order=S.map(s=>s.n);
+Object.entries(N).forEach(([k,v])=>{
+  const idx=order.indexOf(k);
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.setAttribute('class','node');g.dataset.k=k;g.setAttribute('transform',`translate(${v.x-W/2} ${v.y-H/2})`);
+  g.innerHTML=`<rect class="box" width="${W}" height="${H}" rx="14"/>
+    <g class="ico" transform="translate(30 ${H/2})">${ICON[v.i]}</g>
+    <text class="ttl" x="54" y="28">${v.t}</text><text class="sub" x="54" y="46">${v.s}</text>
+    ${idx>=0?`<text class="stepnum" x="${W-14}" y="20" text-anchor="end">0${idx+1}</text>`:''}`;
+  if(idx>=0) g.onclick=()=>go(idx);
+  ng.appendChild(g);
+});
+const dots=document.getElementById('dots');
+S.forEach((_,i)=>{const d=document.createElement('i');d.onclick=()=>go(i);dots.appendChild(d)});
+
+let cur=0,timer=null;
+function go(i){
+  cur=(i+S.length)%S.length; const s=S[cur];
+  const active=new Set([s.n,...(s.aux||[])]);
+  document.querySelectorAll('.node').forEach(g=>{
+    const k=g.dataset.k, idx=order.indexOf(k);
+    g.classList.remove('on','done','idle','aux');
+    if(k===s.n) g.classList.add('on');
+    else if((s.aux||[]).includes(k)) g.classList.add('aux');
+    else if(idx>=0 && idx<cur) g.classList.add('done');
+    else g.classList.add('idle');
+  });
+  const onEdges=[s.edge,...(s.auxEdges||[])].filter(Boolean).map(e=>e.join('>'));
+  const doneEdges=S.slice(0,cur).map(x=>x.edge).filter(Boolean).map(e=>e.join('>'));
+  document.querySelectorAll('.edge').forEach(p=>{
+    p.classList.toggle('on',onEdges.includes(p.dataset.k));
+    p.classList.toggle('done',!onEdges.includes(p.dataset.k)&&doneEdges.includes(p.dataset.k));
+  });
+  const pk=document.getElementById('packet'),mv=document.getElementById('mv');
+  if(s.edge){mv.setAttribute('path',pathOf(...s.edge));pk.setAttribute('opacity','1');mv.beginElement();}
+  else{pk.setAttribute('opacity','0');}
+  [...dots.children].forEach((d,j)=>{d.className=j===cur?'on':(j<cur?'done':'')});
+  const st=document.getElementById('story');
+  st.innerHTML=`<div class="fade"><div class="stephead"><div class="big">0${cur+1}<small>/0${S.length}</small></div><h2>${s.h}</h2></div>
+    <div class="cols">
+      <div class="col what"><div class="k what">Ne oluyor</div><p>${s.what}</p></div>
+      <div class="col why"><div class="k why">Neden böyle</div><p>${s.why}</p></div>
+      <div class="col cost"><div class="k cost">Bedeli</div><p>${s.cost}</p></div>
+    </div>
+    <div class="terms">${s.terms.map(([t,d])=>`<span class="term">${t}<span class="tip">${d}</span></span>`).join('')}</div></div>`;
+  document.getElementById('fname').textContent=s.file;
+  const code=document.getElementById('code');code.classList.remove('fade');void code.offsetWidth;code.classList.add('fade');
+  code.innerHTML=s.code+'\n<span class="caret"></span>';
+  document.getElementById('src').innerHTML=`Kaynak: <code>${s.file.split(' ')[0]}</code> · terimlerin üstüne gel → tanım`;
+}
+document.getElementById('next').onclick=()=>{stop();go(cur+1)};
+document.getElementById('prev').onclick=()=>{stop();go(cur-1)};
+const playBtn=document.getElementById('play');
+function stop(){clearInterval(timer);timer=null;playBtn.textContent='▶ Oynat'}
+playBtn.onclick=()=>{ if(timer){stop();return}
+  playBtn.textContent='❚❚ Durdur'; timer=setInterval(()=>go(cur+1),4200); };
+addEventListener('keydown',e=>{if(e.key==='ArrowRight'){stop();go(cur+1)}if(e.key==='ArrowLeft'){stop();go(cur-1)}});
+go(0);
+</script>
+</body>
+</html>

@@ -282,6 +282,37 @@ body {
 .modal-in { animation: modal-in .16s ease-out; }
 @media (prefers-reduced-motion: reduce) { .modal-in { animation: none; } }
 
+/* Kaydırma çubukları: ince, tema token'ında (--input); iki temada da sakin. */
+* { scrollbar-width: thin; scrollbar-color: hsl(var(--input)) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--input)); border: 3px solid transparent; border-radius: 999px; background-clip: content-box; }
+/* Sayfa çubuğunun yanında ikinci çubuk görünmesin: sabit yan paneller çubuğunu yalnız imleç üstündeyken gösterir.
+   Renk saydamlaşır, genişlik aynı kalır → içerik kaymaz. */
+.scroll-quiet { scrollbar-color: transparent transparent; }
+.scroll-quiet:hover { scrollbar-color: hsl(var(--input)) transparent; }
+.scroll-quiet::-webkit-scrollbar-thumb { background-color: transparent; }
+.scroll-quiet:hover::-webkit-scrollbar-thumb { background-color: hsl(var(--input)); }
+
+/* Bildirim (toast): mobilde yukarıdan iner, md+ sağdan kayar; çıkışta aynı yöne geri çekilir.
+   Alttaki çubuk kalan süreyi gösterir (süre style ile, DURATION_MS). */
+@keyframes toast-in-top { from { opacity: 0; transform: translateY(-16px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes toast-in-right { from { opacity: 0; transform: translateX(28px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes toast-out-top { to { opacity: 0; transform: translateY(-12px) scale(.98); } }
+@keyframes toast-out-right { to { opacity: 0; transform: translateX(28px) scale(.98); } }
+@keyframes toast-bar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+.toast-in { animation: toast-in-top .26s cubic-bezier(.2, .8, .2, 1); }
+.toast-out { animation: toast-out-top .18s cubic-bezier(.4, 0, 1, 1) forwards; }
+.toast-bar { animation: toast-bar linear forwards; }
+@media (min-width: 48rem) {
+  .toast-in { animation-name: toast-in-right; }
+  .toast-out { animation-name: toast-out-right; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-in, .toast-out { animation: none; }
+  .toast-bar { display: none; }
+}
+
 /* Giriş: şifre → kod adımı geçişi, yanlış kodda kutu sallanması, doğrulama ikonu */
 @keyframes step-in {
   from { opacity: 0; transform: translateX(14px); }

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { assetPath } from '@/lib/assetPath'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useAssetTransactions } from '@/hooks/queries'
 import PriceChart from './PriceChart'
 import { buyPath } from '@/lib/portfolioCategories'
-import { ArrowDownRight, Plus, TrendingUp, TrendingDown, Maximize2, Minimize2, X } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, Plus, TrendingUp, TrendingDown, Maximize2, Minimize2, X } from 'lucide-react'
 
 const fmt = (v, currency) =>
   v != null
@@ -83,6 +84,17 @@ export default function AssetDrawer({ holding, onClose, onSell }) {
         {holding.name && holding.name !== holding.symbol && <div className="mt-0.5 truncate text-body text-foreground">{holding.name}</div>}
       </div>
       <div className="-mr-2 flex shrink-0 items-center">
+        {holding.assetType === 'Stock' && ['BIST', 'US'].includes(holding.market) && (
+          <Link
+            to={assetPath(holding.market, holding.symbol)}
+            onClick={onClose}
+            className="grid h-10 w-10 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground"
+            aria-label={t('asset.open')}
+            title={t('asset.open')}
+          >
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
+        )}
         <button
           onClick={() => setExpanded((v) => !v)}
           className="hidden h-10 w-10 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground md:grid"
@@ -230,8 +242,8 @@ export default function AssetDrawer({ holding, onClose, onSell }) {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="border-b border-border px-6 py-5 text-ui">{header}</div>
-          <div className="grid flex-1 grid-cols-1 overflow-y-auto overscroll-contain md:grid-cols-[360px_1fr] md:overflow-hidden">
-            <div className="border-border p-6 text-ui md:overflow-y-auto md:border-r">
+          <div className="scroll-quiet grid flex-1 grid-cols-1 overflow-y-auto overscroll-contain md:grid-cols-[360px_1fr] md:overflow-hidden">
+            <div className="scroll-quiet border-border p-6 text-ui md:overflow-y-auto md:border-r">
               {priceBlock}
               {statsBlock}
               {!isMarket && positionBlock}
@@ -256,7 +268,7 @@ export default function AssetDrawer({ holding, onClose, onSell }) {
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        className="modal-in fixed inset-x-0 bottom-0 flex max-h-[92dvh] flex-col justify-between overflow-y-auto overscroll-contain rounded-t-sheet border-t border-border bg-popover px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-3 text-ui shadow-sheet outline-none md:inset-y-0 md:left-auto md:right-0 md:max-h-none md:w-full md:max-w-md md:rounded-none md:border-l md:border-t-0 md:pb-6 md:pt-6"
+        className="modal-in scroll-quiet fixed inset-x-0 bottom-0 flex max-h-[92dvh] flex-col justify-between overflow-y-auto overscroll-contain rounded-t-sheet border-t border-border bg-popover px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-3 text-ui shadow-sheet outline-none md:inset-y-0 md:left-auto md:right-0 md:max-h-none md:w-full md:max-w-md md:rounded-none md:border-l md:border-t-0 md:pb-6 md:pt-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div>
