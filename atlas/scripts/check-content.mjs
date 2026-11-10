@@ -176,9 +176,59 @@ if (fs.existsSync(dataFile)) {
   }
 }
 
+// Akış 12 · Pipeline haritası
+const PIPE_STATUS = new Set(['present', 'missing'])
+const PIPE_GATES = new Set(['blocks', 'warns', 'none'])
+const PIPE_PRIORITY = new Set(['P0', 'P1', 'P2'])
+const MATRIX_VALUES = new Set(['yes', 'no', 'partial'])
+const STATION_FIELDS = ['id', 'line', 'phase', 'label', 'status', 'does', 'checks', 'ifFails', 'file']
+const pipelineFile = path.join(contentDir, 'pipeline.yaml')
+const isRepoFile = (p) => {
+  const abs = path.resolve(repoRoot, String(p))
+  return abs.startsWith(repoRoot + path.sep) && fs.existsSync(abs) && fs.statSync(abs).isFile()
+}
+if (fs.existsSync(pipelineFile)) {
+  const where = 'pipeline.yaml'
+  const doc = readYaml(pipelineFile)
+  const missing = ['no', 'id', 'eyebrow', 'title', 'lede', 'phases', 'lines', 'stations', 'matrix', 'files'].filter((k) => doc?.[k] == null)
+  if (missing.length) err(where, `eksik alan: ${missing.join(', ')}`)
+  else {
+    const phaseIds = new Set(doc.phases.map((p) => p?.id))
+    const lineIds = new Set(doc.lines.map((l) => l?.id))
+    for (const l of doc.lines) if (!TONES.has(l.tone)) err(where, `hat ${l.id}: bilinmeyen ton: ${l.tone}`)
+    const stationIds = new Set()
+    for (const s of doc.stations) {
+      const ctx = `durak ${s?.id}`
+      const miss = STATION_FIELDS.filter((k) => s?.[k] == null)
+      if (miss.length) { err(where, `${ctx}: eksik alan: ${miss.join(', ')}`); continue }
+      if (stationIds.has(s.id)) err(where, `${ctx}: tekrar eden id`)
+      stationIds.add(s.id)
+      if (!lineIds.has(s.line)) err(where, `${ctx}: bilinmeyen hat: ${s.line}`)
+      if (!phaseIds.has(s.phase)) err(where, `${ctx}: bilinmeyen aşama: ${s.phase}`)
+      if (!PIPE_STATUS.has(s.status)) err(where, `${ctx}: status present | missing olmalı`)
+      // Çalışan durak durdurup durdurmadığını söyler; eksik durak önceliğini ve kaynağını söyler.
+      if (s.status === 'present' && !PIPE_GATES.has(s.gate)) err(where, `${ctx}: gate blocks | warns | none olmalı`)
+      if (s.status === 'missing' && (!PIPE_PRIORITY.has(s.priority) || !s.ref)) err(where, `${ctx}: eksik durak priority (P0-P2) ve ref ister`)
+      if (!isRepoFile(s.file)) err(where, `${ctx}: dosya yok: ${s.file}`)
+    }
+    for (const r of doc.matrix.rows ?? []) {
+      for (const c of doc.matrix.columns ?? []) if (!MATRIX_VALUES.has(r?.[c])) err(where, `matris "${r?.label}": ${c} yes | no | partial olmalı`)
+    }
+    const fileIds = new Set()
+    for (const f of doc.files) {
+      const ctx = `dosya ${f?.id}`
+      if (!f?.id || !f.path || !f.title || !Array.isArray(f.blocks) || f.blocks.length === 0) { err(where, `${ctx}: id, path, title, blocks ister`); continue }
+      if (fileIds.has(f.id)) err(where, `${ctx}: tekrar eden id`)
+      fileIds.add(f.id)
+      if (!isRepoFile(f.path)) err(where, `${ctx}: dosya yok: ${f.path}`)
+      for (const b of f.blocks) if (!b?.lines || !b.code || !b.note) err(where, `${ctx}: blok lines, code, note ister`)
+    }
+  }
+}
+
 if (errors.length) {
   console.error(`İçerik hatalı (${errors.length}):`)
   for (const e of errors) console.error(`  - ${e}`)
   process.exit(1)
 }
-console.log(`İçerik geçerli: ${flowIds.size} akış, ${termIds.size} terim${fs.existsSync(screensFile) ? ', ekran → veri sayfası' : ''}${fs.existsSync(dataFile) ? ', veri envanteri' : ''}`)
+console.log(`İçerik geçerli: ${flowIds.size} akış, ${termIds.size} terim${fs.existsSync(screensFile) ? ', ekran → veri sayfası' : ''}${fs.existsSync(dataFile) ? ', veri envanteri' : ''}${fs.existsSync(pipelineFile) ? ', pipeline haritası' : ''}`)

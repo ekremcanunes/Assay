@@ -1,0 +1,774 @@
+# Akış 12 · Pipeline haritası. Hatlar (tetikleyici) × aşamalar; her durak gerçek bir dosyaya bağlanır.
+# status: present (çalışıyor) | missing (önerildi, yok — kaynak docs/10-standards/PIPELINE-SECURITY.md)
+# gate:   blocks (başarısızsa süreci durdurur) | warns (raporlar, durdurmaz) | none (kontrol yok, yalnız iş yapar)
+# İçerik kuralı: hesap ID'si, ARN, bucket ve secret adı yazılmaz; yer tutucu kullanılır.
+no: "12"
+id: pipeline
+eyebrow: "Akış 12 · Pipeline haritası · DevOps"
+title: "Pipeline'ımız *ne çalıştırıyor, neyi kontrol ediyor?*"
+lede: >-
+  Kodun her yolculuğu: hangi branch hangi workflow'u tetikliyor, hangi dosyada hangi adım çalışıyor,
+  hangisi süreci durdurabiliyor. "Eksikleri göster" ile önerilen ama henüz olmayan duraklar yerlerinde belirir.
+
+phases:
+  - { id: source, label: "Kaynak" }
+  - { id: verify, label: "Doğrulama" }
+  - { id: package, label: "Paketleme" }
+  - { id: deliver, label: "Teslim" }
+  - { id: runtime, label: "Çalışma zamanı" }
+
+lines:
+  - { id: dev, label: "Geliştirici → GitHub", sub: "her commit", tone: gh }
+  - { id: test, label: "test", sub: "push · WSL dev ortamı", tone: app }
+  - { id: prod, label: "main-prod", sub: "push · AWS prod", tone: aws }
+  - { id: weekly, label: "Haftalık", sub: "zamanlayıcı", tone: client }
+  - { id: atlas, label: "Vercel · atlas/", sub: "her branch push", tone: edge }
+  - { id: always, label: "Sürekli", sub: "kod değişmese de", tone: ext }
+
+stations:
+  # ---------- Geliştirici → GitHub ----------
+  - id: precommit-gitleaks
+    line: dev
+    phase: source
+    label: "pre-commit: gitleaks"
+    status: missing
+    priority: P0
+    ref: "PIPELINE-SECURITY.md §3 [1]"
+    does: "Commit oluşmadan önce değişiklikte sır (anahtar, token, şifre) arar."
+    checks: "Sırrın git geçmişine hiç girmemesi."
+    ifFails: "Commit reddedilir."
+    file: docs/10-standards/PIPELINE-SECURITY.md
+  - id: push
+    line: dev
+    phase: source
+    label: "git push"
+    status: present
+    gate: none
+    does: "Dal akışı feature → test → main-prod. Her push ilgili hattı tetikler."
+    checks: "Hiçbir şey. Doğrudan push açık; PR veya onay zorunlu değil (2026-09 değerlendirmesi)."
+    ifFails: "—"
+    file: docs/10-standards/PIPELINE-SECURITY.md
+    code: |
+      feature/* ──merge──▶ test ──merge──▶ main-prod
+                            │                 │
+                       wsl-deploy.yml    build-push.yml
+                       codeql.yml        codeql.yml
+  - id: push-protection
+    line: dev
+    phase: source
+    label: "Push Protection"
+    status: missing
+    priority: P0
+    ref: "PIPELINE-SECURITY.md §8 P0-1"
+    does: "GitHub, sır içeren push'u sunucuda reddeder. Public repoda ücretsiz, tek ayar."
+    checks: "Sırrın public repoya ulaşmaması."
+    ifFails: "Push reddedilir."
+    file: docs/10-standards/PIPELINE-SECURITY.md
+  - id: branch-protection
+    line: dev
+    phase: source
+    label: "Branch koruması + PR"
+    status: missing
+    priority: P0
+    ref: "PIPELINE-SECURITY.md §6-6, §8 P0-4"
+    does: "main-prod'a doğrudan push kapanır; PR, geçmesi zorunlu kontroller ve onay istenir."
+    checks: "Pipeline'daki kontrollerin atlanamaması."
+    ifFails: "Merge butonu kilitli kalır."
+    file: docs/10-standards/PIPELINE-SECURITY.md
+
+  # ---------- test ----------
+  - id: test-trigger
+    line: test
+    phase: source
+    label: "push → test"
+    status: present
+    gate: none
+    does: "İki workflow'u birlikte başlatır: wsl-deploy.yml ve codeql.yml."
+    checks: "—"
+    ifFails: "—"
+    file: .github/workflows/wsl-deploy.yml
+    code: |
+      on:
+        push:
+          branches:
+            - test
+  - id: test-build
+    line: test
+    phase: verify
+    label: "Build + test"
+    status: missing
+    priority: P1
+    ref: "PIPELINE-SECURITY.md §3 [3], §8 P2-16"
+    does: "dotnet build/test ve npm build/test çalışır. Önkoşul: test projesi (xUnit, Vitest) henüz yok."
+    checks: "Kodun derlenmesi ve davranışının bozulmaması."
+    ifFails: "Deploy başlamaz."
+    file: docs/10-standards/PIPELINE-SECURITY.md
+  - id: test-codeql
+    line: test
+    phase: verify
+    label: "CodeQL ×3"
+    status: present
+    gate: warns
+    does: "actions, csharp ve javascript-typescript paralel ve derlemeden (buildless) taranır. Sonuç Security sekmesine yazılır."
+    checks: "Koddaki açık kalıpları: injection, XSS, workflow'da script injection."
+    ifFails: "Bulgu raporlanır; deploy durmaz (zorunlu kontrol değil)."
+    file: .github/workflows/codeql.yml
+    code: |
+      on:
+        push:
+          branches: [ "test", "main-prod" ]
+          paths-ignore: [ "docs/**", "**/*.md", ".superpowers/**" ]
+      matrix:
+        - language: actions
+        - language: csharp
+        - language: javascript-typescript
+  - id: test-sca
+    line: test
+    phase: verify
+    label: "npm audit / dotnet --vulnerable"
+    status: missing
+    priority: P0
+    ref: "PIPELINE-SECURITY.md §8 P0-3"
+    does: "Bağımlılıklardaki bilinen CVE'leri listeler. Başlangıçta yalnız görünürlük, gate değil."
+    checks: "Kullanılan paketlerde bilinen açık."
+    ifFails: "Önce uyarır; gate politikası kararından sonra durdurur."
+    file: docs/10-standards/PIPELINE-SECURITY.md
+  - id: test-deploy
+    line: test
+    phase: deliver
+    label: "WSL deploy"
+    status: present
+    gate: none
+    does: "Self-hosted runner (WSL) repoyu çeker, ~/secrets/.env'i kopyalar, compose'u indirip kaynaktan build ederek kaldırır."
+    checks: "Hiçbir şey. Image bu makinede yeniden build edilir (immutable değil)."
+    ifFails: "Job kırmızı olur. down çalışıp up başarısız olursa dev ortamı kapalı kalır."
+    file: .github/workflows/wsl-deploy.yml
+    code: |
+      runs-on: self-hosted
+      - run: cp ~/secrets/.env $GITHUB_WORKSPACE/.env
+      - run: |
+          docker compose down --remove-orphans
+          docker compose up --build -d
+          docker compose ps
+  - id: test-smoke
+    line: test
+    phase: runtime
+    label: "Smoke test"
+    status: missing
+    priority: P2
+    ref: "PIPELINE-SECURITY.md §5 (CD sorumluluğu)"
+    does: "Deploy'dan sonra birkaç kritik ucu (/, /api/system/status, giriş akışı) çağırır."
+    checks: "Ortamın gerçekten ayağa kalktığı."
+    ifFails: "Deploy başarısız sayılır, haber verilir."
+    file: docs/10-standards/PIPELINE-SECURITY.md
+
+  # ---------- main-prod ----------
+  - id: prod-trigger
+    line: prod
+    phase: source
+    label: "push → main-prod"
+    status: present
+    gate: none
+    does: "build-push.yml ve codeql.yml'i başlatır. Merge de bir push'tur."
+    checks: "—"
+    ifFails: "—"
+    file: .github/workflows/build-push.yml
+    code: |
+      on:
+        push:
+          branches: [ main-prod ]
+      permissions:
+        id-token: write   # OIDC jetonu istemek için
+        contents: read
+  - id: prod-build-test
+    line: prod
+    phase: verify
+    label: "Build + test"
+    status: missing
+    priority: P1
+    ref: "PIPELINE-SECURITY.md §3 [3]"
+    does: "Image'dan önce derleme ve testler. Bugün derleme yalnız Dockerfile içinde, test hiç yok."
+    checks: "Davranışın bozulmadığı."
+    ifFails: "Image üretilmez."
+    file: docs/10-standards/PIPELINE-SECURITY.md
+  - id: prod-codeql
+    line: prod
+    phase: verify
+    label: "CodeQL ×3"
+    status: present
+    gate: warns
+    does: "test hattındakiyle aynı tarama, main-prod push'unda tekrar koşar."
+    checks: "Koddaki açık kalıpları."
+    ifFails: "Raporlanır; build-push ayrı workflow olduğu için deploy beklemez ve durmaz."
+    file: .github/workflows/codeql.yml
+  - id: prod-sca
+    line: prod
+    phase: verify
+    label: "Bağımlılık taraması"
+    status: missing
+    priority: P0
+    ref: "PIPELINE-SECURITY.md §8 P0-3"
+    does: "npm audit, dotnet list package --vulnerable --include-transitive."
+    checks: "Bilinen CVE'li paket."
+    ifFails: "Prod'da Critical/High durdurur (§7 öneri)."
+    file: docs/10-standards/PIPELINE-SECURITY.md
+  - id: prod-gitleaks
+    line: prod
+    phase: verify
+    label: "gitleaks (tam geçmiş)"
+    status: missing
+    priority: P0
+    ref: "PIPELINE-SECURITY.md §8 P0-1"
+    does: "Tüm git geçmişini sır için tarar; pre-commit atlanmışsa yakalar."
+    checks: "Geçmişe girmiş sır."
+    ifFails: "Her ortamda durdurur; sır iptal edilip yenilenir."
+    file: docs/10-standards/PIPELINE-SECURITY.md
+  - id: prod-hadolint
+    line: prod
+    phase: verify
+    label: "hadolint + Trivy config"
+    status: missing
+    priority: P1
+    ref: "PIPELINE-SECURITY.md §8 P1-6"
+    does: "Dockerfile ve compose'u denetler. Bugün üç Dockerfile'da USER satırı yok: container'lar root çalışır."
+    checks: "Root kullanıcı, sabitlenmemiş etiket, hatalı compose ayarı."
+    ifFails: "Uyarır veya durdurur (politikaya göre)."
+    file: portfolio-service/Dockerfile
+  - id: prod-build
+    line: prod
+    phase: package
+    label: "docker build ×3"
+    status: present
+    gate: blocks
+    does: "Matrix ile web, portfolio-service, market-service paralel build edilir. Multi-stage: npm ci / dotnet restore + publish."
+    checks: "Yalnız derlenebilirlik: derleme hatası job'u durdurur."
+    ifFails: "Image üretilmez, release job'u hiç başlamaz (needs: build)."
+    file: .github/workflows/build-push.yml
+    code: |
+      strategy:
+        matrix:
+          include:
+            - { name: web, context: ./web }
+            - { name: portfolio-service, context: ./portfolio-service }
+            - { name: market-service, context: ./market-service }
+      run: docker build -t "$IMAGE" "${{ matrix.context }}"
+  - id: prod-oidc
+    line: prod
+    phase: package
+    label: "OIDC → AWS"
+    status: present
+    gate: blocks
+    does: "Kalıcı anahtar yok: runner kısa ömürlü token ile deploy rolünü üstlenir. Action'lar commit SHA ile sabit."
+    checks: "Rolü yalnız bu repo ve branch üstlenebilir (trust policy)."
+    ifFails: "Kimlik alınamaz, push yapılamaz."
+    file: .github/workflows/build-push.yml
+    code: |
+      - uses: aws-actions/configure-aws-credentials@<sha> # v5
+        with:
+          role-to-assume: <deploy rolü>
+  - id: prod-trivy
+    line: prod
+    phase: package
+    label: "Trivy image scan"
+    status: missing
+    priority: P1
+    ref: "PIPELINE-SECURITY.md §8 P1-6"
+    does: "Image'daki işletim sistemi paketlerini ve bağımlılıkları tarar."
+    checks: "alpine/debian paketlerindeki CVE'ler."
+    ifFails: "Prod'da Critical/High durdurur (§7 öneri)."
+    file: docs/10-standards/PIPELINE-SECURITY.md
+  - id: prod-sbom
+    line: prod
+    phase: package
+    label: "SBOM (Syft)"
+    status: missing
+    priority: P2
+    ref: "PIPELINE-SECURITY.md §8 P2-11"
+    does: "Her image'ın içindeki kütüphane envanterini üretip saklar."
+    checks: "Yeni CVE çıkınca hangi image'ın etkilendiği."
+    ifFails: "—"
+    file: docs/10-standards/PIPELINE-SECURITY.md
+  - id: prod-ecr
+    line: prod
+    phase: package
+    label: "ECR push (tag = SHA)"
+    status: present
+    gate: blocks
+    does: "Üç image commit SHA tag'iyle ECR'a gönderilir."
+    checks: "Aynı SHA'nın image'ı sonra EC2'de birebir çekilir (immutable deploy)."
+    ifFails: "Release job'u başlamaz."
+    file: .github/workflows/build-push.yml
+    code: |
+      IMAGE="$ECR_REGISTRY/assay/${{ matrix.name }}:${GITHUB_SHA}"
+      docker push "$IMAGE"
+  - id: prod-ecr-scan
+    line: prod
+    phase: package
+    label: "ECR scan-on-push + immutable tag"
+    status: missing
+    priority: P1
+    ref: "PIPELINE-SECURITY.md §8 P1-10"
+    does: "ECR image'ı gelince tarar; aynı tag'in üzerine yazılmasını engeller; lifecycle eski image'ları siler."
+    checks: "Registry'deki image'ın değişmemesi ve temizliği."
+    ifFails: "—"
+    file: docs/10-standards/PIPELINE-SECURITY.md
+  - id: prod-release
+    line: prod
+    phase: deliver
+    label: "release.zip → S3"
+    status: present
+    gate: blocks
+    does: "İkinci job: SHA'yı release.env'e yazar, run.sh ile zip'leyip S3'e koyar."
+    checks: "Yalnız üç image da gittiyse çalışır (needs: build)."
+    ifFails: "Pipeline tetiklenmez; prod eski sürümde kalır."
+    file: .github/workflows/build-push.yml
+    code: |
+      echo "IMAGE_TAG=${GITHUB_SHA}" > bundle/release.env
+      (cd bundle && zip -q ../release.zip run.sh release.env)
+      aws s3 cp release.zip "s3://<release bucket>/release.zip"
+  - id: prod-codepipeline
+    line: prod
+    phase: deliver
+    label: "CodePipeline"
+    status: present
+    gate: none
+    does: "S3'teki yeni zip pipeline'ı başlatır; EC2 deploy action'ı zip'i sunucuya taşıyıp run.sh'ı çalıştırır."
+    checks: "Hiçbir şey; yalnız taşır."
+    ifFails: "Pipeline kırmızı; AWS konsolunda görünür."
+    file: deploy/scripts/run.sh
+  - id: prod-approval
+    line: prod
+    phase: deliver
+    label: "Manuel onay"
+    status: missing
+    priority: P1
+    ref: "PIPELINE-SECURITY.md §3 [6]"
+    does: "CodePipeline'da deploy'dan önce bir insan onayı."
+    checks: "Prod'a ne çıktığının bilinçli kararı."
+    ifFails: "Deploy bekler."
+    file: docs/10-standards/PIPELINE-SECURITY.md
+  - id: prod-runsh
+    line: prod
+    phase: deliver
+    label: "run.sh"
+    status: present
+    gate: blocks
+    does: "release.env'den SHA'yı okur, biçimini doğrular, deploy.sh'ı çalıştırır."
+    checks: "IMAGE_TAG tam 40 karakterlik hex commit SHA mı."
+    ifFails: "Çıkış 1; deploy hiç başlamaz."
+    file: deploy/scripts/run.sh
+    code: |
+      IMAGE_TAG=$(sed -n 's/^IMAGE_TAG=//p' release.env)
+      if [[ ! "$IMAGE_TAG" =~ ^[0-9a-f]{40}$ ]]; then
+        echo "release.env gecersiz" >&2; exit 1
+      fi
+      exec /opt/assay/deploy/scripts/deploy.sh
+  - id: prod-deploysh
+    line: prod
+    phase: deliver
+    label: "deploy.sh"
+    status: present
+    gate: blocks
+    does: "Repoyu aynı SHA'ya alır, kendini yeni haliyle yeniden başlatır; Secrets Manager'dan .env (umask 077) ve TLS sertifikasını yazar; ECR'dan çeker ve compose'u kaldırır."
+    checks: "set -euo pipefail: herhangi bir komut hata verirse durur. Sırda tek tırnak varsa .env yazılmaz."
+    ifFails: "Script durur; o ana kadar güncellenen container'lar yeni sürümde kalabilir (otomatik geri alma yok)."
+    file: deploy/scripts/deploy.sh
+    code: |
+      set -euo pipefail
+      git checkout --quiet --detach "$IMAGE_TAG"
+      RE_DEPLOY="$IMAGE_TAG" exec "$APP_DIR/deploy/scripts/deploy.sh"
+      ( umask 077; aws secretsmanager get-secret-value --secret-id <prod env> ... > .env.tmp; mv .env.tmp .env )
+      docker compose -f docker-compose.yml pull
+      docker compose -f docker-compose.yml up -d --remove-orphans
+  - id: prod-smoke
+    line: prod
+    phase: runtime
+    label: "Smoke test"
+    status: missing
+    priority: P2
+    ref: "PIPELINE-SECURITY.md §5"
+    does: "up -d'den sonra kritik uçları çağırıp sağlıklı olduğunu doğrular."
+    checks: "Prod'un gerçekten cevap verdiği."
+    ifFails: "Geri alma tetiklenir."
+    file: docs/10-standards/PIPELINE-SECURITY.md
+  - id: prod-rollback
+    line: prod
+    phase: runtime
+    label: "Otomatik geri alma"
+    status: missing
+    priority: P2
+    ref: "PIPELINE-SECURITY.md §5"
+    does: "Smoke test başarısızsa bir önceki SHA ile deploy.sh yeniden çalışır."
+    checks: "Bozuk sürümün prod'da kalmaması."
+    ifFails: "—"
+    file: docs/10-standards/PIPELINE-SECURITY.md
+  - id: prod-monitoring
+    line: prod
+    phase: runtime
+    label: "İzleme / alarm"
+    status: missing
+    priority: P1
+    ref: "PIPELINE-SECURITY.md §2 (öncelik: yüksek)"
+    does: "Loglar EC2'deki Docker'da kalıyor; çökme veya saldırıda haber gelmiyor. CloudWatch + alarm."
+    checks: "Hatanın kullanıcıdan önce fark edilmesi."
+    ifFails: "—"
+    file: docs/10-standards/LOGGING.md
+
+  # ---------- Haftalık ----------
+  - id: weekly-codeql
+    line: weekly
+    phase: verify
+    label: "CodeQL tam tarama"
+    status: present
+    gate: warns
+    does: "Her Çarşamba 22:27 UTC; kod değişmese de güncellenen CodeQL kurallarıyla yeniden tarar."
+    checks: "Yeni yazılmış kuralların eski kodda bulduğu açıklar."
+    ifFails: "Raporlanır."
+    file: .github/workflows/codeql.yml
+    code: |
+      schedule:
+        - cron: '27 22 * * 3'
+
+  # ---------- Vercel · atlas/ ----------
+  - id: atlas-ignore
+    line: atlas
+    phase: source
+    label: "ignore-build.sh"
+    status: present
+    gate: blocks
+    does: "Son başarılı deploy'dan beri atlas/ veya akışların gösterdiği repo dosyaları değişmediyse build'i atlar."
+    checks: "Gereksiz build olmaması; önceki SHA bilinmiyorsa her zaman build eder."
+    ifFails: "—"
+    file: atlas/scripts/ignore-build.sh
+    code: |
+      [ -n "$VERCEL_GIT_PREVIOUS_SHA" ] || exit 1
+      if git diff --quiet "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- . $files; then exit 0; else exit 1; fi
+  - id: atlas-check
+    line: atlas
+    phase: verify
+    label: "check-content"
+    status: present
+    gate: blocks
+    does: "prebuild adımı: içerik şeması, terim ve düğüm atıfları, dosya yollarının repoda varlığı, gizli kalıplar."
+    checks: "AWS hesap ID'si, ARN ve IP adresi kalıpları; olmayan dosyaya atıf."
+    ifFails: "Build durur, yayın olmaz."
+    file: atlas/scripts/check-content.mjs
+  - id: atlas-build
+    line: atlas
+    phase: package
+    label: "npm ci + vite build"
+    status: present
+    gate: blocks
+    does: "Lock dosyasından birebir kurulum, statik derleme (dist/)."
+    checks: "package.json ile lock'un tutarlılığı; derlenebilirlik."
+    ifFails: "Deploy olmaz; önceki sürüm yayında kalır."
+    file: atlas/package.json
+  - id: atlas-deploy
+    line: atlas
+    phase: deliver
+    label: "CDN · preview / production"
+    status: present
+    gate: none
+    does: "main-prod production'a, diğer branch'ler preview adresine çıkar. Preview'lar Vercel Authentication arkasında."
+    checks: "—"
+    ifFails: "—"
+    file: atlas/vercel.json
+
+  # ---------- Sürekli ----------
+  - id: dependabot
+    line: always
+    phase: runtime
+    label: "Dependabot PR"
+    status: present
+    gate: none
+    does: "Bilinen açığı olan bağımlılık için otomatik güncelleme PR'ı açar. Repo ayarından açık; repoda dependabot.yml yok. Şimdiye kadar web (npm) PR'ları görüldü."
+    checks: "Bağımlılıklarda sonradan açıklanan CVE'ler."
+    ifFails: "PR açık bekler; birleştirmek elle."
+    file: web/package.json
+  - id: inspector
+    line: always
+    phase: runtime
+    label: "Amazon Inspector"
+    status: missing
+    priority: P2
+    ref: "PIPELINE-SECURITY.md §8 P2-12"
+    does: "EC2 ve ECR'ı sürekli tarar; deploy'dan sonra çıkan CVE'leri yakalar."
+    checks: "Çalışan sistemdeki yeni açıklar."
+    ifFails: "—"
+    file: docs/10-standards/PIPELINE-SECURITY.md
+
+# Kontrol matrisi: bir firma "pipeline'ınız neyi kontrol ediyor?" diye sorarsa tek bakış cevabı.
+# value: yes | no | partial
+matrix:
+  columns: [test, prod]
+  rows:
+    - { label: "Derleme", test: partial, prod: partial, note: "Yalnız Dockerfile içinde; ayrı CI adımı yok." }
+    - { label: "Birim / entegrasyon testi", test: no, prod: no, note: "Test projesi yok (xUnit, Vitest)." }
+    - { label: "SAST (CodeQL)", test: partial, prod: partial, note: "Çalışıyor ama merge'ü veya deploy'u durdurmuyor." }
+    - { label: "Bağımlılık (SCA)", test: partial, prod: partial, note: "Yalnız Dependabot PR'ları; CI'da tarama yok." }
+    - { label: "Sır taraması", test: no, prod: no, note: "gitleaks ve Push Protection yok." }
+    - { label: "Dockerfile / IaC", test: no, prod: no, note: "hadolint yok; container'lar root." }
+    - { label: "Image taraması", test: no, prod: no, note: "Trivy ve ECR scan-on-push yok." }
+    - { label: "Kimlik (anahtarsız)", test: partial, prod: yes, note: "Prod OIDC; test runner'ı diskteki .env ile." }
+    - { label: "Immutable artefakt", test: no, prod: yes, note: "Prod SHA tag'li image; test makinede yeniden build." }
+    - { label: "Girdi doğrulama", test: no, prod: yes, note: "run.sh SHA biçimini kontrol ediyor." }
+    - { label: "Manuel onay", test: no, prod: no, note: "Merge = deploy." }
+    - { label: "Smoke test / geri alma", test: no, prod: no, note: "Deploy sonrası doğrulama yok." }
+    - { label: "İzleme / alarm", test: no, prod: no, note: "Loglar yalnız sunucuda." }
+
+# Dosya rehberi: her workflow/script satır aralıklarıyla bloklara bölünür; her bloğun yanında ne yaptığı ve nedeni.
+# Durağın `file` alanı burada bir dosyanın `path`'ine eşitse durak paneli bu rehbere bağlantı verir.
+files:
+  - id: build-push
+    path: .github/workflows/build-push.yml
+    kind: workflow
+    title: "build-push.yml — prod image'ları ve sürüm"
+    trigger: "main-prod'a push"
+    runsOn: "GitHub'ın Ubuntu makineleri (ubuntu-latest)"
+    blocks:
+      - lines: "1-5"
+        code: |
+          name: Build and Push to ECR
+          on:
+            push:
+              branches: [ main-prod ]
+        note: "Tetikleyici. Yalnız main-prod'a gelen push (merge dahil) bu workflow'u başlatır. paths-ignore yok: yalnız doküman değişse de çalışır (BACKLOG)."
+      - lines: "7-14"
+        code: |
+          env:
+            AWS_REGION: eu-central-1 # Frankfurt
+            ECR_REGISTRY: <hesap>.dkr.ecr.eu-central-1.amazonaws.com
+            RELEASE_BUCKET: <release bucket>
+          permissions:
+            id-token: write   # OIDC jetonu istemek için ZORUNLU
+            contents: read
+        note: "Ortak değişkenler ve izinler. `permissions` GITHUB_TOKEN'ın yetkisini daraltır: yalnız kodu okur ve OIDC token'ı isteyebilir. Varsayılan geniş yetki kullanılmaz."
+      - lines: "16-29"
+        code: |
+          jobs:
+            build:
+              runs-on: ubuntu-latest
+              strategy:
+                matrix:
+                  include:
+                    - { name: web, context: ./web }
+                    - { name: portfolio-service, context: ./portfolio-service }
+                    - { name: market-service, context: ./market-service }
+        note: "`matrix`: aynı job'un üç kopyası paralel koşar; her kopya bir servisin klasörünü (context) build eder. Üçünden biri düşerse release başlamaz."
+      - lines: "30-38"
+        code: |
+          - uses: actions/checkout@<sha> # v7
+          - uses: aws-actions/configure-aws-credentials@<sha> # v5
+            with:
+              role-to-assume: <deploy rolü>
+              aws-region: ${{ env.AWS_REGION }}
+        note: "Kodu indirir ve AWS'ye OIDC ile girer: GitHub kısa ömürlü bir kimlik token'ı verir, AWS bununla deploy rolünü geçici olarak üstlendirir. Action'lar etiket yerine commit SHA ile sabit: etiket taşınabilir, SHA taşınamaz (tedarik zinciri saldırısına karşı)."
+      - lines: "39-50"
+        code: |
+          - run: |
+              aws ecr get-login-password --region "$AWS_REGION" \
+                | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+          - run: |
+              IMAGE="$ECR_REGISTRY/assay/${{ matrix.name }}:${GITHUB_SHA}"
+              docker build -t "$IMAGE" "${{ matrix.context }}"
+              docker push "$IMAGE"
+        note: "ECR'a geçici şifreyle giriş, build ve push. Tag olarak commit SHA kullanılır: her sürüm tekil olur, prod'da hangi kodun çalıştığı kesin bilinir."
+      - lines: "52-72"
+        code: |
+          release:
+            needs: build
+            steps:
+              - run: |
+                  mkdir bundle
+                  cp deploy/scripts/run.sh bundle/
+                  echo "IMAGE_TAG=${GITHUB_SHA}" > bundle/release.env
+                  (cd bundle && zip -q ../release.zip run.sh release.env)
+                  aws s3 cp release.zip "s3://<release bucket>/release.zip"
+        note: "`needs: build`: üç image da gittikten sonra çalışır. Deploy edilecek SHA'yı ve onu çalıştıracak run.sh'ı zip'leyip S3'e koyar; S3'teki bu nesne CodePipeline'ın tetikleyicisidir."
+
+  - id: codeql
+    path: .github/workflows/codeql.yml
+    kind: workflow
+    title: "codeql.yml — statik güvenlik analizi"
+    trigger: "test ve main-prod'a push · her Çarşamba 22:27 UTC"
+    runsOn: "GitHub'ın Ubuntu makineleri"
+    blocks:
+      - lines: "6-19"
+        code: |
+          on:
+            push:
+              branches: [ "test", "main-prod" ]
+              paths-ignore: [ "docs/**", "**/*.md", ".superpowers/**" ]
+            schedule:
+              - cron: '27 22 * * 3'
+        note: "İki tetikleyici: push ve haftalık zamanlayıcı. Push'taki tüm dosyalar paths-ignore listesindeyse (yalnız doküman) tarama atlanır. Haftalık tarama, kod değişmese de güncellenen kurallarla yeniden bakar."
+      - lines: "21-24"
+        code: |
+          concurrency:
+            group: codeql-${{ github.ref }}-${{ github.event_name }}
+            cancel-in-progress: true
+        note: "Aynı dala art arda push gelirse yalnız sonuncusu taranır, öncekiler iptal edilir. Grup adında olay türü olduğu için haftalık tarama bir push yüzünden iptal olmaz."
+      - lines: "34-56"
+        code: |
+          permissions:
+            security-events: write   # sonucu Security sekmesine yazmak için
+            contents: read
+          strategy:
+            fail-fast: false
+            matrix:
+              include:
+                - { language: actions, build-mode: none }
+                - { language: csharp, build-mode: none }
+                - { language: javascript-typescript, build-mode: none }
+        note: "Üç dil paralel taranır; biri çökerse diğerleri sürer (fail-fast: false). `build-mode: none`: kod derlenmeden analiz edilir, runner'a SDK kurmak gerekmez."
+      - lines: "57-88"
+        code: |
+          - uses: actions/checkout@<sha>
+          - uses: github/codeql-action/init@<sha>
+            with:
+              languages: ${{ matrix.language }}
+          - uses: github/codeql-action/analyze@<sha>
+            with:
+              category: "/language:${{ matrix.language }}"
+        note: "CodeQL motorunu kurar, kodu sorgularıyla tarar, bulguları SARIF olarak Security sekmesine yükler. Bulgu deploy'u durdurmaz: zorunlu kontrol (branch koruması) yok."
+
+  - id: wsl-deploy
+    path: .github/workflows/wsl-deploy.yml
+    kind: workflow
+    title: "wsl-deploy.yml — dev ortamına deploy"
+    trigger: "test'e push"
+    runsOn: "Kendi makinemizdeki self-hosted runner (WSL)"
+    blocks:
+      - lines: "1-13"
+        code: |
+          on:
+            push:
+              branches:
+                - test
+          permissions:
+            contents: read
+          jobs:
+            deploy:
+              runs-on: self-hosted
+        note: "`runs-on: self-hosted`: iş GitHub'ın makinesinde değil, WSL'de kurulu runner'da koşar. Bu yüzden Docker'a ve diskteki sırlara doğrudan erişir."
+      - lines: "16-21"
+        code: |
+          - uses: actions/checkout@<sha> # v4
+          - run: cp ~/secrets/.env $GITHUB_WORKSPACE/.env
+        note: "Kodu indirir, .env'i runner'ın diskinden kopyalar. Sır repoda değil makinede durur; prod'daki Secrets Manager yaklaşımının dev'deki basit karşılığı."
+      - lines: "22-27"
+        code: |
+          - run: |
+              cd $GITHUB_WORKSPACE
+              docker compose down --remove-orphans
+              docker compose up --build -d
+              docker compose ps
+        note: "Ortamı indirip kaynaktan yeniden build ederek kaldırır. override dosyası okunur (dev portları açılır). Prod'dan farkı: image burada build edilir, ECR'dan çekilmez."
+
+  - id: run-sh
+    path: deploy/scripts/run.sh
+    kind: script
+    title: "run.sh — sürümü doğrulayıp deploy.sh'ı çağırır"
+    trigger: "CodePipeline EC2 deploy action'ı (release.zip içinde)"
+    runsOn: "Prod EC2"
+    blocks:
+      - lines: "1-6"
+        code: |
+          #!/usr/bin/env bash
+          set -euo pipefail
+          cd "$(dirname "$0")"
+        note: "`set -euo pipefail`: bir komut hata verirse (-e), tanımsız değişken kullanılırsa (-u) veya pipe'ın herhangi bir parçası düşerse (pipefail) script hemen durur."
+      - lines: "8-12"
+        code: |
+          IMAGE_TAG=$(sed -n 's/^IMAGE_TAG=//p' release.env)
+          if [[ ! "$IMAGE_TAG" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "release.env gecersiz ..." >&2
+            exit 1
+          fi
+        note: "Girdi doğrulama: SHA tam 40 karakter küçük harf hex değilse deploy hiç başlamaz. Bozuk veya beklenmedik bir zip sunucuda komut çalıştıramaz."
+      - lines: "14-15"
+        code: |
+          export IMAGE_TAG
+          exec /opt/assay/deploy/scripts/deploy.sh
+        note: "`exec`: run.sh'ın yerini deploy.sh alır (yeni süreç açılmaz); çıkış kodu doğrudan CodePipeline'a döner."
+
+  - id: deploy-sh
+    path: deploy/scripts/deploy.sh
+    kind: script
+    title: "deploy.sh — prod'u yeni sürüme taşır"
+    trigger: "run.sh (veya elle: IMAGE_TAG=<sha> ./deploy.sh)"
+    runsOn: "Prod EC2, /opt/assay"
+    blocks:
+      - lines: "4-8"
+        code: |
+          set -euo pipefail
+          deploy() {
+            : "${IMAGE_TAG:?IMAGE_TAG tanimli degil}"
+        note: "Gövde bir fonksiyonda: bash fonksiyonu çalıştırmadan önce tamamını okur. Aşağıdaki git checkout dosyanın kendisini değiştirse bile çalışan kopya bozulmaz. IMAGE_TAG yoksa hemen durur."
+      - lines: "22-26"
+        code: |
+          if [[ "${RE_DEPLOY:-}" != "$IMAGE_TAG" ]]; then
+            git fetch --quiet origin main-prod
+            git checkout --quiet --detach "$IMAGE_TAG"
+            RE_DEPLOY="$IMAGE_TAG" exec "$APP_DIR/deploy/scripts/deploy.sh"
+          fi
+        note: "Sunucudaki repoyu image'la aynı commit'e alır (compose ve kratos ayarları da o sürümden gelsin diye), sonra kendini yeni haliyle baştan başlatır. RE_DEPLOY ikinci turda döngüyü keser."
+      - lines: "28-55"
+        code: |
+          (
+            umask 077
+            aws secretsmanager get-secret-value --secret-id <prod env> ... \
+              | python3 -c '... print(f"{k}=<tek tırnaklı değer>") ...' > .env.tmp
+            mv .env.tmp .env
+            aws secretsmanager get-secret-value --secret-id <prod tls> ... > certs/origin.*
+          )
+        note: "Sırları Secrets Manager'dan alır. `umask 077`: dosya ilk andan yalnız sahibine okunur (600). Değerler tek tırnakla yazılır; içinde tek tırnak olan sır reddedilir. Önce .env.tmp, sonra mv: yarım dosya hiç oluşmaz."
+      - lines: "57-64"
+        code: |
+          aws ecr get-login-password | docker login ... "$ECR_REGISTRY"
+          export ECR_REGISTRY IMAGE_TAG
+          docker compose -f docker-compose.yml pull
+          docker compose -f docker-compose.yml up -d --remove-orphans
+          docker compose -f docker-compose.yml ps
+        note: "`-f docker-compose.yml`: override dosyası prod'da okunmaz (dev portları açılmaz, build yapılmaz). pull ile SHA tag'li image'lar çekilir, up -d ile değişen container'lar yeniden başlar."
+
+  - id: ignore-build
+    path: atlas/scripts/ignore-build.sh
+    kind: script
+    title: "ignore-build.sh — Vercel build yapsın mı?"
+    trigger: "Vercel, her push'ta build'den önce"
+    runsOn: "Vercel build makinesi (atlas/ içinde)"
+    blocks:
+      - lines: "8-10"
+        code: |
+          [ -n "$VERCEL_GIT_PREVIOUS_SHA" ] || exit 1
+          files=$(grep -h '^ *file:' content/flows/*.yaml content/screens.yaml | sed ...)
+        note: "Önceki başarılı deploy'un SHA'sı bilinmiyorsa (ilk deploy) build eder. Akışların gösterdiği repo dosyalarını içerikten toplar."
+      - lines: "12-13"
+        code: |
+          if git diff --quiet "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- . $files; then exit 0; else exit 1; fi
+        note: "Çıkış 0 = build'i atla, 1 = build et. atlas/ ya da anlatılan dosyalardan biri değiştiyse build eder; git hata verirse de güvenli tarafta kalıp build eder."
+
+  - id: dockerfile
+    path: portfolio-service/Dockerfile
+    kind: dockerfile
+    title: "Dockerfile (servisler) — iki aşamalı image"
+    trigger: "build-push.yml (prod) · compose up --build (dev)"
+    runsOn: "Build makinesi"
+    blocks:
+      - lines: "1-8"
+        code: |
+          FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+          WORKDIR /src
+          COPY portfolio-service.csproj ./
+          RUN dotnet restore
+          COPY . .
+          RUN dotnet publish -c Release -o /publish --no-restore
+        note: "Derleme aşaması: tam SDK'lı büyük image. Önce yalnız .csproj kopyalanıp restore edilir; kod değişip bağımlılık değişmediyse Docker bu katmanı cache'ten kullanır."
+      - lines: "10-14"
+        code: |
+          FROM mcr.microsoft.com/dotnet/aspnet:9.0
+          WORKDIR /app
+          COPY --from=build /publish .
+          CMD ["dotnet", "portfolio-service.dll"]
+        note: "Çalışma aşaması: yalnız runtime'lı küçük image'a derlenmiş çıktı kopyalanır, SDK prod'a girmez. Eksik: USER satırı yok → container root çalışır; HEALTHCHECK yok (hadolint durağı)."
