@@ -11,12 +11,14 @@ import NotFound from './pages/NotFound'
 import Glossary from './pages/Glossary'
 import Screens from './pages/Screens'
 import Data from './pages/Data'
+import Pipeline from './pages/Pipeline'
 
 const router = createBrowserRouter([
   { path: '/', element: <Home /> },
   { path: '/flow/:id', element: <Flow /> },
   { path: '/ekran-veri', element: <Screens /> },
   { path: '/veri', element: <Data /> },
+  { path: '/pipeline', element: <Pipeline /> },
   { path: '/terms', element: <Glossary /> },
   { path: '*', element: <NotFound /> },
 ])
