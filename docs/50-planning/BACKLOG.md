@@ -467,3 +467,25 @@ Kullanıcı oturumu bir istekte iki kez (portfolio-service ve market-service) Kr
 **Neden önemli.** Listede olup Yahoo'da hiç bulunmayan bir sembol kullanıcıya sürekli "şu an doğrulanamıyor, sonra dene" gösterir; doğrusu "desteklenmiyor"dur. Nadir, ama yanıltıcı.
 
 **Öneri.** İstemci iki durumu ayırsın (ör. sonuç türü: bulundu / bulunamadı / hata). Sonra `/instrument`: bulunamadı → 404, hata → 503.
+
+---
+
+## Enstrüman senkronu: 2026-11-13 Neon incelemesi bulguları
+
+*Eklendi: 2026-11-14 · Bağlam: 2026-11-13 21:51 UTC senkronunun Neon'da incelenmesi (54 satır değişti, hepsi US)*
+
+### 1. Test sembolü `PTEST` aktif listeye girdi
+
+**Sorun.** Twelve Data NASDAQ listesi `PTEST` sembolünü veriyor (adı da `PTEST`). Bu, Nasdaq'ın sistem testi için kullandığı sahte bir semboldür. `InstrumentSyncer.Filter` tür ve biçim filtresinden geçirdi; satır şimdi aktif.
+
+**Neden önemli.** Kullanıcı aramada gerçek olmayan bir sembol görebilir ve alım deneyebilir. Fiyatı yoktur.
+
+**Öneri.** `Filter`'a bilinen test sembolleri için küçük bir dışlama listesi ekle (ör. `PTEST`, Nasdaq'ın `ZVZZT`/`ZWZZT`/`ZXZZT` test sembolleri). Listedeki semboller bir sonraki senkronda pasife çekilir.
+
+### 2. BIST kaynağı boş dönerse senkron yine "tamamlandı" sayılıyor
+
+**Sorun.** BIST satırlarının son değişikliği 2026-10-23 (ilk yükleme); üç haftada hiç değişmedi. Neden doğrulanmadı: liste gerçekten sabit olabilir ya da BIST kaynağı her senkronda boş dönüyor olabilir. Kod bir kaynak boş dönünce yalnız Warning yazıp diğer kaynaklarla devam ediyor ve `LastCompletedAt`'i güncelliyor. Bu yüzden tek kaynağın sürekli başarısız olması sessiz kalır.
+
+**Neden önemli.** BIST'te yeni halka arzlar aramaya hiç girmez ve kimse fark etmez.
+
+**Öneri.** Önce doğrula: bir sonraki senkronun `Instrument sync completed ... sources:` log satırında `BIST stock: ok(655)` mı yoksa `failed` mı yazıyor bak. Başarısızsa nedeni bul. Kalıcı çözüm için kaynak başına "son başarılı senkron" zamanı tut; bir kaynak N gündür başarısızsa Error logla.
