@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { NavLink, Outlet, useLocation, useNavigationType } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigationType } from 'react-router-dom'
 import { LayoutDashboard, CandlestickChart, Wallet, Menu, Settings, Star, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { APP_NAME } from '@/lib/app'
@@ -117,12 +117,12 @@ export default function Layout() {
     <div className="min-h-dvh text-foreground md:flex md:h-dvh">
       {/* Masaüstü kenar çubuğu — mobilde alt çubuk + menü sayfası devralır */}
       <aside className="hidden w-[224px] shrink-0 flex-col gap-0.5 border-r border-border bg-card px-3 py-3 md:flex">
-        {/* Marka rozeti */}
-        <div className="mb-1 flex items-center gap-2.5 px-1.5 pb-3 pt-1">
+        {/* Marka rozeti — ana sayfaya gider ("/" oturuma göre Genel Bakış ya da landing) */}
+        <Link to="/" className="mb-1 flex items-center gap-2.5 rounded-lg px-1.5 pb-3 pt-1 hover:opacity-80">
           <AssayMark className="h-[26px] w-[26px] shrink-0" />
           {/* Yalnızca marka — kullanıcı bilgisi alttaki kartta */}
-          <div className="truncate text-body font-bold leading-tight tracking-tight text-foreground">{APP_NAME}</div>
-        </div>
+          <span className="truncate text-body font-bold leading-tight text-foreground">{APP_NAME}</span>
+        </Link>
 
         <nav className="mt-2 flex flex-col gap-0.5">
           <div className={sectionCls}>{t('nav.sectionGeneral')}</div>

@@ -258,6 +258,7 @@ Koyu tema `body` zemini: sağ üstte `#3B82F6` `%12`, sol altta `#10B981` `%8` r
 - `BL-27` İstek süren düğmede ikonun yerine `Loader2` + `animate-spin motion-reduce:animate-none` göster ve düğmeyi `disabled` yap.
 - `BL-28` Sayfa içinde kendi kaydırması olan sabit panel/drawer `.scroll-quiet` alır: çubuk yalnız imleç üstündeyken görünür. Genel kaydırma çubuğu `index.css`'te ince ve `--input` renginde.
 - `BL-29` Hesap, tema ve dil ayarları yalnız Ayarlar sayfasında ([`Account`](../../web/src/pages/Account.jsx), `/account`). Kenar çubuğu ve mobil Menü yalnız "Ayarlar" satırını gösterir; e-posta orada yazılmaz.
+- `BL-30` Kesilen (`truncate`) metnin tamamını göstermek için [`ui/tooltip`](../../web/src/components/ui/tooltip.jsx) kullan. Bunun için `title` özniteliği kullanma. Görünüm: `bg-popover`, `border-border`, `shadow-float`, `rounded-lg`, `text-ui`; 300ms gecikme. İpucuna eylem veya bağlantı koyma.
 
 ### Yardımcı sınıflar — [`index.css`](../../web/src/index.css)
 
@@ -315,3 +316,4 @@ Kod tek bir değere bağlı değil. Karar verilince kurala dönüşür.
 - `font-mono` ve `font-display` Plus Jakarta Sans'a bağlı. Ad yanıltıcı; [`authStyles.js`](../../web/src/lib/authStyles.js) alanda `font-mono` kullanıyor.
 - `rounded-lg` (12px) ile `rounded-xl` (12px) aynı değeri veriyor.
 - [`index.css`](../../web/src/index.css) `--radius` yorumu "8 — buton, alan" diyor; butonlar 10px.
+- İkon düğmeleri etiketi `title` ile gösteriyor (HoldingsList, AssetDrawer, ThemeSwitch, WatchButton, WatchlistPanel). `ui/tooltip`'e geçip geçmeyecekleri karar verilmedi.

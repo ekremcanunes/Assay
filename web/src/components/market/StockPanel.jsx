@@ -7,12 +7,12 @@ import { useSymbolSearch } from '@/hooks/queries'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import AssetDrawer from '@/components/AssetDrawer'
 import { AreaSpark } from '@/components/AreaSpark'
-import { RangeBar } from '@/components/Sparkline'
+import { Tooltip } from '@/components/ui/tooltip'
 import { catOf } from '@/lib/assetColors'
 import { pulse as computePulse } from '@/lib/marketPulse'
 import { cn } from '@/lib/utils'
 import { Search, X } from 'lucide-react'
-import { num, pct, pctCls, compact, bandPos } from './marketFormat'
+import { num, pct, pctCls, compact } from './marketFormat'
 
 const SORTS = [
   { key: 'gainers', label: 'market.sortGainers', fn: (a, b) => (b.changePercent ?? -Infinity) - (a.changePercent ?? -Infinity) },
@@ -232,14 +232,14 @@ export default function StockPanel({ stocks, bist30, bist100, selected, onSelect
                 <th className="px-3 py-2.5 font-semibold">{t('market.company')}</th>
                 <th className="px-3 py-2.5 text-right font-semibold">{t('assets.price')}</th>
                 <th className="px-3 py-2.5 text-right font-semibold">{t('market.change')}</th>
-                <th className="px-3 py-2.5 font-semibold">{t('market.dayRange')}</th>
+                <th className="whitespace-nowrap px-2 py-2.5 font-semibold">{t('market.dayRange')}</th>
                 <th className="px-3 py-2.5 text-right font-semibold">{t('market.volume')}</th>
-                <th className="px-3 py-2.5 font-semibold">{t('market.band52')}</th>
+                <th className="whitespace-nowrap px-2 py-2.5 text-right font-semibold">{t('market.low52')}</th>
+                <th className="whitespace-nowrap py-2.5 pl-2 pr-3 text-right font-semibold">{t('market.high52')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {sorted.map((s) => {
-                const band = bandPos(s)
                 const sel = isSel(s)
                 return (
                   <tr
@@ -257,20 +257,17 @@ export default function StockPanel({ stocks, bist30, bist100, selected, onSelect
                         {s.symbol}
                       </span>
                     </td>
-                    <td className="max-w-[170px] truncate px-3 py-3 text-foreground">{s.name}</td>
+                    <Tooltip content={s.name}>
+                      <td className="max-w-[140px] truncate px-3 py-3 text-foreground">{s.name}</td>
+                    </Tooltip>
                     <td className="tabular px-3 py-3 text-right font-medium text-foreground">{num(s.price)}</td>
                     <td className={`tabular px-3 py-3 text-right font-semibold ${pctCls(s.changePercent)}`}>{pct(s.changePercent)}</td>
-                    <td className="px-3 py-3">
-                      <RangeBar low={s.dayLow} high={s.dayHigh} value={s.price} className="w-20" />
+                    <td className="tabular whitespace-nowrap px-2 py-3 text-muted-foreground">
+                      {s.dayLow != null && s.dayHigh != null ? `${num(s.dayLow)} – ${num(s.dayHigh)}` : '—'}
                     </td>
                     <td className="tabular px-3 py-3 text-right text-muted-foreground">{compact(s.volume)}</td>
-                    <td className="px-3 py-3">
-                      {band != null && (
-                        <span className="block h-1.5 w-16 overflow-hidden rounded-full bg-secondary">
-                          <span className={`block h-full rounded-full ${catOf('Gold').dot}`} style={{ width: `${band}%` }} />
-                        </span>
-                      )}
-                    </td>
+                    <td className="tabular px-2 py-3 text-right text-muted-foreground">{s.week52Low != null ? num(s.week52Low) : '—'}</td>
+                    <td className="tabular py-3 pl-2 pr-3 text-right text-muted-foreground">{s.week52High != null ? num(s.week52High) : '—'}</td>
                   </tr>
                 )
               })}
