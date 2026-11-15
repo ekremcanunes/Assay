@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 // Her sayfanın iskeleti: tuvale yapışık başlık çubuğu + padding'li gövde.
 // Layout main'e padding vermez; onu buradan yönetiyoruz ki başlık kenara yapışabilsin.
 // back: { label, onClick } — başlığın solunda geri oku
-export function Page({ eyebrow, title, meta, actions, tabs, band, back, children }) {
+export function Page({ title, meta, actions, tabs, band, back, children }) {
   return (
     <>
       <header className="sticky top-0 z-20 border-b border-border bg-background/90 px-4 pt-4 backdrop-blur md:px-8 md:pt-5">
@@ -20,10 +20,7 @@ export function Page({ eyebrow, title, meta, actions, tabs, band, back, children
             </button>
           )}
           <div className="min-w-0 flex-1">
-            {eyebrow && (
-              <div className="label text-muted-foreground">{eyebrow}</div>
-            )}
-            <h1 className="mt-0.5 truncate font-display text-head font-bold text-foreground md:text-title">{title}</h1>
+            <h1 className="truncate font-display text-head font-bold text-foreground md:text-title">{title}</h1>
             {meta && <div className="mt-1.5 text-ui text-muted-foreground">{meta}</div>}
           </div>
           {actions && <div className="ml-auto flex shrink-0 items-center gap-2">{actions}</div>}

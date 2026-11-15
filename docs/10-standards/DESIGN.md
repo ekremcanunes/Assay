@@ -38,6 +38,8 @@ Bir değişikliği denetlerken tüm dosyayı okuma. Diff'teki işarete göre yal
 | sheet | Mobilde alttan açılan katman. |
 | açılır katman | Modal, sheet, açılır menü, takvim. |
 | bant | Sayfa genişliğinde dolu renkli blok. |
+| ışıma | Bulanıklığı olan renkli `box-shadow` veya `text-shadow`. Ör. `0 0 20px -4px` kobalt. |
+| meta satırı | [`Page`](../../web/src/components/Page.jsx)'in `meta` alanı: başlığın altındaki satır. |
 
 ---
 
@@ -48,6 +50,7 @@ Bir değişikliği denetlerken tüm dosyayı okuma. Diff'teki işarete göre yal
 - `IL-03` Katmanları zemin tonu ve hairline ile ayır. Gölgeyi yalnız §6 token'larıyla ekle.
 - `IL-04` Kâr/zarar, kategori, uyarı ve marka renklerini birbirinin yerine kullanma.
 - `IL-05` Zararı alarm renkleriyle gösterme. Neon yeşil ve neon kırmızı kullanma.
+- `IL-06` Zemine dekoratif ızgara veya çizgi deseni koyma. Yüzeyi düz tut. İstisna: giriş görseli ([`AuthVisualScene`](../../web/src/components/AuthVisualScene.jsx), `RN-11`).
 
 ---
 
@@ -77,16 +80,17 @@ Bir değişikliği denetlerken tüm dosyayı okuma. Diff'teki işarete göre yal
 | Token | Açık | Koyu | Rol |
 |-------|------|------|-----|
 | `primary`, `ring` | `#1D4ED8` | `#3B82F6` | tek aksan (§7) |
-| `primary-foreground` | `#FFFFFF` | `#FFFFFF` | aksan üstündeki metin |
+| `primary-foreground` | `#FFFFFF` | `#090D16` | aksan üstündeki metin (koyuda beyaz `#3B82F6` üstünde 3.6:1 kalır, WCAG AA 4.5:1 ister) |
 
 ### Semantik
 
 | Token | Açık | Koyu | Rol |
 |-------|------|------|-----|
-| `up` | `#059669` | `#10B981` | kâr |
+| `up` | `#047857` | `#10B981` | kâr (açıkta `#059669` beyaz zeminde 3.9:1 kalır, WCAG AA 4.5:1 ister) |
 | `down` | `#C2410C` | `#F43F5E` | zarar |
 | `warn` | `#A16207` | `#FBBF24` | yumuşak uyarı, açıklama |
 | `destructive` | `#C53030` | `#F43F5E` | silme, sert uyarı |
+| `destructive-foreground` | `#FFFFFF` | `#090D16` | dolu silme butonu metni (koyuda beyaz `#F43F5E` üstünde 3.7:1 kalır) |
 
 - `RN-05` Kâr/zarar metninde, rozetinde, çubuğunda ve veri grafiğinde yalnız `up` / `down` kullan.
 - `RN-06` Delta rozetinde `.chip-up`, `.chip-down`, `.chip-neutral` kullan. `bg-up/10 text-up` yazma.
@@ -94,12 +98,13 @@ Bir değişikliği denetlerken tüm dosyayı okuma. Diff'teki işarete göre yal
 
 ### Kategori
 
-Erişim: [`lib/assetColors.js`](../../web/src/lib/assetColors.js) → `catOf(type)` → `text`, `tint`, `dot`, `color`.
+Erişim: [`lib/assetColors.js`](../../web/src/lib/assetColors.js) → `catOf(type)` → `text` (monogram harfi ve ikon), `tint`, `dot`, `color` (grafik). Altın'da `text` `cat-gold-ink` kullanır; dolgu, nokta ve grafik `cat-gold` kullanır.
 
 | Token | Açık | Koyu | Kategori |
 |-------|------|------|----------|
 | `cat-stock` | `#1D4ED8` | `#60A5FA` | Hisse |
 | `cat-gold` | `#B58A3A` | `#E3B341` | Altın |
+| `cat-gold-ink` | `#765A24` | `#E3B341` | Altın monogram harfi ve ikonu (`catOf().text`). Neden: açıkta `cat-gold` kendi tonunda 2.6:1 kalır. |
 | `cat-fx` | `#565E74` | `#94A3B8` | Döviz |
 | `cat-cash` | `#7C5CC4` | `#A78BFA` | Nakit |
 | `cat-index` | `#AD5233` | `#FB923C` | Endeks |
@@ -119,14 +124,14 @@ Erişim: [`lib/assetColors.js`](../../web/src/lib/assetColors.js) → `catOf(typ
 ## §3 Tema
 
 - `TM-01` Tema tercihi üç değer alır: `light`, `dark`, `system`. Varsayılan `system`.
-- `TM-02` [`ThemeContext`](../../web/src/contexts/ThemeContext.jsx) `<html>`'e `.dark` sınıfını koyar. Tercihi `localStorage.theme`'de tutar.
+- `TM-02` [`ThemeProvider`](../../web/src/contexts/ThemeProvider.jsx) `<html>`'e `.dark` sınıfını koyar. Tercihi `localStorage.theme`'de tutar.
 - `TM-03` Tema seçici olarak yalnız [`ThemeSwitch`](../../web/src/components/ThemeSwitch.jsx) kullan.
 - `TM-04` Renk token'dan geliyorsa `dark:` varyantı yazma.
 - `TM-05` Token'ı JS'te okuyan bileşende `useTheme().dark`'ı bağımlılık yap. Neden: tema değişince yeniden çizilir.
 - `TM-06` Sayfa köklerinde (`Layout`, auth, landing) zemin rengi verme. Neden: koyu temadaki zemin ışığını `body` verir.
 - `TM-07` Açılır katmanda `bg-popover` kullan. `bg-card` kullanma. Neden: koyu temada `card` yarı saydamdır.
 
-Koyu tema `body` zemini: sağ üstte `#3B82F6` `%12`, sol altta `#10B981` `%8` radyal ışık. Dolu kobalt buton koyu temada `0 0 20px -4px` kobalt `%45` ışıma alır. İkisi de `index.css`'tedir; bileşen yazmaz.
+Koyu tema `body` zemini: sağ üstte `#3B82F6` `%12`, sol altta `#10B981` `%8` radyal ışık. `index.css`'tedir; bileşen yazmaz.
 
 ---
 
@@ -146,7 +151,7 @@ Koyu tema `body` zemini: sağ üstte `#3B82F6` `%12`, sol altta `#10B981` `%8` r
 
 | Sınıf | px | Ağırlık | Kullanım |
 |-------|----|---------|----------|
-| `text-micro` | 11 | 400, 500, 600, 700 | çip, rozet, mikro metin |
+| `text-micro` | 12 | 400, 500, 600, 700 | çip, rozet, mikro metin |
 | `text-ui` | 13 | 400, 500, 600, 700 | varsayılan: UI, tablo hücresi, buton |
 | `text-body` | 15 | 400, 500, 600, 700 | gövde, form alanı, liste satırı adı |
 | `text-figure` | 18 | 600, 700 | kart değeri, modal başlığı |
@@ -155,7 +160,7 @@ Koyu tema `body` zemini: sağ üstte `#3B82F6` `%12`, sol altta `#10B981` `%8` r
 | `text-display` | 44 | 700 | yalnız landing bölüm başlığı |
 | `text-hero` | 60 | 700 | yalnız landing h1 |
 
-- `TP-07` Eyebrow, KPI etiketi, form etiketi ve tablo başlığında `.label` kullan. `text-[11px] uppercase tracking-*` yazma.
+- `TP-07` KPI etiketi, form etiketi ve tablo başlığında `.label` kullan. `text-[11px] uppercase tracking-*` yazma.
 - `TP-08` Sembolün altındaki şirket adını `text-foreground` yaz. Gri yazma.
 - `TP-09` Ölçek dışı yalnız iki istisna var:
 
@@ -163,6 +168,8 @@ Koyu tema `body` zemini: sağ üstte `#3B82F6` `%12`, sol altta `#10B981` `%8` r
 |-----|-------|-------|
 | Mobil auth alanı ([`authStyles`](../../web/src/lib/authStyles.js)) | `text-[16px] md:text-body` | iOS Safari 16px altı alanda sayfayı yakınlaştırır. |
 | Fiyatlı takvim hücresi ([`PriceCalendar`](../../web/src/components/PriceCalendar.jsx)) | 9.5px | 7 sütunlu ızgaraya sığar. |
+
+- `TP-10` Başlığın üstüne ayrı satırda küçük etiket (eyebrow) koyma. Bölüm başlıklarını numaralama ("01 — …"). Bağlam bilgisi gerekiyorsa başlığın altına, meta satırına yaz. Neden: başlık bölümü kendi başına tanıtır.
 
 ---
 
@@ -193,12 +200,13 @@ Koyu tema `body` zemini: sağ üstte `#3B82F6` `%12`, sol altta `#10B981` `%8` r
 
 - `GL-01` Yalnız yukarıdaki üç sınıfı kullan. `shadow`, `shadow-lg` yazma.
 - `GL-02` Koyu temada ayrımı `border` ve yarı saydam yüzeyle kur. Neden: koyu temada gölge görünmez.
+- `GL-03` Işıma kullanma. Dolu kobalt butona ışıma ekleme. 1px `inset` renkli halka ışıma sayılmaz (ör. `.dark .chip-up`).
 
 ---
 
 ## §7 Aksan (kobalt)
 
-- `AK-01` `primary`'yi yalnız şuralarda kullan: birincil buton dolgusu, aktif sekme/segment/nav, odak kenarı, seçili hap, metin bağlantısı, landing bölüm etiketi, logo taban çizgisi.
+- `AK-01` `primary`'yi yalnız şuralarda kullan: birincil buton dolgusu, aktif sekme/segment/nav, odak kenarı, seçili hap, metin bağlantısı, logo taban çizgisi.
 - `AK-02` Seçili hapta `border-primary/30 bg-primary/10 text-primary` kullan.
 - `AK-03` Sayfada en fazla bir dolu aksan bandı kullan.
 - `AK-04` `primary`'yi uyarı, hata, kâr/zarar veya kategori için kullanma.
@@ -251,7 +259,7 @@ Koyu tema `body` zemini: sağ üstte `#3B82F6` `%12`, sol altta `#10B981` `%8` r
 - `BL-19` Modal için [`ui/modal`](../../web/src/components/ui/modal.jsx) kullan. `window.confirm` kullanma.
 - `BL-20` Liste içinden hızlı bakış için [`AssetDrawer`](../../web/src/components/AssetDrawer.jsx) kullan. Varlığın tam sayfası [`AssetDetail`](../../web/src/pages/AssetDetail.jsx) (`/market/:market/:symbol`); drawer ve panel ona bağlantı verir.
 - `BL-21` Tam ekran yükleme için [`PageLoader`](../../web/src/components/PageLoader.jsx) kullan. Metni yalnız `sr-only` yaz.
-- `BL-22` Kenar çubuğunda aktif öğe: `.nav-active text-primary`.
+- `BL-22` Kenar çubuğunda aktif öğe: `.nav-active text-primary`. Koyu temada `.nav-active` yazıyı `foreground`, ikonu `primary` yapar (`index.css`). Neden: kobalt yazı `secondary` zeminde 4.3:1 kalır.
 - `BL-23` Logoyu [`AssayMark`](../../web/src/components/AssayMark.jsx) ile ekle. `<img>` kullanma. Neden: koyu temada görünmez olur.
 - `BL-25` Bir eylemin sonucunu bildirmek için [`toast`](../../web/src/lib/toast.js) kullan: `toast.success` / `toast.error` / `toast.info`. Ayrı bildirim bileşeni yazma; `alert()` kullanma. Görünüm [`Toaster`](../../web/src/components/Toaster.jsx)'da: md+ sağ üst, mobilde üstte tam genişlik; `bg-popover`, `shadow-float`, `rounded-xl`; başarı ikonu `text-primary`, hata `text-destructive`, bilgi `text-muted-foreground`. 4 sn sonra kapanır; imleç üstündeyken süre durur. md+ sağdan kayarak, mobilde yukarıdan girer; solda 3px tür şeridi, altta kalan süre çubuğu. Kâr/zarar renkleri kullanılmaz (`IL-04`).
 - `BL-26` Hata mesajını `apiErrorMessage(err, t)` ile üret. Form içi hata alanda kalır; formsuz eylemin (ör. izleme yıldızı) hatası `toast.error` ile gösterilir.
@@ -264,10 +272,9 @@ Koyu tema `body` zemini: sağ üstte `#3B82F6` `%12`, sol altta `#10B981` `%8` r
 
 | Sınıf | İş |
 |-------|-----|
-| `.label` | 11px, 600, büyük harf, `0.06em` tracking |
+| `.label` | 11px (sabit, `text-micro`'ya bağlı değil), 600, büyük harf, `0.06em` tracking |
 | `.tabular` | `tabular-nums` |
 | `.nav-active` | aktif nav zemini |
-| `.paper` | 34px hairline ızgara + radyal maske (landing hero, auth zemini) |
 | `.press` | basınca `scale(.97)` |
 | `.modal-in`, `.rise`, `.step-in` | giriş animasyonları |
 

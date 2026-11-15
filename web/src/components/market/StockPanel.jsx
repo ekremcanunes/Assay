@@ -162,7 +162,7 @@ export default function StockPanel({ stocks, bist30, bist100, selected, onSelect
       {/* BIST 30 */}
       <section className="overflow-hidden rounded-xl border border-border bg-card shadow-card">
         <div className="flex flex-wrap items-center gap-3 px-4 pb-3 pt-4">
-          <h3 className="font-display text-body font-semibold text-foreground">BIST 30</h3>
+          <h2 className="font-display text-body font-semibold text-foreground">BIST 30</h2>
           <span className="tabular chip-neutral rounded-sm px-1.5 py-0.5 text-micro font-medium">{sorted.length} / {stocks.length}</span>
           <div className="flex w-full flex-wrap items-center gap-2 md:ml-auto md:w-auto">
             {/* Sıralama — segment */}
@@ -246,9 +246,10 @@ export default function StockPanel({ stocks, bist30, bist100, selected, onSelect
                     key={s.symbol}
                     onClick={() => open(s)}
                     aria-selected={sel || undefined}
-                    className={cn('group cursor-pointer', sel ? 'bg-primary/5 shadow-[inset_3px_0_0_hsl(var(--primary))]' : 'hover:bg-primary/5')}
+                    className={cn('group cursor-pointer', sel ? 'bg-primary/5' : 'hover:bg-primary/5')}
                   >
-                    <td className="py-1.5 pl-2">
+                    {/* Seçili satırın soldaki 3px kobalt çizgisi: gölge değil, hücre kenarında bir şerit (GL-01) */}
+                    <td className={cn('py-1.5 pl-2', sel && 'relative before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-primary')}>
                       <WatchStar assetType="Stock" market="BIST" symbol={s.symbol} className="h-8 w-8" />
                     </td>
                     <td className="px-3 py-3">

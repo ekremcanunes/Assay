@@ -79,7 +79,7 @@ export default function AssetDrawer({ holding, onClose, onSell }) {
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <span className="truncate font-display text-head font-bold text-foreground">{holding.symbol}</span>
-          <span className="label shrink-0 rounded-md bg-primary/10 px-2 py-0.5 text-primary">{holding.exchange || holding.assetType}</span>
+          <span className="label chip-neutral shrink-0 rounded-sm px-2 py-0.5">{holding.exchange || holding.assetType}</span>
         </div>
         {holding.name && holding.name !== holding.symbol && <div className="mt-0.5 truncate text-body text-foreground">{holding.name}</div>}
       </div>

@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { APP_NAME } from '../lib/app'
 import { useTheme } from '../contexts/ThemeContext'
 
-const CELL = 34 // .paper ızgarasıyla aynı
+const CELL = 34 // ızgara hücresi (px)
 const STEP = 17
 const RADIUS = 130
 const PULL = 14
@@ -93,7 +93,7 @@ export default function AuthVisualScene() {
       ctx.strokeStyle = color
       ctx.lineWidth = 1
       ctx.beginPath()
-      // Çizgileri ebeveyndeki .paper ızgarasının orijinine hizala.
+      // Çizgileri ebeveyn öğenin sol üst köşesine hizala (ox/oy: sahnenin ebeveyne göre konumu).
       for (let x = (CELL - (ox % CELL)) % CELL + 0.5; x <= w; x += CELL) {
         for (let y = 0; y < h + STEP; y += STEP) {
           const [px, py] = bend(x, Math.min(y, h))

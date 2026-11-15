@@ -45,6 +45,7 @@
   /* Kategori renkleri — yalnızca AYIRT ETMEK için. Asla kâr/zarar anlamı taşımaz. */
   --color-cat-stock: hsl(var(--cat-stock));
   --color-cat-gold: hsl(var(--cat-gold));
+  --color-cat-gold-ink: hsl(var(--cat-gold-ink));
   --color-cat-fx: hsl(var(--cat-fx));
   --color-cat-cash: hsl(var(--cat-cash));
   --color-cat-index: hsl(var(--cat-index));
@@ -75,7 +76,7 @@
     Büyük basamaklarda negatif tracking zorunlu: 700 ağırlık tracking'siz
     fazla geniş okunur, sıkıştırma sisteme mühendislik hissini veren şey.
   */
-  --text-micro: 0.6875rem;                /* 11 — etiket / mikro metin */
+  --text-micro: 0.75rem;                  /* 12 — mikro metin (11px gövde metninde okunmuyordu) */
   --text-micro--line-height: 1.35;
   --text-ui: 0.8125rem;                   /* 13 — varsayılan UI / tablo hücresi */
   --text-ui--line-height: 1.45;
@@ -127,14 +128,15 @@
   --card-alpha: 1;             /* koyuda kart yarı saydam (zemin ışığı görünsün) */
 
   /* Kâr/zarar — iki temada aynı aile (zümrüt / kırmızı); metin, rozet ve mum grafikleri bunu kullanır */
-  --up: 161 94% 30%;           /* kâr #059669 */
+  --up: 163 94% 24%;           /* kâr #047857 — #059669 açık zeminde 3.4–3.9:1 kalıyordu, bu ≥4.8:1 */
   --down: 17 88% 40%;          /* zarar #C2410C kiremit — düşüşü söyler, alarm vermez (yeşil–turuncu renk körü dostu) */
 
   --warn: 35 92% 33%;          /* #A16207 uyarı / açıklama — kiremit zarardan ayrışsın diye amber */
 
   /* Kategori paleti — yalnızca ayırt eder, kâr/zarar anlamı taşımaz */
   --cat-stock: 224 76% 48%;    /* #1D4ED8 hisse */
-  --cat-gold: 39 51% 47%;      /* #B58A3A altın */
+  --cat-gold: 39 51% 47%;      /* #B58A3A altın — dolgu, nokta, ısı */
+  --cat-gold-ink: 40 53% 30%;  /* #765A24 monogram harfi — #B58A3A kendi tonunda 2.6:1 kalıyordu, bu 4.8:1 */
   --cat-fx: 224 15% 40%;       /* #565E74 döviz */
   --cat-cash: 258 47% 56%;     /* #7C5CC4 nakit */
   --cat-index: 15 54% 44%;     /* #AD5233 endeks */
@@ -158,7 +160,7 @@
   --popover: 221 44% 15%;      /* #162138 açılır katman (tam opak) */
   --popover-foreground: 214 32% 91%;
   --primary: 217 91% 60%;      /* #3B82F6 elektrik kobalt */
-  --primary-foreground: 0 0% 100%;
+  --primary-foreground: 222 42% 6%; /* #090D16 — beyaz bu kobaltın üstünde 3.6:1 kalıyordu, bu 5.3:1 */
   --secondary: 223 35% 16%;    /* #1A2236 oluk / hover */
   --secondary-foreground: 214 32% 91%;
   --muted: 223 35% 16%;
@@ -166,7 +168,7 @@
   --accent: 223 35% 16%;
   --accent-foreground: 214 32% 91%;
   --destructive: 350 89% 60%;  /* #F43F5E */
-  --destructive-foreground: 0 0% 100%;
+  --destructive-foreground: 222 42% 6%; /* #090D16 — beyaz bu mercanın üstünde 3.7:1 kalıyordu, bu 5.3:1 */
   --border: 222 27% 19%;       /* #232B3D ≈ beyaz %8 */
   --input: 222 27% 25%;        /* #2E3850 ≈ beyaz %14 */
   --ring: 217 91% 60%;
@@ -178,6 +180,7 @@
 
   --cat-stock: 213 94% 68%;    /* #60A5FA */
   --cat-gold: 42 74% 57%;      /* #E3B341 */
+  --cat-gold-ink: 42 74% 57%;  /* koyuda altın zaten açık; monogram harfi aynı renk */
   --cat-fx: 215 20% 65%;       /* #94A3B8 */
   --cat-cash: 255 92% 76%;     /* #A78BFA */
   --cat-index: 27 96% 61%;     /* #FB923C */
@@ -223,16 +226,14 @@ body {
 .dark .chip-down { background-color: hsl(var(--down) / 0.12); box-shadow: inset 0 0 0 1px hsl(var(--down) / 0.25); }
 .dark .chip-neutral { background-color: rgb(255 255 255 / 0.05); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08); }
 
-/* Koyu temada dolu kobalt buton hafif ışıma yayar */
-.dark :is(button, a).bg-primary { box-shadow: 0 0 20px -4px rgb(59 130 246 / 0.45); }
-
 /*
-  Mikro etiket: eyebrow, tablo başlığı, kart etiketi, bölüm ayracı.
+  Mikro etiket: tablo başlığı, KPI ve form etiketi, bölüm ayracı.
   Tek aile kuralı gereği mono değil 600 ağırlık; ayrımı tracking yapıyor.
+  11px sabit: büyük harf + tracking 12px'lik text-micro'dan geniş durur, o yüzden token'a bağlı değil.
 */
 .label {
   font-family: var(--font-sans);
-  font-size: var(--text-micro);
+  font-size: 0.6875rem;
   font-weight: 600;
   line-height: 1.35;
   letter-spacing: 0.06em;
@@ -251,22 +252,9 @@ body {
 
 /* Aktif nav satırı: yumuşak dolgu, aksan rengi metin/ikonda */
 .nav-active { background: hsl(var(--secondary)); }
-
-/*
-  Defter kağıdı: 34px cetvel ızgarası + radyal maske.
-  Landing hero'su ve auth zemini bunu kullanır.
-*/
-.paper { position: relative; overflow: hidden; }
-.paper::before {
-  content: ""; position: absolute; inset: 0; pointer-events: none;
-  background-image:
-    linear-gradient(hsl(var(--border)) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px);
-  background-size: 34px 34px;
-  -webkit-mask-image: radial-gradient(120% 85% at 22% 8%, #000 8%, transparent 72%);
-          mask-image: radial-gradient(120% 85% at 22% 8%, #000 8%, transparent 72%);
-}
-.paper > * { position: relative; z-index: 1; }
+/* Koyu temada kobalt yazı bu zeminde 4.3:1 kalıyordu: yazı foreground, ikon kobalt (aktiflik ikondan da okunur) */
+.dark .nav-active { color: hsl(var(--foreground)); }
+.dark .nav-active svg { color: hsl(var(--primary)); }
 
 /* Mimari diyagramındaki akan hat — istek yolunu gösterir */
 @keyframes flow { to { stroke-dashoffset: -24; } }

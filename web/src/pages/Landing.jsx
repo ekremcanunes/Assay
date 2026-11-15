@@ -29,19 +29,15 @@ function Mark({ className = 'h-6 w-6' }) {
   return <AssayMark className={className} />
 }
 
-function Eyebrow({ children }) {
-  return <span className="label block text-primary">{children}</span>
-}
-
 const CAPS = [
   { t: 'Varlık takibi', tags: ['TRY / USD', 'ağırlıklı ortalama'],
     d: 'Adet, alış fiyatı, para birimi ve tarih girilir. Aynı varlıktan tekrar alınca ortalama maliyet ağırlıklı güncellenir. Satışta gerçekleşen kâr/zarar hesaplanıp kaydedilir.' },
   { t: 'Piyasa sayfaları', tags: ['BIST 30', 'sarrafiye'],
     d: 'BIST 30 için fiyat, günlük değişim, hacim ve 52 hafta bandı. Altın ve döviz ayrı sayfada. Varlık detayında fiyat geçmişi grafiği.' },
   { t: 'İşlem defteri', tags: ['append-only', 'EF Core'],
-    d: 'Her alış ve satış arka planda tek bir transaction tablosuna yazılır. Varlık silinse bile işlem geçmişi kalır — veri modelinin tamamı bu tabloya dayanıyor.' },
+    d: 'Her alış ve satış arka planda tek bir transaction tablosuna yazılır. Varlık silinse bile işlem geçmişi kalır. Veri modelinin tamamı bu tabloya dayanıyor.' },
   { t: 'Sembol arama', tags: ['Twelve Data', 'client-side'],
-    d: 'BIST ve ABD borsalarındaki semboller isim ya da kodla aranır. BIST 30 içi arama client-side filtredir — 30 satır için sunucuya gidilmez.' },
+    d: 'BIST ve ABD borsalarındaki semboller isim ya da kodla aranır. BIST 30 içi arama client-side filtredir: 30 satır için sunucuya gidilmez.' },
 ]
 
 function CapCard({ c }) {
@@ -68,10 +64,10 @@ const FLOW_STEPS = [
 ]
 
 const TRADEOFFS = [
-  ['Piyasa verisi Postgres\'te tutulmuyor', 'Veritabanı yalnızca portföy ve işlemler için. Fiyatlar Redis\'te yaşar ve bayatlar — kalıcı fiyat tarihçesi yok.'],
+  ['Piyasa verisi Postgres\'te tutulmuyor', 'Veritabanı yalnızca portföy ve işlemler için. Fiyatlar Redis\'te yaşar ve bayatlar. Kalıcı fiyat tarihçesi yok.'],
   ['BIST 30 araması sunucuya gitmiyor', '30 satır için ağ turu ya da DB indeksi kurmak abartı olurdu. Filtre client-side; boş dönerse tüm BIST evreni sorgulanıyor.'],
-  ['Elde olmayan veri uydurulmuyor', 'Sektör bilgisi, F/K, piyasa değeri, emir defteri, haber akışı — hiçbir kaynağımız vermiyor. Ekranda mock veriyle yer doldurulmuyor.'],
-  ['TradingView widget\'ı kaldırıldı', 'Ücretsiz widget BIST sembollerinde varsayılana düşüyordu — lisans kısıtı, kod hatası değil. Yerine veriyi kendimiz beslediğimiz Lightweight Charts kondu.'],
+  ['Elde olmayan veri uydurulmuyor', 'Sektör bilgisi, F/K, piyasa değeri, emir defteri ve haber akışını hiçbir kaynağımız vermiyor. Ekranda mock veriyle yer doldurulmuyor.'],
+  ['TradingView widget\'ı kaldırıldı', 'Ücretsiz widget BIST sembollerinde varsayılana düşüyordu. Sebep lisans kısıtıydı, kod hatası değil. Yerine veriyi kendimiz beslediğimiz Lightweight Charts kondu.'],
 ]
 
 /* ---------- Entegrasyon bölümü: solda dikey liste, sağda içerik ---------- */
@@ -109,11 +105,11 @@ function TechDetail({ tech }) {
       </header>
 
       <section className="border-b border-border py-6">
-        <span className="label mb-4 block text-muted-foreground">Neden bu</span>
+        <h4 className="mb-4 text-body font-semibold text-foreground">Neden bu</h4>
         <div className="grid gap-5 md:grid-cols-3">
           {why.map((w) => (
             <div key={w.t} className="border-t border-border pt-3">
-              <h4 className="mb-1.5 text-ui font-semibold text-foreground">{w.t}</h4>
+              <h5 className="mb-1.5 text-ui font-semibold text-foreground">{w.t}</h5>
               <p className="text-ui text-muted-foreground">{w.d}</p>
             </div>
           ))}
@@ -121,7 +117,7 @@ function TechDetail({ tech }) {
       </section>
 
       <section className="py-6">
-        <span className="label mb-5 block text-muted-foreground">Nasıl entegre edildi</span>
+        <h4 className="mb-5 text-body font-semibold text-foreground">Nasıl entegre edildi</h4>
         <div className="grid grid-cols-1 gap-7">
           {blocks.map((b) => <DetailBlock key={b.title} b={b} />)}
         </div>
@@ -191,7 +187,7 @@ export default function Landing() {
       </div>
 
       {/* ---------- HERO ---------- */}
-      <header className="paper border-b border-border">
+      <header className="border-b border-border">
         <div className="mx-auto max-w-[1280px] px-5 py-10 md:px-6 md:py-24">
           <div className="grid gap-10 lg:grid-cols-[7fr_5fr] lg:items-start lg:gap-12">
             <div>
@@ -232,8 +228,8 @@ export default function Landing() {
       {/* ---------- ÜZERİNDE ÇALIŞTIĞI YIĞIN (logolar + detay tablosu birlikte) ---------- */}
       <section className="hidden border-b border-border py-12 md:block md:py-20">
         <div className="mx-auto max-w-[1280px] px-5 md:px-6">
-          <span className="label mb-2 block text-primary">Üzerinde çalıştığı yığın</span>
-          <p className="mb-8 max-w-[62ch] text-body text-muted-foreground">
+          <h2 className="text-head font-bold text-foreground md:text-display">Üzerinde çalıştığı yığın</h2>
+          <p className="mb-8 mt-4 max-w-[62ch] text-body text-muted-foreground">
             Her seçimin bir gerekçesi var; &quot;popülerdi&quot; gerekçe sayılmadı. Bir işarete tıklayınca
             o teknolojinin entegrasyonuna inersin.
           </p>
@@ -279,8 +275,7 @@ export default function Landing() {
       <section id="ne" className="bg-background py-10 md:py-24 dark:bg-transparent">
         <div className="mx-auto max-w-[1280px] px-5 md:px-6">
           <div className="mb-8 max-w-[62ch]">
-            <Eyebrow>01 — Kapsam</Eyebrow>
-            <h2 className="mt-2 text-head font-bold text-foreground md:text-display">Defterin tuttukları</h2>
+            <h2 className="text-head font-bold text-foreground md:text-display">Defterin tuttukları</h2>
           </div>
           {/* mobil: ekranda tek kart, yana kaydırılır · md+: iki sütun */}
           <SnapRail className="md:hidden" label="Defterin tuttukları">
@@ -296,8 +291,7 @@ export default function Landing() {
       <section id="akis" className="border-y border-border py-10 md:py-24">
         <div className="mx-auto max-w-[1280px] px-5 md:px-6">
           <div className="mb-8 max-w-[62ch]">
-            <Eyebrow>02 — Mimari</Eyebrow>
-            <h2 className="mt-2 text-head font-bold text-foreground md:text-display">Bir fiyat isteği nereden geçiyor</h2>
+            <h2 className="text-head font-bold text-foreground md:text-display">Bir fiyat isteği nereden geçiyor</h2>
           </div>
 
           {/* mobil: geniş şema yerine dikey adımlar (yana kaydırma yok) */}
@@ -380,7 +374,7 @@ services:
               {[
                 ['01 · Kenar', 'nginx statik dosyaları verir, /api\'yi servise yollar.'],
                 ['02 · Kimlik', 'Servis cookie\'yi Kratos\'a doğrulatır; dönen kimlik ID\'siyle veri filtrelenir.'],
-                ['03 · Cache — 04 · Kaynak', 'Önce Redis. Doluysa yanıt buradan döner. Boşsa dış API çağrılır ve sonuç yazılır — gün içi 5 dk, günlük seri 1 saat.'],
+                ['03 · Cache — 04 · Kaynak', 'Önce Redis. Doluysa yanıt buradan döner. Boşsa dış API çağrılır ve sonuç yazılır (gün içi 5 dk, günlük seri 1 saat).'],
               ].map(([h, d]) => (
                 <div key={h} className="rounded-xl border border-border bg-card p-5 shadow-card">
                   <h3 className="mb-1 text-ui font-semibold text-foreground">{h}</h3>
@@ -396,14 +390,13 @@ services:
       <section id="entegrasyon" className="scroll-mt-4 bg-background py-10 md:py-24 dark:bg-transparent">
         <div className="mx-auto max-w-[1280px] px-5 md:px-6">
           <div className="mb-8 max-w-[62ch]">
-            <Eyebrow>03 — Gerekçe</Eyebrow>
-            <h2 className="mt-2 text-head font-bold text-foreground md:text-display">Her teknoloji neden burada</h2>
+            <h2 className="text-head font-bold text-foreground md:text-display">Her teknoloji neden burada</h2>
             <p className="mt-4 hidden text-body text-muted-foreground md:block">
               Soldan bir teknoloji seç; nasıl entegre edildiğini, hangi kararların alındığını ve
               hangi tuzağa düşüldüğünü anlatıyorum. Sırayla dolduruluyor.
             </p>
             <p className="mt-3 text-ui text-muted-foreground md:hidden">
-              Birine dokun: ne işe yarıyor, neden seçildi, nasıl kuruldu. Soluk olanlar henüz yazılmadı.
+              Birine dokun: ne işe yarıyor, neden seçildi, nasıl kuruldu. Kesik çizgili olanlar henüz yazılmadı.
             </p>
           </div>
 
@@ -415,8 +408,8 @@ services:
                 to={`/landing/tech/${x.slug}`}
                 viewTransition
                 style={{ viewTransitionName: `tech-${x.slug}` }}
-                className={`press flex min-h-[52px] items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2.5 shadow-card hover:border-input ${
-                  x.detail || x.loadDetail ? '' : 'opacity-55'
+                className={`press flex min-h-[52px] items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5 shadow-card hover:border-input ${
+                  x.detail || x.loadDetail ? 'border-border' : 'border-dashed border-input'
                 }`}
               >
                 <span className="shrink-0 text-foreground [&>svg]:h-5 [&>svg]:w-5">{x.icon}</span>
@@ -481,11 +474,10 @@ services:
         <div className="mx-auto max-w-[1280px] px-5 md:px-6">
           <div className="grid items-center gap-7 rounded-xl border border-border bg-background p-6 shadow-card md:p-8 lg:grid-cols-[1fr_auto] lg:gap-8">
             <div>
-              <Eyebrow>Başla</Eyebrow>
-              <h3 className="mb-2 mt-3 text-head font-bold text-foreground">Defterini aç</h3>
-              <p className="max-w-[56ch] text-ui text-muted-foreground">
+              <h3 className="mb-2 text-head font-bold text-foreground">Defterini aç</h3>
+              <p className="max-w-[50ch] text-ui text-muted-foreground">
                 Kayıt ve giriş <b className="font-semibold text-foreground">Ory Kratos</b>&apos;un self-service
-                akışlarıyla çalışır — parola bizim kodumuza hiç uğramaz. Giriş yaptıktan sonra portföy,
+                akışlarıyla çalışır. Parola bizim kodumuza hiç uğramaz. Giriş yaptıktan sonra portföy,
                 işlem defteri ve piyasa sayfalarına geçersin.
               </p>
             </div>
@@ -511,8 +503,7 @@ services:
       <section className="bg-background py-10 md:py-24 dark:bg-transparent">
         <div className="mx-auto max-w-[1280px] px-5 md:px-6">
           <div className="mb-8 max-w-[62ch]">
-            <Eyebrow>04 — Dürüstlük</Eyebrow>
-            <h2 className="mt-2 text-head font-bold text-foreground md:text-display">Bilinçli ödünler</h2>
+            <h2 className="text-head font-bold text-foreground md:text-display">Bilinçli ödünler</h2>
             <p className="mt-4 text-body text-muted-foreground">
               Bir öğrenme projesinde her yer üretim standardında olmaz. Nerede bilerek aşağı indiğimi yazmak,
               yanlışlıkla indiğim yerlerden ayırıyor.
@@ -546,7 +537,7 @@ services:
       <section className="py-10 md:py-24">
         <div className="mx-auto max-w-[1280px] px-5 md:px-6">
           <div className="rounded-2xl bg-primary p-6 shadow-float md:p-16">
-            <h2 className="max-w-[20ch] text-head font-bold leading-[1.1] text-primary-foreground md:text-display">
+            <h2 className="max-w-[20ch] text-balance text-head font-bold leading-[1.1] text-primary-foreground md:text-display">
               Bitmiş bir ürün değil, süren bir defter.
             </h2>
             <p className="mt-4 max-w-[56ch] text-body text-primary-foreground/85">

@@ -51,9 +51,14 @@ export default function AssetDetail() {
   return (
     <Page
       back={{ label: t('nav.market'), onClick: () => (window.history.length > 1 ? navigate(-1) : navigate('/market')) }}
-      eyebrow={`${exchange} · ${currency}`}
       title={symbol}
-      meta={info?.name && <span className="text-foreground">{info.name}</span>}
+      // Borsa ve para birimi başlığın üstünde değil, şirket adının yanında (DESIGN.md TP-10)
+      meta={
+        <>
+          {info?.name && <><span className="text-foreground">{info.name}</span>{' · '}</>}
+          {exchange} · {currency}
+        </>
+      }
       // Mobilde eylemler alttaki sabit çubukta; başlıkta boş kutu yer kaplamasın diye yalnız md+ verilir
       actions={wide && (
         <div className="flex items-center gap-2">

@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ArrowLeft } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import { usePriceHistory, usePriceOnDate } from '@/hooks/queries'
 import { toDateString, fromDateString, formatDisplayDate } from '@/lib/date'
 import { heatTier, shortPrice, closesByDay, monthsBack, nearestClose } from '@/lib/heat'
@@ -9,10 +10,37 @@ import { catOf } from '@/lib/assetColors'
 import { cn } from '@/lib/utils'
 
 // Kategori rengi kart zeminiyle karıştırılır: %10 → %100
-// Koyu hücrede metin kart rengini alır: açık temada beyaz, koyu temada koyu (kategori rengi orada açık)
 const MIX = [10, 28, 48, 72, 100]
-const heatStyle = (color, tier) =>
-  tier == null ? undefined : { background: `color-mix(in oklab, ${color} ${MIX[tier]}%, hsl(var(--card)))`, color: tier >= 3 ? 'hsl(var(--card))' : undefined }
+const heatStyle = (color, tier, text) =>
+  tier == null ? undefined : { background: `color-mix(in oklab, ${color} ${MIX[tier]}%, hsl(var(--card)))`, color: text?.[tier] }
+
+// Tarayıcının çözdüğü rengi [r, g, b] olarak döner ('hsl(var(--x))' gibi ifadeler için)
+function resolveRgb(css) {
+  const el = document.createElement('i')
+  el.style.color = css
+  document.body.appendChild(el)
+  const rgb = getComputedStyle(el).color.match(/[\d.]+/g).slice(0, 3).map(Number)
+  el.remove()
+  return rgb
+}
+const luminance = (rgb) => {
+  const [r, g, b] = rgb.map((v) => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4 })
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+const contrast = (a, b) => { const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x); return (hi + 0.05) / (lo + 0.05) }
+
+// Her ısı kademesi için okunaklı metin rengi: kart rengi ya da foreground, hangisi zeminde daha net okunuyorsa.
+// Sabit "koyu hücrede kart rengi" kuralı altın gibi açık kategori renklerinde 2–3:1 kalıyordu.
+// Zemin oklab yerine sRGB'de yaklaşık karıştırılır; yalnız iki renkten birini seçmek için yeterli.
+function heatTextColors(color) {
+  const c = resolveRgb(color)
+  const card = resolveRgb('hsl(var(--card))')
+  const fg = resolveRgb('hsl(var(--foreground))')
+  return MIX.map((p) => {
+    const bg = c.map((v, i) => (v * p + card[i] * (100 - p)) / 100)
+    return contrast(card, bg) >= contrast(fg, bg) ? 'hsl(var(--card))' : 'hsl(var(--foreground))'
+  })
+}
 
 const YEARS_BACK = 20
 
@@ -37,6 +65,9 @@ function CalendarSheet({ market = '', symbol, assetType, label, value, onClose, 
   const closes = useMemo(() => closesByDay(history?.candles), [history])
   const hasSeries = closes.size > 0
   const color = catOf(assetType).color
+  const { dark } = useTheme() // token JS'te okunuyor; tema değişince yeniden hesaplanır (TM-05)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- dark kullanılmıyor ama token değerleri temaya bağlı
+  const heatText = useMemo(() => heatTextColors(color), [color, dark])
 
   const [picked, setPicked] = useState(value)
   // null = son 1 yıl görünümü; formdaki tarih 1 yıldan eskiyse o yılın görünümüyle açılır
@@ -128,10 +159,10 @@ function CalendarSheet({ market = '', symbol, assetType, label, value, onClose, 
             const colored = monthVals.length > 0
             return (
               <section key={key} data-month={key} className="px-3 pb-1.5 pt-3.5">
-                <h3 className="px-1 pb-2.5 text-body font-semibold text-foreground">
+                <h2 className="px-1 pb-2.5 text-body font-semibold text-foreground">
                   {new Date(y, month, 1).toLocaleDateString(locale, { month: 'long', year: 'numeric' })}
                   {year != null && <span className="text-micro font-normal text-muted-foreground"> · {t('cal.noColor')}</span>}
-                </h3>
+                </h2>
                 <div className="grid grid-cols-7 gap-[3px]">
                   {Array.from({ length: lead }, (_, i) => <span key={`b${i}`} />)}
                   {Array.from({ length: days }, (_, i) => {
@@ -148,7 +179,7 @@ function CalendarSheet({ market = '', symbol, assetType, label, value, onClose, 
                         type="button"
                         disabled={future}
                         onClick={() => setPicked(ds)}
-                        style={heatStyle(color, tier)}
+                        style={heatStyle(color, tier, heatText)}
                         aria-label={`${formatDisplayDate(ds, lang)}${v != null ? ` ${money(v)}` : ''}`}
                         aria-pressed={picked === ds}
                         className={cn(
@@ -157,7 +188,7 @@ function CalendarSheet({ market = '', symbol, assetType, label, value, onClose, 
                           picked === ds && 'outline outline-2 outline-offset-1 outline-foreground'
                         )}
                       >
-                        <span className={cn('text-ui font-medium', closed && 'text-muted-foreground opacity-60', ds === todayStr && (tier >= 3 ? 'font-bold underline underline-offset-2' : 'font-bold text-primary'))}>
+                        <span className={cn('text-ui font-medium', closed && 'text-muted-foreground', ds === todayStr && (tier >= 3 ? 'font-bold underline underline-offset-2' : 'font-bold text-primary'))}>
                           {i + 1}
                         </span>
                         <span className="tabular min-h-[11px] text-[9.5px] leading-none tracking-tight opacity-90">{v != null ? shortPrice(v) : ''}</span>

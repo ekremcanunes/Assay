@@ -11,7 +11,6 @@ export default function Watchlist() {
   const [summaryOpen, setSummaryOpen] = useState(false)
   return (
     <Page
-      eyebrow={t('nav.market')}
       title={t('nav.watchlist')}
       meta={t('watch.meta')}
       actions={

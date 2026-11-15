@@ -30,7 +30,6 @@ export default function Overview() {
 
   return (
     <Page
-      eyebrow={t('nav.sectionGeneral')}
       title={t('overview.title')}
       actions={
         <>

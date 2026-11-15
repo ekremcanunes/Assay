@@ -164,7 +164,6 @@ export default function AddAsset() {
 
   return (
     <Page
-      eyebrow={t('assets.title')}
       title={t('assets.buyAsset')}
       // Geri = geldiği sayfa (Piyasa, kategori…); doğrudan açıldıysa Portföy
       back={{ label: t('common.back'), onClick: () => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/assets')) }}

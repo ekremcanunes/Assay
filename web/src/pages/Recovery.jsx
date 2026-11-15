@@ -124,7 +124,7 @@ export default function Recovery() {
     await sendCode(address)
   }
 
-  if (!flow) return <PageLoader label={t('auth.redirecting')} className="paper" />
+  if (!flow) return <PageLoader label={t('auth.redirecting')} />
 
   return (
     <div className={authPageCls}>

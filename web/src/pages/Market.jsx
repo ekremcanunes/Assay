@@ -56,7 +56,6 @@ export default function Market() {
 
   return (
     <Page
-      eyebrow={t('nav.sectionMarket')}
       title={t('nav.market')}
       meta={meta}
       actions={

@@ -52,8 +52,9 @@ export function DetailBlock({ b }) {
     return (
       <figure>
         <h4 className="mb-1.5 text-figure font-semibold text-foreground">{b.title}</h4>
-        {b.body && <p className="mb-4 text-ui text-muted-foreground">{b.body}</p>}
-        <div className="overflow-x-auto rounded-xl border border-border bg-background p-5">{b.figure}</div>
+        {b.body && <p className="mb-4 max-w-[50ch] text-ui text-muted-foreground">{b.body}</p>}
+        {/* Çerçevesiz: blok bir kartın içinde duruyor, ayrımı zemin tonu yapar (BL-14, IL-03) */}
+        <div className="overflow-x-auto rounded-lg bg-background p-5">{b.figure}</div>
         {b.caption && <figcaption className="mt-2 font-mono text-micro text-muted-foreground">{b.caption}</figcaption>}
       </figure>
     )
@@ -61,9 +62,9 @@ export function DetailBlock({ b }) {
 
   if (b.kind === 'warn') {
     return (
-      <div className="rounded-xl border border-border bg-background p-5">
+      <div className="border-l-2 border-warn pl-4">
         <h4 className="mb-1.5 text-ui font-semibold text-foreground">{b.title}</h4>
-        <p className="text-ui text-muted-foreground">{b.body}</p>
+        <p className="max-w-[50ch] text-ui text-muted-foreground">{b.body}</p>
       </div>
     )
   }
@@ -71,10 +72,11 @@ export function DetailBlock({ b }) {
   return (
     <div>
       <h4 className="mb-1.5 text-figure font-semibold text-foreground">{b.title}</h4>
-      <p className="text-ui text-muted-foreground">{b.body}</p>
+      {/* 50ch ≈ 78 karakter (13px): satır 80 karakteri geçmesin */}
+      <p className="max-w-[50ch] text-ui text-muted-foreground">{b.body}</p>
       {b.table && <MiniTable head={b.table.head} rows={b.table.rows} />}
       {b.code && <div className="mt-4"><CodeBlock code={b.code} /></div>}
-      {b.after && <p className="mt-3 text-ui text-muted-foreground">{b.after}</p>}
+      {b.after && <p className="mt-3 max-w-[50ch] text-ui text-muted-foreground">{b.after}</p>}
     </div>
   )
 }

@@ -117,8 +117,8 @@ export default function HoldingsList({ holdings, type, isLoading, queryError }) 
             </div>
           ) : (
             <>
-            {/* Mobil: kart listesi — 7 sütunlu tablo dar ekranda okunmuyor */}
-            <div className="space-y-2.5 md:hidden">
+            {/* Mobil: satır listesi — 7 sütunlu tablo dar ekranda okunmuyor. Section zaten kart; satırlar hairline ile ayrılır (BL-14) */}
+            <div className="divide-y divide-border md:hidden">
               {visible.map((h) => {
                 const isActive = editing?.id === h.id
                 const isSell = isActive && editing.mode === 'sell'
@@ -127,7 +127,7 @@ export default function HoldingsList({ holdings, type, isLoading, queryError }) 
                 return (
                   <div
                     key={h.id}
-                    className="rounded-xl border border-border bg-card p-3.5"
+                    className="py-3.5 first:pt-0 last:pb-0"
                     onClick={() => !isActive && setDrawer(h)}
                   >
                     <div className="flex items-center justify-between gap-2">

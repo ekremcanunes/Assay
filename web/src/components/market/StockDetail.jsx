@@ -29,7 +29,7 @@ export default function StockDetail({ stock: s, volumeRank }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="text-figure font-bold text-foreground">{s.symbol}</span>
-            <span className="label rounded-md bg-primary/10 px-1.5 py-0.5 text-primary">BIST</span>
+            <span className="label chip-neutral rounded-sm px-1.5 py-0.5">BIST</span>
           </div>
           <div className="truncate text-ui text-foreground">{s.name}</div>
         </div>
