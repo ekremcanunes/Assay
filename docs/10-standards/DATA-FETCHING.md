@@ -28,7 +28,7 @@ flowchart TD
     M -. "invalidate" .-> D
 
     subgraph NoRQ["React Query DIŞI (bilinçli)"]
-      Auth["AuthContext / Login / Register\n→ Kratos, fetch"]
+      Auth["AuthProvider / Login / Register\n→ Kratos, fetch"]
       Search["AddAsset arama kutusu\n→ marketApi.search, debounce axios"]
     end
 ```
@@ -113,7 +113,7 @@ Sonuç:
 
 | Yer | Yöntem | Neden RQ değil |
 |-----|--------|----------------|
-| [`AuthContext.jsx`](src/contexts/AuthContext.jsx) | `fetch` (Kratos `whoami`) | Oturum kontrolü; auth akışının parçası |
+| [`AuthProvider.jsx`](src/contexts/AuthProvider.jsx) | `fetch` (Kratos `whoami`) | Oturum kontrolü; auth akışının parçası |
 | [`Login.jsx`](src/pages/Login.jsx) / [`Register.jsx`](src/pages/Register.jsx) | `fetch` (Kratos self-service flow) | Tek seferlik akış, cache anlamsız |
 | [`AddAsset.jsx`](src/pages/AddAsset.jsx) arama | `marketApi.search` (debounce'lu axios, `useEffect`) | Canlı yazdıkça arama; kısa ömürlü, cache gerekmez |
 

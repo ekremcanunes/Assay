@@ -49,7 +49,8 @@ export default function AddAsset() {
   const [results, setResults] = useState([])
   const [searching, setSearching] = useState(false)
   const [quantity, setQuantity] = useState('')
-  const [unitPrice, setUnitPrice] = useState('')
+  // Yalnız kullanıcının elle yazdığı fiyat; otomatik fiyat aşağıda referanstan türetilir
+  const [manualPrice, setManualPrice] = useState('')
   const [currency, setCurrency] = useState('TRY')
   const [date, setDate] = useState(todayString())
   const [error, setError] = useState(null)
@@ -72,39 +73,33 @@ export default function AddAsset() {
   const thenPrice = reference?.available ? pickPrice(reference) : null
   const nowPrice = date === today ? thenPrice : nowRef?.available ? pickPrice(nowRef) : null
   const sinceThen = thenPrice != null && nowPrice != null && date !== today ? ((nowPrice - thenPrice) / thenPrice) * 100 : null
-  const totalCost = quantity && unitPrice ? parseFloat(quantity) * parseFloat(unitPrice) : null
   const money = (v) => new Intl.NumberFormat(currency === 'TRY' ? 'tr-TR' : 'en-US', { style: 'currency', currency }).format(v)
 
   const refPrice = reference?.available
     ? (currency === 'USD' ? reference.priceInUsd : reference.priceInTry)
     : null
+  // Tarih/sembol/para birimi değişince fiyat referanstan gelir — ama YALNIZCA kullanıcı elle
+  // dokunmadıysa. Kullanıcının yazdığı veri kutsal; üstüne yazmıyoruz.
+  // Render'da türetilir (effect + setState fazladan bir render turu yapıyordu).
+  const unitPrice = priceSource === 'auto' ? (refPrice != null ? refPrice.toFixed(2) : '') : manualPrice
+  const totalCost = quantity && unitPrice ? parseFloat(quantity) * parseFloat(unitPrice) : null
   const { ratio, tier } = priceSource === 'manual'
     ? deviationOf(unitPrice, refPrice)
     : { ratio: null, tier: 'none' }
   const pct = ratio != null ? (ratio * 100).toFixed(1) : '0'
 
-  // Tarih/sembol değişince fiyatı doldur — ama YALNIZCA kullanıcı elle
-  // dokunmadıysa. Kullanıcının yazdığı veri kutsal; üstüne yazmıyoruz.
-  useEffect(() => {
-    if (priceSource !== 'auto') return
-    if (!reference?.available) return
-
-    const value = currency === 'USD' ? reference.priceInUsd : reference.priceInTry
-    if (value != null) setUnitPrice(String(value.toFixed(2)))
-  }, [reference, currency, priceSource])
-
   // Hisse araması — debounce (300ms, min 2 karakter). Seçim yapıldıysa arama durur.
+  // Aramanın açık olup olmadığı render'da türetilir; kısa sorguda eski sonuç gösterilmez.
+  // "Aranıyor" durumu yazarken (olay işleyicisinde) başlar, effect yalnız isteği yapar.
+  const searchQuery = query.trim()
+  const searchOn = assetType === 'Stock' && !symbol && searchQuery.length >= 2
+  const isSearching = searchOn && searching
+  const shownResults = searchOn ? results : []
   useEffect(() => {
-    if (assetType !== 'Stock' || symbol) return
-    const q = query.trim()
-    if (q.length < 2) {
-      setResults([])
-      return
-    }
-    setSearching(true)
+    if (!searchOn) return
     const handle = setTimeout(async () => {
       try {
-        const res = await marketApi.search(q)
+        const res = await marketApi.search(searchQuery)
         setResults(res.data)
       } catch {
         setResults([])
@@ -113,7 +108,7 @@ export default function AddAsset() {
       }
     }, 300)
     return () => clearTimeout(handle)
-  }, [query, assetType, symbol])
+  }, [searchQuery, searchOn])
 
   const handleTypeChange = (val) => {
     setAssetType(val)
@@ -246,18 +241,23 @@ export default function AddAsset() {
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={query}
-                    onChange={(e) => setQuery(e.target.value)}
+                    onChange={(e) => {
+                      // Yalnız sorgu gerçekten değişince: sona boşluk eklemek effect'i yeniden çalıştırmaz,
+                      // "aranıyor" takılı kalırdı
+                      if (e.target.value.trim() !== searchQuery) setSearching(true)
+                      setQuery(e.target.value)
+                    }}
                     placeholder={t('assets.searchPlaceholder')}
                     className="pl-9"
                     autoComplete="off"
                   />
                 </div>
-                {(searching || results.length > 0) && (
+                {(isSearching || shownResults.length > 0) && (
                   <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl border border-border bg-popover shadow-float">
-                    {searching && (
+                    {isSearching && (
                       <div className="px-3 py-2 text-ui text-muted-foreground">{t('common.loading')}</div>
                     )}
-                    {!searching && results.map((r) => (
+                    {!isSearching && shownResults.map((r) => (
                       <button
                         key={`${r.market}-${r.symbol}`}
                         type="button"
@@ -323,7 +323,7 @@ export default function AddAsset() {
               currency={currency}
               placeholder="0,00"
               value={unitPrice}
-              onChange={(v) => { setUnitPrice(v); setPriceSource('manual') }}
+              onChange={(v) => { setManualPrice(v); setPriceSource('manual') }}
               required
             />
           </div>
@@ -365,7 +365,7 @@ export default function AddAsset() {
             {tier === 'info'
               ? t('assets.deviationInfo').replace('{price}', refPrice.toFixed(2))
               : t('assets.deviationWarn').replace('{price}', refPrice.toFixed(2)).replace('{pct}', pct)}
-            <button type="button" onClick={() => { setPriceSource('auto'); setUnitPrice('') }}
+            <button type="button" onClick={() => setPriceSource('auto')}
               className="ml-1 font-semibold text-primary hover:underline">
               {t('assets.useThatDayPrice')}
             </button>
@@ -433,7 +433,7 @@ export default function AddAsset() {
         label={assetType === 'Gold' ? t('assets.goldGram') : symbol}
         value={date}
         onClose={closeCal}
-        onSelect={(v) => { setDate(v); if (priceSource === 'auto') setUnitPrice(''); closeCal() }}
+        onSelect={(v) => { setDate(v); closeCal() }}
       />
 
       <Modal
