@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 // Sonuç bildirimle (toast) söylenir; istek sürerken düğme spinner gösterir.
 function useWatchToggle(assetType, market, symbol) {
   const { t } = useLanguage()
-  const { data: items = [] } = useWatchlist()
+  const { data: items = [] } = useWatchlist({ refetchOnMount: false })
   const add = useAddWatch()
   const remove = useRemoveWatch()
   const item = items.find((w) => w.market === market && w.symbol === symbol)

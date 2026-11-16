@@ -59,10 +59,15 @@ export function useSymbolSearch(q) {
 }
 
 // İzleme listesi: kalemler + güncel fiyat. Tazeliği fiyatların cache ömrü belirler (serverCached).
-export function useWatchlist() {
+// options: yalnız okuyan yerler (satırlardaki yıldız) { refetchOnMount: false } verir. Neden: tablo
+// sayfalanınca her sayfada yeni yıldızlar mount olur; liste boşken önbellek başlığı gelmez, veri hep
+// bayat sayılır ve her sayfa değişimi /api/watchlist isteği atardı. Liste ekle/çıkar sonrası zaten
+// invalidate edilir; İzlediklerim ekranı kendi sorgusuyla tazeler.
+export function useWatchlist(options = {}) {
   return useQuery({
     queryKey: queryKeys.watchlist,
     ...serverCached(() => watchlistApi.getAll()),
+    ...options,
   })
 }
 
