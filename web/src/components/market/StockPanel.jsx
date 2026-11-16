@@ -9,10 +9,11 @@ import AssetDrawer from '@/components/AssetDrawer'
 import { AreaSpark } from '@/components/AreaSpark'
 import { Tooltip } from '@/components/ui/tooltip'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
 import { catOf } from '@/lib/assetColors'
 import { pulse as computePulse } from '@/lib/marketPulse'
 import { cn } from '@/lib/utils'
-import { Search, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
 import { num, pct, pctCls, compact } from './marketFormat'
 
 const SORTS = [
@@ -20,6 +21,9 @@ const SORTS = [
   { key: 'losers', label: 'market.sortLosers', fn: (a, b) => (a.changePercent ?? Infinity) - (b.changePercent ?? Infinity) },
   { key: 'volume', label: 'market.sortMostTraded', fn: (a, b) => (b.volume ?? -1) - (a.volume ?? -1) },
 ]
+
+// Tablo ve mobil liste sayfa başına bu kadar satır gösterir (İzlediklerim ile aynı).
+const PAGE_SIZE = 10
 
 const moodCls = { strongUp: 'text-up', up: 'text-up', flat: 'text-muted-foreground', down: 'text-down', strongDown: 'text-down' }
 
@@ -51,6 +55,14 @@ export default function StockPanel({ stocks, bist30, bist100, indexes, indexCode
     [stocks, q]
   )
   const sorted = useMemo(() => [...filtered].sort(SORTS.find((s) => s.key === sort).fn), [filtered, sort])
+
+  // Sayfa; endeks, arama veya sıralama değişince 1. sayfaya döner (effect yerine anahtarla).
+  const pageKey = `${indexCode}|${q}|${sort}`
+  const [pager, setPager] = useState({ key: pageKey, page: 0 })
+  const pages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE))
+  const current = Math.min(pager.key === pageKey ? pager.page : 0, pages - 1)
+  const setPage = (page) => setPager({ key: pageKey, page })
+  const visible = sorted.slice(current * PAGE_SIZE, (current + 1) * PAGE_SIZE)
 
   // Seçili endeksin dışına taşan arama → tüm BIST evreni (Redis cache'li katalog)
   const wantsWideSearch = !loading && q.length >= 2 && filtered.length === 0
@@ -180,9 +192,6 @@ export default function StockPanel({ stocks, bist30, bist100, indexes, indexCode
               </button>
             ))}
           </div>
-          {!loading && (
-            <span className="tabular chip-neutral rounded-sm px-1.5 py-0.5 text-micro font-medium">{sorted.length} / {stocks.length}</span>
-          )}
           <div className="flex w-full flex-wrap items-center gap-2 md:ml-auto md:w-auto">
             {/* Sıralama — segment */}
             <div role="radiogroup" className="flex max-w-full gap-0.5 overflow-x-auto rounded-[10px] bg-secondary p-1">
@@ -227,7 +236,7 @@ export default function StockPanel({ stocks, bist30, bist100, indexes, indexCode
         {!loading && (<>
         {/* Mobil: satır listesi */}
         <ul className="divide-y divide-border border-t border-border md:hidden">
-          {sorted.map((s) => (
+          {visible.map((s) => (
             <li key={s.symbol} className="flex items-center pr-2">
               <button onClick={() => open(s)} className="press flex min-h-14 min-w-0 flex-1 items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-secondary/60">
                 <span className="flex min-w-0 items-center gap-3">
@@ -266,7 +275,7 @@ export default function StockPanel({ stocks, bist30, bist100, indexes, indexCode
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {sorted.map((s) => {
+              {visible.map((s) => {
                 const sel = isSel(s)
                 return (
                   <tr
@@ -302,6 +311,8 @@ export default function StockPanel({ stocks, bist30, bist100, indexes, indexCode
             </tbody>
           </table>
         </div>
+
+        {pages > 1 && <Pager pages={pages} current={current} onChange={setPage} />}
         </>)}
 
         {!loading && sorted.length === 0 && (
@@ -331,6 +342,48 @@ export default function StockPanel({ stocks, bist30, bist100, indexes, indexCode
 
       {drawer && <AssetDrawer holding={drawer} onClose={() => setDrawer(null)} onSell={() => {}} />}
     </div>
+  )
+}
+
+// Gösterilecek sayfa numaraları (0 tabanlı) ve boşluklar ('…'): ilk, son ve seçili sayfanın çevresi.
+// En geniş hâli oklarla ~300px; 360px ekranda kartın içine sığar (MB-05 44px düğme, MB-10 taşma yok).
+function pageItems(pages, current) {
+  if (pages <= 4) return [...Array(pages).keys()]
+  if (current <= 2) return [0, 1, 2, '…', pages - 1]
+  if (current >= pages - 3) return [0, '…', pages - 3, pages - 2, pages - 1]
+  return [0, '…', current, '…', pages - 1]
+}
+
+// Numaralı sayfalama: ‹ 1 2 3 … 10 ›. Düğmeler İzlediklerim'deki ok düğmeleriyle aynı (ghost, 44px);
+// seçili sayfa kobalt yıkama (AK-01/AK-02).
+function Pager({ pages, current, onChange }) {
+  const { t } = useLanguage()
+  return (
+    <nav aria-label={t('market.pages')} className="flex items-center justify-center gap-0.5 border-t border-border px-2 py-1">
+      <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => onChange(current - 1)} disabled={current === 0} aria-label={t('market.prevPage')}>
+        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+      </Button>
+      {pageItems(pages, current).map((p, i) =>
+        p === '…' ? (
+          <span key={`gap-${i}`} className="grid h-11 w-6 place-items-center text-ui text-muted-foreground" aria-hidden="true">…</span>
+        ) : (
+          <Button
+            key={p}
+            variant="ghost"
+            size="icon"
+            onClick={() => onChange(p)}
+            aria-current={p === current ? 'page' : undefined}
+            aria-label={t('market.pageN').replace('{n}', p + 1)}
+            className={cn('tabular h-11 w-11', p === current && 'bg-primary/10 font-bold text-primary hover:bg-primary/10 hover:text-primary')}
+          >
+            {p + 1}
+          </Button>
+        )
+      )}
+      <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => onChange(current + 1)} disabled={current >= pages - 1} aria-label={t('market.nextPage')}>
+        <ChevronRight className="h-4 w-4" aria-hidden="true" />
+      </Button>
+    </nav>
   )
 }
 
