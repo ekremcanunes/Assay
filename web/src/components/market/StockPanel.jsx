@@ -8,6 +8,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import AssetDrawer from '@/components/AssetDrawer'
 import { AreaSpark } from '@/components/AreaSpark'
 import { Tooltip } from '@/components/ui/tooltip'
+import { Skeleton } from '@/components/ui/skeleton'
 import { catOf } from '@/lib/assetColors'
 import { pulse as computePulse } from '@/lib/marketPulse'
 import { cn } from '@/lib/utils'
@@ -29,9 +30,10 @@ const toQuote = (s) => ({
   week52High: s.week52High, week52Low: s.week52Low, volume: s.volume, priceAvailable: true,
 })
 
-// Borsa bölümü: nabız kartı (BIST 100, yorum, dağılım, öne çıkanlar) + BIST 30 tablosu.
+// Borsa bölümü: nabız kartı (BIST 100, yorum, dağılım, öne çıkanlar) + seçili endeksin tablosu.
+// Endeks segmenti (indexes: { kod: ad }) tablo başlığındadır; yorum, dağılım ve öne çıkanlar da seçili listeden hesaplanır.
 // lg+ ekranda satıra tıklamak sağdaki sabit paneli seçer (onSelect); daha darda kayan panel açılır.
-export default function StockPanel({ stocks, bist30, bist100, selected, onSelect }) {
+export default function StockPanel({ stocks, bist30, bist100, indexes, indexCode, onIndexChange, loading, selected, onSelect }) {
   const { t } = useLanguage()
   const wide = useMediaQuery('(min-width: 64rem)')
   const [drawer, setDrawer] = useState(null)
@@ -41,7 +43,7 @@ export default function StockPanel({ stocks, bist30, bist100, selected, onSelect
   const p = useMemo(() => computePulse(stocks), [stocks])
   const volumeLeader = useMemo(() => stocks.reduce((b, s) => ((s.volume ?? -1) > (b?.volume ?? -1) ? s : b), null), [stocks])
 
-  // BIST 30 içinde arama tamamen client-side: 30 satır, ağ turu gereksiz.
+  // Seçili endeks içinde arama tamamen client-side: en fazla 100 satır, ağ turu gereksiz.
   const q = query.trim().toLocaleUpperCase('tr')
   const filtered = useMemo(
     () => (q.length === 0 ? stocks : stocks.filter((s) =>
@@ -50,8 +52,8 @@ export default function StockPanel({ stocks, bist30, bist100, selected, onSelect
   )
   const sorted = useMemo(() => [...filtered].sort(SORTS.find((s) => s.key === sort).fn), [filtered, sort])
 
-  // BIST 30 dışına taşan arama → tüm BIST evreni (Redis cache'li katalog)
-  const wantsWideSearch = q.length >= 2 && filtered.length === 0
+  // Seçili endeksin dışına taşan arama → tüm BIST evreni (Redis cache'li katalog)
+  const wantsWideSearch = !loading && q.length >= 2 && filtered.length === 0
   const { data: wideResults = [], isFetching: wideSearching } = useSymbolSearch(wantsWideSearch ? query.trim() : null)
 
   const open = (s) => (wide && onSelect ? onSelect(s.symbol) : setDrawer(toQuote(s)))
@@ -124,7 +126,7 @@ export default function StockPanel({ stocks, bist30, bist100, selected, onSelect
           ))}
         </div>
 
-        {/* Öne çıkan hisseler — hepsi mevcut BIST 30 verisinden */}
+        {/* Öne çıkan hisseler — hepsi seçili endeksin mevcut verisinden */}
         {highlights.length > 0 && (
           <div className="mt-5 border-t border-border pt-4">
             <div className="label mb-2.5 text-muted-foreground">{t('market.highlights')}</div>
@@ -159,11 +161,28 @@ export default function StockPanel({ stocks, bist30, bist100, selected, onSelect
         )}
       </section>
 
-      {/* BIST 30 */}
+      {/* Endeks tablosu (BIST 30 / BIST 100) */}
       <section className="overflow-hidden rounded-xl border border-border bg-card shadow-card">
         <div className="flex flex-wrap items-center gap-3 px-4 pb-3 pt-4">
-          <h2 className="font-display text-body font-semibold text-foreground">BIST 30</h2>
-          <span className="tabular chip-neutral rounded-sm px-1.5 py-0.5 text-micro font-medium">{sorted.length} / {stocks.length}</span>
+          <h2 className="sr-only">{indexes[indexCode]}</h2>
+          {/* Endeks — segment (sıralama segmentiyle aynı kalıp, BL-10/BL-11) */}
+          <div role="radiogroup" aria-label={t('market.indexPick')} className="flex gap-0.5 rounded-[10px] bg-secondary p-1">
+            {Object.entries(indexes).map(([code, label]) => (
+              <button
+                key={code}
+                role="radio"
+                aria-checked={indexCode === code}
+                onClick={() => onIndexChange(code)}
+                className={cn('h-11 shrink-0 whitespace-nowrap rounded-lg border px-3 text-micro md:h-8',
+                  indexCode === code ? 'border-border bg-card font-bold text-foreground shadow-card' : 'border-transparent font-medium text-muted-foreground hover:text-foreground')}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {!loading && (
+            <span className="tabular chip-neutral rounded-sm px-1.5 py-0.5 text-micro font-medium">{sorted.length} / {stocks.length}</span>
+          )}
           <div className="flex w-full flex-wrap items-center gap-2 md:ml-auto md:w-auto">
             {/* Sıralama — segment */}
             <div role="radiogroup" className="flex max-w-full gap-0.5 overflow-x-auto rounded-[10px] bg-secondary p-1">
@@ -198,6 +217,14 @@ export default function StockPanel({ stocks, bist30, bist100, selected, onSelect
           </div>
         </div>
 
+        {/* Seçilen endeks yüklenirken (BIST 100 ayrı istekle gelir) */}
+        {loading && (
+          <div className="border-t border-border p-4">
+            <Skeleton className="h-64 w-full" />
+          </div>
+        )}
+
+        {!loading && (<>
         {/* Mobil: satır listesi */}
         <ul className="divide-y divide-border border-t border-border md:hidden">
           {sorted.map((s) => (
@@ -275,10 +302,11 @@ export default function StockPanel({ stocks, bist30, bist100, selected, onSelect
             </tbody>
           </table>
         </div>
+        </>)}
 
-        {sorted.length === 0 && (
+        {!loading && sorted.length === 0 && (
           <div className="border-t border-border px-4 py-8 text-center">
-            <p className="text-micro text-muted-foreground">{t('market.notInBist30')}</p>
+            <p className="text-micro text-muted-foreground">{t('market.notInIndex').replace('{index}', indexes[indexCode])}</p>
             {wideSearching && <p className="mt-2 text-micro text-muted-foreground">{t('common.loading')}</p>}
             {wideResults.length > 0 && (
               <div className="mx-auto mt-4 max-w-sm space-y-1 text-left">

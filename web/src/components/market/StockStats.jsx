@@ -43,7 +43,8 @@ function returnsOf(candles, price) {
 // Hisse istatistikleri: dönem getirisi, gün içi aralık, 52H konum, hacim — rakam + düz cümle.
 // s: { price, dayHigh, dayLow, week52High, week52Low, volume }; candles: 1 yıllık seri; cur: para birimi işareti.
 // Piyasa paneli (StockDetail) ve varlık sayfası aynı bloğu kullanır.
-export function StockStats({ s, candles, volumeRank, cur = '₺' }) {
+// volumeRank / rankIndex: hacim sırası ve hangi listede olduğu ("BIST 30") — yalnız Piyasa paneli verir.
+export function StockStats({ s, candles, volumeRank, rankIndex, cur = '₺' }) {
   const { t } = useLanguage()
 
   const hasDay = s.dayHigh != null && s.dayLow != null && s.dayHigh > s.dayLow
@@ -111,7 +112,7 @@ export function StockStats({ s, candles, volumeRank, cur = '₺' }) {
         </div>
         {s.volume != null && volumeRank > 0 && (
           <p className="mt-1 text-ui text-foreground">
-            {t('market.volumeText').replace('{vol}', compact(s.volume)).replace('{rank}', volumeRank)}
+            {t('market.volumeText').replace('{vol}', compact(s.volume)).replace('{rank}', volumeRank).replace('{index}', rankIndex)}
           </p>
         )}
       </div>

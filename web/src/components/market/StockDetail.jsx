@@ -10,9 +10,10 @@ import { ArrowUpRight, Plus } from 'lucide-react'
 import { num, pct } from './marketFormat'
 import { StockStats } from './StockStats'
 
-// Masaüstü Piyasa: seçili BIST 30 hissesinin sağda sabit duran paneli.
+// Masaüstü Piyasa: seçili endeks (BIST 30 / BIST 100) hissesinin sağda sabit duran paneli.
 // Hiç bilmeyen biri için: rakam + düz cümle. Yalnız mevcut veri (Yahoo quote + 1 yıllık seri).
-export default function StockDetail({ stock: s, volumeRank }) {
+// indexLabel: hacim sırasının hangi listede olduğu ("BIST 30").
+export default function StockDetail({ stock: s, volumeRank, indexLabel }) {
   const { t } = useLanguage()
   const navigate = useNavigate()
   const { data: history } = usePriceHistory('BIST', s.symbol, 'Stock', '1y')
@@ -62,7 +63,7 @@ export default function StockDetail({ stock: s, volumeRank }) {
         <PriceChart key={s.symbol} market="BIST" symbol={s.symbol} assetType="Stock" exchange="BIST" height={200} />
       </div>
 
-      <StockStats s={s} candles={history?.candles} volumeRank={volumeRank} />
+      <StockStats s={s} candles={history?.candles} volumeRank={volumeRank} rankIndex={indexLabel} />
 
       <button
         type="button"

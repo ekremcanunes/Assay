@@ -22,6 +22,13 @@ public class MarketController(IMarketServiceClient marketServiceClient) : Contro
         return await ForwardAsync(() => marketServiceClient.GetOverviewAsync());
     }
 
+    // Piyasa ekranındaki BIST 30 / BIST 100 segmenti. indexCode: XU030 | XU100; başkası market-service'ten 400 döner.
+    [HttpGet("index-stocks/{indexCode}")]
+    public async Task<ActionResult<List<MarketQuoteResponse>>> IndexStocks(string indexCode)
+    {
+        return await ForwardAsync(() => marketServiceClient.GetIndexStocksAsync(indexCode));
+    }
+
     // Varlık sayfası: tek varlığın anlık fiyatı ve gün/52H istatistikleri. Kimlik (market, symbol);
     // hisse "BIST:THYAO", altın/döviz market boş ("XAU", "USD"). Fiyat bulunamazsa 404.
     [HttpGet("quote")]

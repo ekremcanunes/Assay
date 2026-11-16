@@ -88,6 +88,17 @@ public class MarketController : ControllerBase
         return Ok(await _overviewService.GetOverviewAsync());
     }
 
+    // Bir endeksin hisseleri (piyasa ekranındaki BIST 30 / BIST 100 segmenti).
+    // indexCode, IndexConstituents tablosunun IndexCode sütunudur; yalnız tutulan endeksler kabul edilir.
+    [HttpGet("index-stocks/{indexCode}")]
+    public async Task<ActionResult<List<MarketQuote>>> IndexStocks(string indexCode)
+    {
+        indexCode = indexCode.Trim().ToUpperInvariant();
+        if (indexCode is not (IndexConstituent.Bist30 or IndexConstituent.Bist100))
+            return BadRequest(new { error = "Unsupported index" });
+        return Ok(await _overviewService.GetIndexStocksAsync(indexCode));
+    }
+
     // Grafik serisi. range beyaz listeye karşı doğrulanır (bkz. PriceHistoryService.Ranges).
     [HttpGet("history/{symbol}")]
     public async Task<ActionResult<PriceHistory>> History(string symbol,

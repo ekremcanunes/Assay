@@ -41,6 +41,8 @@ export const watchlistApi = {
 export const marketApi = {
   search: (q) => api.get('/api/market/search', { params: { q } }),
   overview: () => api.get('/api/market/overview'),
+  // indexCode: XU030 | XU100 (Borsa İstanbul endeks kodu)
+  indexStocks: (indexCode) => api.get(`/api/market/index-stocks/${indexCode}`),
   quote: (market, symbol) => api.get('/api/market/quote', { params: { market, symbol } }),
   instrument: (market, symbol) => api.get('/api/market/instrument', { params: { market, symbol } }),
   // market: hisse için BIST/US (kimliğin parçası), altın ve dövizde ''. Yahoo yazımını (.IS vb.) backend üretir.

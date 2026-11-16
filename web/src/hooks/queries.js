@@ -38,7 +38,17 @@ export function useMarketOverview() {
   })
 }
 
-// Tüm BIST evreninde sembol arama — yalnızca BIST 30 filtresi boş kalınca kullanılır.
+// Bir endeksin hisseleri (Piyasa'daki BIST 100 segmenti). BIST 30 piyasa özetiyle gelir;
+// bu sorgu yalnız segment seçilince çalışır, sayfayı açan herkes 100 hisse yüklemez.
+export function useIndexStocks(indexCode, enabled) {
+  return useQuery({
+    queryKey: ['index-stocks', indexCode],
+    ...serverCached(() => marketApi.indexStocks(indexCode)),
+    enabled,
+  })
+}
+
+// Tüm BIST evreninde sembol arama — yalnızca seçili endeksin (BIST 30 / BIST 100) filtresi boş kalınca kullanılır.
 // q null ise sorgu hiç çalışmaz.
 export function useSymbolSearch(q) {
   return useQuery({

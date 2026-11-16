@@ -17,6 +17,9 @@ public class MarketServiceClient(HttpClient httpClient, IHttpContextAccessor htt
     public async Task<MarketOverviewResponse> GetOverviewAsync() =>
         await GetAsync<MarketOverviewResponse>("/api/market/overview") ?? new();
 
+    public async Task<List<MarketQuoteResponse>> GetIndexStocksAsync(string indexCode) =>
+        await GetAsync<List<MarketQuoteResponse>>($"/api/market/index-stocks/{Uri.EscapeDataString(indexCode)}") ?? new();
+
     public async Task<PriceHistoryResponse> GetHistoryAsync(string market, string symbol, string assetType, string range) =>
         await GetAsync<PriceHistoryResponse>($"/api/market/history/{Uri.EscapeDataString(symbol)}"
             + $"?market={Uri.EscapeDataString(market)}&assetType={Uri.EscapeDataString(assetType)}&range={Uri.EscapeDataString(range)}") ?? new();
