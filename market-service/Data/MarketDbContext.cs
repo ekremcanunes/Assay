@@ -7,6 +7,7 @@ public class MarketDbContext(DbContextOptions<MarketDbContext> options) : DbCont
 {
     public DbSet<Instrument> Instruments => Set<Instrument>();
     public DbSet<InstrumentSyncState> InstrumentSyncStates => Set<InstrumentSyncState>();
+    public DbSet<IndexConstituent> IndexConstituents => Set<IndexConstituent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -19,6 +20,11 @@ public class MarketDbContext(DbContextOptions<MarketDbContext> options) : DbCont
         {
             entity.HasKey(s => s.Id);
             entity.Property(s => s.Id).ValueGeneratedNever();
+        });
+
+        modelBuilder.Entity<IndexConstituent>(entity =>
+        {
+            entity.HasKey(c => new { c.IndexCode, c.Symbol });
         });
     }
 }

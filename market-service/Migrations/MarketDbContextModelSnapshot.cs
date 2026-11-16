@@ -22,6 +22,22 @@ namespace market_service.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("market_service.Models.IndexConstituent", b =>
+                {
+                    b.Property<string>("IndexCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Symbol")
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly>("AsOf")
+                        .HasColumnType("date");
+
+                    b.HasKey("IndexCode", "Symbol");
+
+                    b.ToTable("IndexConstituents");
+                });
+
             modelBuilder.Entity("market_service.Models.Instrument", b =>
                 {
                     b.Property<string>("Market")

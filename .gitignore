@@ -13,6 +13,8 @@ obj/
 appsettings.Development.json
 # Prod TLS: deploy.sh Secrets Manager'dan EC2'de yazar
 certs/
+# Lokal BIST endeks dosyasi klasoru (docker-compose.override.yml, BIST_DATA_DIR varsayilani)
+.bist/
 
 # Node
 node_modules/

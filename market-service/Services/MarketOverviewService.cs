@@ -12,30 +12,24 @@ public class MarketOverviewService : IMarketOverviewService
     private const decimal GramsPerOunce = 31.1034768m;
     private const string SparkRange = "1mo";   // Yahoo range parametresi
     private const int SparkDays = 30;          // Frankfurter gün sayısı
-
-    // BIST 30 bileşenleri — endeks üyeliğini API vermediği için elle tutulur.
-    // Periyodik olarak (BIST 30 üç ayda bir gözden geçirilir) güncellenmeli.
-    private static readonly string[] Bist30 =
-    [
-        "AKBNK", "ARCLK", "ASELS", "ASTOR", "BIMAS", "BRSAN", "EKGYO", "ENKAI", "EREGL", "FROTO",
-        "GARAN", "GUBRF", "HEKTS", "ISCTR", "KCHOL", "KONTR", "AEFES", "KRDMD", "OYAKC", "PETKM",
-        "PGSUS", "SAHOL", "SASA", "SISE", "TCELL", "THYAO", "TOASO", "TTKOM", "TUPRS", "YKBNK"
-    ];
+    private const int MaxParallelQuotes = 8;   // endeks listesinde aynı anda Yahoo'ya giden en fazla istek
 
     private readonly IYahooFinanceClient _yahoo;
     private readonly IFrankfurterClient _frankfurter;
     private readonly InstrumentCatalog _catalog;
+    private readonly IndexMembership _membership;
     private readonly IMarketService _marketService;
     private readonly CacheStore _cache;
     private readonly ILogger<MarketOverviewService> _logger;
 
     public MarketOverviewService(IYahooFinanceClient yahoo, IFrankfurterClient frankfurter,
-        InstrumentCatalog catalog, IMarketService marketService, CacheStore cache,
+        InstrumentCatalog catalog, IndexMembership membership, IMarketService marketService, CacheStore cache,
         ILogger<MarketOverviewService> logger)
     {
         _yahoo = yahoo;
         _frankfurter = frankfurter;
         _catalog = catalog;
+        _membership = membership;
         _marketService = marketService;
         _cache = cache;
         _logger = logger;
@@ -50,14 +44,34 @@ public class MarketOverviewService : IMarketOverviewService
             IndexQuoteAsync("XU030.IS", "BIST 30"),
         };
 
-        // BIST 30 hisseleri — portföyle aynı stock:BIST:{symbol} anahtarı
-        var stockTasks = Bist30.Select(t => StockQuoteAsync(t, _catalog.FindName("BIST", t) ?? t));
+        var stocksTask = GetIndexStocksAsync(IndexConstituent.Bist30);
 
         var strip = await BuildStripAsync();
         var indices = (await Task.WhenAll(indexTasks)).Where(q => q != null).Select(q => q!).ToList();
-        var stocks = (await Task.WhenAll(stockTasks)).Where(q => q != null).Select(q => q!).ToList();
+        var stocks = await stocksTask;
 
         return new MarketOverview { Indices = indices, Strip = strip, Stocks = stocks };
+    }
+
+    // Üyelik Borsa İstanbul'un resmî listesinden (IndexMembership); fiyat portföyle aynı
+    // stock:BIST:{symbol} anahtarından. Önbellek boşken BIST 100 tek seferde 100 Yahoo isteği
+    // demek; engellenmemek için aynı anda en fazla MaxParallelQuotes istek gider.
+    public async Task<List<MarketQuote>> GetIndexStocksAsync(string indexCode)
+    {
+        using var gate = new SemaphoreSlim(MaxParallelQuotes);
+        var tasks = _membership.Symbols(indexCode).Select(async symbol =>
+        {
+            await gate.WaitAsync();
+            try
+            {
+                return await StockQuoteAsync(symbol, _catalog.FindName("BIST", symbol) ?? symbol);
+            }
+            finally
+            {
+                gate.Release();
+            }
+        });
+        return (await Task.WhenAll(tasks)).Where(q => q != null).Select(q => q!).ToList();
     }
 
     private async Task<MarketQuote?> StockQuoteAsync(string symbol, string name)
