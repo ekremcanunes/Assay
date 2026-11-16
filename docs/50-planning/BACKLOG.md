@@ -321,6 +321,7 @@ Uygulamadan önce DESIGN.md okunur.
 - **Yahoo Finance (fiyatlar).** Kullanılan `query1.finance.yahoo.com/v8/finance/chart` resmi API değil; anahtar ve sözleşme yok. Yahoo her an değiştirip engelleyebilir; bulut IP'leri daha sık engellenir. İzinsiz ticari kullanım risklidir.
 - **Frankfurter (döviz).** Açık kaynak, ECB referans kurları; risk düşük.
 - **BIST verisi.** Üçüncü kişilere dağıtımı (özellikle anlık) Borsa İstanbul lisansına tabi.
+- **Borsa İstanbul endeks bileşen dosyası (BIST 30/100 üyeliği).** `borsaistanbul.com/datum/hisse_endeks_ds.csv`, haftalık indirilip veritabanında tutuluyor (2026-11-16). Sitenin "Telif Hakkı ve Çekince İhbarı": bilgiler "sadece bilgi edinme amacıyla" kullanılabilir; yazılı izin olmadan kopyalanamaz, saklanamaz, dağıtılamaz. Herkese açılmadan önce Borsa İstanbul'dan yazılı izin.
 
 **Neden önemli.** Kişisel ve az trafikli projede pratik risk düşük; en olası sonuç Yahoo'nun engellemesi ya da Twelve Data'nın anahtarı kapatması (teknik kesinti). Herkese açık ya da ticari ürün olursa izinsiz veri kullanımı somut hukuki risk olur.
 
@@ -455,3 +456,15 @@ Kullanıcı oturumu bir istekte iki kez (portfolio-service ve market-service) Kr
 **Neden önemli.** Listede olup Yahoo'da hiç bulunmayan bir sembol kullanıcıya sürekli "şu an doğrulanamıyor, sonra dene" gösterir; doğrusu "desteklenmiyor"dur. Nadir, ama yanıltıcı.
 
 **Öneri.** İstemci iki durumu ayırsın (ör. sonuç türü: bulundu / bulunamadı / hata). Sonra `/instrument`: bulunamadı → 404, hata → 503.
+
+---
+
+## Arka plan senkronlarının hataları kimseye haber vermiyor
+
+*Eklendi: 2026-11-16 · Bağlam: BIST 30/100 üyeliğini resmî kaynaktan alma (spec `docs/superpowers/specs/2026-11-16-bist30-resmi-liste-design.md`)*
+
+**Sorun.** Endeks bileşen senkronu kaynak okunamazsa `Warning`, liste 10 günden eskiyse `Error` yazar; Twelve Data senkronu da sorunlarını yalnızca loga yazar. Log için alarm yok; kurulu tek alarm bütçe alarmı (`LOGGING.md`).
+
+**Neden önemli.** "BT müdahale etsin" kararı ancak biri logu görürse işler. Ekran son listeyi göstermeye devam ettiği için sorun kullanıcı tarafında fark edilmez; liste sessizce eskiyebilir.
+
+**Öneri.** Bu iki senkronun `Error` satırları için log alarmı (ör. CloudWatch metric filter + e-posta). Alternatif: haftalık log kontrolü alışkanlığı.
