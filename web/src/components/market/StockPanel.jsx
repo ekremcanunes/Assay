@@ -312,7 +312,16 @@ export default function StockPanel({ stocks, bist30, bist100, indexes, indexCode
           </table>
         </div>
 
-        {pages > 1 && <Pager pages={pages} current={current} onChange={setPage} />}
+        {pages > 1 && (
+          <Pager
+            pages={pages}
+            current={current}
+            onChange={setPage}
+            from={current * PAGE_SIZE + 1}
+            to={current * PAGE_SIZE + visible.length}
+            total={sorted.length}
+          />
+        )}
         </>)}
 
         {!loading && sorted.length === 0 && (
@@ -354,36 +363,42 @@ function pageItems(pages, current) {
   return [0, '…', current, '…', pages - 1]
 }
 
-// Numaralı sayfalama: ‹ 1 2 3 … 10 ›. Düğmeler İzlediklerim'deki ok düğmeleriyle aynı (ghost, 44px);
-// seçili sayfa kobalt yıkama (AK-01/AK-02).
-function Pager({ pages, current, onChange }) {
+// Numaralı sayfalama, İzlediklerim'le aynı düzen: solda "11–20 / 100", sağda ‹ 1 2 3 … 10 ›.
+// Düğmeler İzlediklerim'deki ok düğmeleriyle aynı (ghost, 44px); seçili sayfa kobalt yıkama (AK-01/AK-02).
+// Dar ekranda yazı ile düğmeler tek satıra sığmaz: düğmeler alt satıra iner, sağda kalır (MB-10).
+function Pager({ pages, current, onChange, from, to, total }) {
   const { t } = useLanguage()
   return (
-    <nav aria-label={t('market.pages')} className="flex items-center justify-center gap-0.5 border-t border-border px-2 py-1">
-      <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => onChange(current - 1)} disabled={current === 0} aria-label={t('market.prevPage')}>
-        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-      </Button>
-      {pageItems(pages, current).map((p, i) =>
-        p === '…' ? (
-          <span key={`gap-${i}`} className="grid h-11 w-6 place-items-center text-ui text-muted-foreground" aria-hidden="true">…</span>
-        ) : (
-          <Button
-            key={p}
-            variant="ghost"
-            size="icon"
-            onClick={() => onChange(p)}
-            aria-current={p === current ? 'page' : undefined}
-            aria-label={t('market.pageN').replace('{n}', p + 1)}
-            className={cn('tabular h-11 w-11', p === current && 'bg-primary/10 font-bold text-primary hover:bg-primary/10 hover:text-primary')}
-          >
-            {p + 1}
-          </Button>
-        )
-      )}
-      <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => onChange(current + 1)} disabled={current >= pages - 1} aria-label={t('market.nextPage')}>
-        <ChevronRight className="h-4 w-4" aria-hidden="true" />
-      </Button>
-    </nav>
+    <div className="flex flex-wrap items-center justify-between gap-x-3 border-t border-border py-1 pl-4 pr-2">
+      <span className="tabular text-ui text-muted-foreground">
+        {t('watch.pageOf').replace('{from}', from).replace('{to}', to).replace('{total}', total)}
+      </span>
+      <nav aria-label={t('market.pages')} className="ml-auto flex items-center gap-0.5">
+        <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => onChange(current - 1)} disabled={current === 0} aria-label={t('market.prevPage')}>
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+        </Button>
+        {pageItems(pages, current).map((p, i) =>
+          p === '…' ? (
+            <span key={`gap-${i}`} className="grid h-11 w-6 place-items-center text-ui text-muted-foreground" aria-hidden="true">…</span>
+          ) : (
+            <Button
+              key={p}
+              variant="ghost"
+              size="icon"
+              onClick={() => onChange(p)}
+              aria-current={p === current ? 'page' : undefined}
+              aria-label={t('market.pageN').replace('{n}', p + 1)}
+              className={cn('tabular h-11 w-11', p === current && 'bg-primary/10 font-bold text-primary hover:bg-primary/10 hover:text-primary')}
+            >
+              {p + 1}
+            </Button>
+          )
+        )}
+        <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => onChange(current + 1)} disabled={current >= pages - 1} aria-label={t('market.nextPage')}>
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
+        </Button>
+      </nav>
+    </div>
   )
 }
 
