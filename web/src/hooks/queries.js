@@ -171,6 +171,15 @@ export function useAssetTransactions(market, symbol) {
   })
 }
 
+// Genel Bakış'taki son işlemler — en yeni `limit` kayıt (sunucu tarihe göre yeniden eskiye sıralar).
+// Anahtar ['transactions', ...] ile başlar: al-sat sonrası invalidate bunu da tazeler.
+export function useRecentTransactions(limit = 5) {
+  return useQuery({
+    queryKey: [...queryKeys.transactions, 'recent', limit],
+    queryFn: () => transactionApi.getAll({ pageSize: limit }).then((r) => r.data.items ?? []),
+  })
+}
+
 // Al-sat sonrası holdings + dashboard + lot geçmişi otomatik tazelensin
 function useAssetMutation(mutationFn) {
   const qc = useQueryClient()
