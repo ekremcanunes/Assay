@@ -306,7 +306,7 @@ Koyu tema `body` zemini: sağ üstte `#3B82F6` `%12`, sol altta `#10B981` `%8` r
 ## §11 Veri dürüstlüğü
 
 - `VR-01` Elimizde olmayan piyasa verisini gösterme: sektör, F/K, PD/DD, piyasa değeri, temettü, emir defteri, haber, duyarlılık skoru. Tasarım girdisinde olsa da gösterme.
-- `VR-02` Yapay zekâ özeti kartı gösterme. Servis gelince kartı "yatırım tavsiyesi değildir" notuyla ekle.
+- `VR-02` Yapay zekâ özeti kartı gösterme. Servis gelince kartı "yatırım tavsiyesi değildir" notuyla ekle. İstisna: servis gelmeden önce pasif "Yakında" yer tutucusu gösterebilirsin (Genel Bakış'taki "Portföyüne sor"). Kenarı kesikli olur, alan ve butonlar `disabled` olur, içinde örnek cevap veya örnek metin olmaz. Pasif örnek soru hapları gösterilebilir: hap bir soru önerir, veri veya cevap göstermez.
 - `VR-03` Canlandırmayı gerçek veri gibi sunma. Üstüne "Canlandırma · gerçek istek değil" yaz.
 - `VR-04` Rastgele üretilip canlı log gibi akan kutu kullanma.
 - `VR-05` Temsilci seriyi (BIST 100, USD/TRY, gram altın) portföy değeri gibi gösterme. Altına etiketini yaz.

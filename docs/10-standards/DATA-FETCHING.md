@@ -43,7 +43,7 @@ flowchart TD
 | Dosya | İçerik |
 |-------|--------|
 | [`src/App.jsx`](src/App.jsx) | `QueryClientProvider` + `QueryClient` ayarı (`staleTime: 60_000`, `refetchOnWindowFocus: false`, `retry: 1`). Buradaki `staleTime` yalnızca sunucu tazelik bilgisi göndermeyen sorgular için geçerlidir (bkz. §2.1). |
-| [`src/hooks/queries.js`](src/hooks/queries.js) | Tüm hook'lar burada: `useHoldings`, `useDashboard` + `useBuyAsset/useSellAsset/useUpdateAsset/useDeleteAsset`. Mutation'lar başarıda `['holdings']` ve `['dashboard']`'ı **invalidate** eder. |
+| [`src/hooks/queries.js`](src/hooks/queries.js) | Tüm hook'lar burada: `useHoldings`, `useDashboard`, `useRecentTransactions` (Genel Bakış, son 5 işlem; anahtar `['transactions', 'recent', n]`) + `useBuyAsset/useSellAsset/useUpdateAsset/useDeleteAsset`. Mutation'lar başarıda `['holdings']`, `['dashboard']` ve `['transactions']`'ı **invalidate** eder. |
 
 ### 2.1 Tazelik kuralı: süreyi sunucu belirler
 
