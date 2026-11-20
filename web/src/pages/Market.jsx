@@ -27,7 +27,8 @@ function Ticker({ label, quote }) {
 // Borsa sekmesindeki endeks segmenti. Kod, backend'deki IndexConstituents.IndexCode ile aynıdır.
 const INDEXES = { XU030: 'BIST 30', XU100: 'BIST 100' }
 
-// Piyasa: üç sekme (Borsa · Altın & Döviz · İzlediklerim), seçili sekme adreste (?tab=goldfx|watch) — yenileyince aynısı açılır.
+// Piyasa: dört sekme (BIST · ABD · Altın & Döviz · İzlediklerim), seçili sekme adreste (?tab=us|goldfx|watch) — yenileyince aynısı açılır.
+// ABD sekmesi şimdilik yalnız "Yakında" yer tutucusu.
 // Borsa'da endeks segmenti (BIST 30 · BIST 100) de adreste (?index=xu100); BIST 30 piyasa özetiyle gelir,
 // BIST 100 yalnız seçilince ayrı istekle yüklenir.
 // Borsa'da lg+ ekranda sağda seçili hissenin sabit paneli; ilk açılışta en çok yükselen seçilidir.
@@ -37,7 +38,7 @@ export default function Market() {
   const { data, isLoading } = useMarketOverview()
   const [params, setParams] = useSearchParams()
   const [selectedSymbol, setSelectedSymbol] = useState(null)
-  const tab = ['goldfx', 'watch'].includes(params.get('tab')) ? params.get('tab') : 'stocks'
+  const tab = ['us', 'goldfx', 'watch'].includes(params.get('tab')) ? params.get('tab') : 'stocks'
   const setTab = (next) => setParams(next === 'stocks' ? {} : { tab: next }, { replace: true })
   const indexCode = params.get('index') === 'xu100' ? 'XU100' : 'XU030'
   const setIndexCode = (next) => setParams(next === 'XU100' ? { index: 'xu100' } : {}, { replace: true })
@@ -75,6 +76,7 @@ export default function Market() {
       tabs={
         <>
           <PageTab active={tab === 'stocks'} onClick={() => setTab('stocks')}>{t('market.tileStocks')}</PageTab>
+          <PageTab active={tab === 'us'} onClick={() => setTab('us')}>{t('market.tileUs')}</PageTab>
           <PageTab active={tab === 'goldfx'} onClick={() => setTab('goldfx')}>{t('market.tileGoldFx')}</PageTab>
           <PageTab active={tab === 'watch'} onClick={() => setTab('watch')}>{t('watch.tab')}</PageTab>
         </>
@@ -83,6 +85,14 @@ export default function Market() {
       {/* İzlediklerim piyasa özetini beklemez: kendi verisi var */}
       {tab === 'watch' ? (
         <WatchlistPanel />
+      ) : tab === 'us' ? (
+        <div className="max-w-3xl rounded-xl border border-dashed border-border p-6">
+          <div className="flex items-center gap-2">
+            <h2 className="text-body font-semibold text-foreground">{t('market.usTitle')}</h2>
+            <span className="chip-neutral rounded-sm px-2 py-0.5 text-micro font-semibold">{t('market.soon')}</span>
+          </div>
+          <p className="mt-1 text-ui text-muted-foreground">{t('market.usSoon')}</p>
+        </div>
       ) : isLoading ? (
         <div className="space-y-4">
           <Skeleton className="h-72 w-full" />
