@@ -21,8 +21,9 @@ const formatQty = (v) => new Intl.NumberFormat('tr-TR', { maximumFractionDigits:
 const CATEGORY_LABELS = { Stock: 'assets.stock', Currency: 'assets.currency', Gold: 'assets.gold' }
 const TOP_HOLDINGS = 5
 
-// Genel Bakış (A · Pano): net varlık + dağılım, piyasa, en büyük varlıklar, son işlemler,
-// en altta "Portföyüne sor" yer tutucusu (yerel model gelene kadar pasif).
+// Genel Bakış (A · Pano): solda 2×2 bilgi kartı (net varlık + dağılım, piyasa, en büyük varlıklar,
+// son işlemler), xl+ ekranda sağda tam boy "Portföyüne sor" sütunu (yerel model gelene kadar pasif).
+// Amaç: masaüstünde sayfa kaydırılmadan tek ekrana sığsın. xl altında sohbet alta iner, lg altında tek sütun.
 // Hepsi mevcut uçlardan gelir. Günlük değişim ve toplam K/Z için dashboard API'sinde alan yok (sonraki adım).
 export default function Overview() {
   const { t } = useLanguage()
@@ -54,13 +55,13 @@ export default function Overview() {
       }
     >
       {isLoading || holdingsLoading ? (
-        <div className="mx-auto max-w-6xl space-y-4">
+        <div className="mx-auto max-w-screen-2xl space-y-4">
           <Skeleton className="h-44 w-full" />
           <Skeleton className="h-72 w-full" />
         </div>
       ) : (
-        <div className="mx-auto max-w-6xl space-y-4">
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="mx-auto grid max-w-screen-2xl gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="grid content-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
             {/* Ana KPI: net varlık + dağılım (renk yalnızca ayırt eder) */}
             <section className="rounded-xl border border-border bg-card p-4 shadow-card md:p-5">
               <div className="label text-muted-foreground">{t('overview.netWorth')}</div>
@@ -91,9 +92,6 @@ export default function Overview() {
             </section>
 
             <MarketCard />
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <TopHoldings holdings={holdings} total={total} />
             <RecentTransactions />
           </div>
@@ -245,30 +243,32 @@ function RecentTransactions() {
 }
 
 // Yerel model ile soru-cevap: henüz yok. Yalnız yer tutucu; örnek cevap gösterilmez.
+// xl+ ekranda sağ sütunu boydan boya kaplar: üstte başlık, ortada boş sohbet alanı, altta sorular + alan.
 function AskPlaceholder() {
   const { t } = useLanguage()
   const questions = ['overview.askQ1', 'overview.askQ2', 'overview.askQ3']
 
   return (
-    <section className="rounded-xl border border-dashed border-border p-4 md:p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
-            <MessageCircle className="h-4 w-4" />
-          </span>
-          <div>
-            <h2 className="text-body font-semibold text-foreground">{t('overview.ask')}</h2>
-            <p className="text-ui text-muted-foreground">{t('overview.askHint')}</p>
+    <section className="flex flex-col rounded-xl border border-dashed border-border p-4 md:p-5">
+      <div className="flex items-start gap-2.5">
+        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
+          <MessageCircle className="h-4 w-4" />
+        </span>
+        <div className="min-w-0">
+          <h2 className="text-body font-semibold text-foreground">{t('overview.ask')}</h2>
+          <p className="text-ui text-muted-foreground">{t('overview.askHint')}</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span className="chip-neutral inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-micro font-semibold">
+              <Lock className="h-3 w-3" />
+              {t('overview.localModel')}
+            </span>
+            <span className="chip-neutral rounded-sm px-2 py-0.5 text-micro font-semibold">{t('market.soon')}</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="chip-neutral inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-micro font-semibold">
-            <Lock className="h-3 w-3" />
-            {t('overview.localModel')}
-          </span>
-          <span className="chip-neutral rounded-sm px-2 py-0.5 text-micro font-semibold">{t('market.soon')}</span>
-        </div>
       </div>
+
+      {/* Boş sohbet alanı: cevaplar ileride burada akar */}
+      <div className="xl:flex-1" />
 
       <div className="mt-4 flex flex-wrap gap-2">
         {questions.map((k) => (
