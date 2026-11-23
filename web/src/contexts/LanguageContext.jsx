@@ -66,7 +66,6 @@ export const translations = {
     'theme.label': 'Tema',
     'theme.light': 'Açık',
     'theme.dark': 'Koyu',
-    'theme.system': 'Sistem',
     // Alt navigasyon çubuğu için kısa etiketler (sekme genişliği ~62px)
     'nav.overviewShort': 'Özet',
     'nav.assetsShort': 'Portföy',
@@ -444,7 +443,6 @@ export const translations = {
     'theme.label': 'Theme',
     'theme.light': 'Light',
     'theme.dark': 'Dark',
-    'theme.system': 'System',
     'nav.overviewShort': 'Overview',
     'nav.assetsShort': 'Portfolio',
     'nav.analyticsShort': 'Analytics',
