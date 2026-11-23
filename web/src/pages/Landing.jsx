@@ -1,5 +1,6 @@
 import { Suspense, use, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ArrowDown } from 'lucide-react'
 import { APP_NAME } from '../lib/app'
 import { TECH, STACK_COLUMNS, DEFAULT_TECH } from '../lib/stack'
 import { useAuth } from '../contexts/AuthContext'
@@ -169,7 +170,8 @@ export default function Landing() {
           </div>
           {/* Mobilde menü yok: bölümler zaten tek sütunda alt alta; yalnız giriş ve kayıt */}
           <div className="flex items-center gap-1 sm:gap-3">
-            <ThemeSwitch iconOnly className="mr-1" />
+            <ThemeSwitch iconOnly />
+            <span className="mx-2 hidden h-5 w-px bg-border sm:block" aria-hidden="true" />
             {session ? (
               <Cta session={session} className="press whitespace-nowrap rounded-[10px] bg-primary px-4 py-2.5 text-ui font-semibold text-primary-foreground hover:opacity-90" />
             ) : (
@@ -193,20 +195,28 @@ export default function Landing() {
             <div>
               {/* Başlık geçici — kullanıcı sonra değiştirecek (Faz 2 spec §2) */}
               <h1 className="max-w-[18ch] text-title font-bold text-foreground md:text-display lg:text-hero">
-                Hisse, altın ve döviz. Hepsi tek defterde.
+                Hisse, altın ve döviz.<br />Hepsi tek defterde.
               </h1>
               <p className="mt-4 max-w-[52ch] text-body text-muted-foreground md:mt-6">
                 Yatırımlarımı tuttuğum bu uygulamayı, modern bir yazılımın nasıl kurulduğunu öğrenirken yazdım.
-                Nasıl yapıldığı da burada.
+                Katmanlı mimari, önbellek stratejisi ve istek akışı burada.
               </p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap md:mt-8">
-                <a href="#akis" className="press hidden rounded-[10px] border border-border bg-card px-5 py-3 text-center text-ui font-semibold text-foreground hover:bg-secondary sm:block">
+                <a href="#akis" className="press hidden items-center justify-center gap-2 rounded-[10px] bg-primary px-5 py-3 text-ui font-semibold text-primary-foreground hover:opacity-90 sm:inline-flex">
                   İstek akışını gör
+                  <ArrowDown className="h-4 w-4" aria-hidden="true" />
                 </a>
                 <a href="#akis" className="text-ui font-semibold text-primary sm:hidden">
                   Bir istek nereden geçiyor ↓
                 </a>
               </div>
+              <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-5 text-ui text-muted-foreground md:mt-10">
+                {['Redis önbellek', 'Docker Compose, 6 container', '.NET 9 servisler'].map((f) => (
+                  <li key={f} className="flex items-center gap-2">
+                    <i className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />{f}
+                  </li>
+                ))}
+              </ul>
             </div>
 
             {/* Eskiden rastgele üretilen "stdout" kutusu vardı (gerçek gibi duruyordu); yerine dokunulabilir canlandırma */}
