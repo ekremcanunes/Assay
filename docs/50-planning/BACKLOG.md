@@ -468,3 +468,25 @@ Kullanıcı oturumu bir istekte iki kez (portfolio-service ve market-service) Kr
 **Neden önemli.** "BT müdahale etsin" kararı ancak biri logu görürse işler. Ekran son listeyi göstermeye devam ettiği için sorun kullanıcı tarafında fark edilmez; liste sessizce eskiyebilir.
 
 **Öneri.** Bu iki senkronun `Error` satırları için log alarmı (ör. CloudWatch metric filter + e-posta). Alternatif: haftalık log kontrolü alışkanlığı.
+
+---
+
+## AWS prod: sağlık uç noktası ve prod'da test araçları
+
+*Eklendi: 2026-11-23 · Bağlam: AWS'de prod'u test etme araçları sohbeti (öğrenme amaçlı; AWS yol haritasıyla birlikte ele alınır)*
+
+**Sorun.** İki .NET servisinde `/health` uç noktası yok. `KratosMiddleware` yalnızca `/api/auth/options` yolunu muaf tutar; `/health` eklenirse cookie'siz istek 401 alır. ALB ve ECS sağlık denetimi cookie göndermez, servisi hep "sağlıksız" sayar. Prod'u deploy sonrası ve sürekli denetleyen bir test de yok; Playwright yalnızca öğrenme notunda (`docs/40-learning/PLAYWRIGHT-LEARNING.md`), backend'de test projesi görünmüyor.
+
+**Neden önemli.** Sağlık uç noktası yoksa ALB çöken veya takılan kopyaya istek göndermeyi sürdürür; ECS onu yeniden başlatamaz. Deploy sonrası kontrol olmadan bozuk sürüm kullanıcıdan önce fark edilmez.
+
+**Yapılacaklar, bu sırayla.**
+
+| # | İş | Not |
+|---|---|---|
+| 1 | `portfolio-service` ve `market-service`'e `/health` (`AddHealthChecks` + `MapHealthChecks`) | `KratosMiddleware`'e muafiyet gerekir. Önce yalnızca "canlı mı" (liveness); sonra veritabanı/Redis kontrolüyle "hazır mı" (readiness). Kratos hazır verir: `/health/alive`, `/health/ready` |
+| 2 | Deploy sonrası smoke test (bash + `curl`) | 5–10 dk'lık hızlı kontrol: giriş sayfası, API, Kratos. Başarısızsa önceki sürüme dön. `deploy/scripts/` ve `PIPELINE-SECURITY.md` ile birlikte |
+| 3 | Playwright ile giriş → portföy akışı | Prod'da ayrı test kullanıcısı kullan; gerçek veriye dokunma; testin yazdığı kaydı sil |
+| 4 | Sentetik izleme: CloudWatch Synthetics (canary) | Zamanlanmış betik, uygulamayı kullanıcı gibi gezer, alarma bağlanır. Alternatif: Checkly, UptimeRobot (yalnızca URL yoklar) |
+| 5 | k6 ile yük testi | **Prod'da değil, staging'de.** Prod'da Twelve Data ücretsiz limitini tüketir ve gerçek kullanıcıyı etkiler. AWS'in yük testi politikasını yapmadan önce kontrol et |
+
+**Not.** 4. adımın alarmı, "Arka plan senkronlarının hataları kimseye haber vermiyor" maddesindeki log alarmıyla aynı CloudWatch altyapısını kullanır; ikisi birlikte planlanabilir. `/api/system/status` (durum şeridi, `SystemController`) ALB sağlık denetimi olarak kullanılamaz: `KratosMiddleware` yüzünden kimlik doğrulama ister. Ama içindeki `SELECT 1` veritabanı ping'i, 1. adımdaki readiness kontrolüne örnek olur.
