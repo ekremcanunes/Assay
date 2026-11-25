@@ -11,7 +11,7 @@ lede: >-
   bundan üretilen değer var. Örnekler gerçek şemaya uyar ama değerler örnektir. Uzun ondalıklar kısaltıldı.
 
 groups:
-  - { id: dis, label: "Dış kaynaklar", desc: "Fiyat, kur ve enstrüman listesi dışarıdan gelir." }
+  - { id: dis, label: "Dış kaynaklar", desc: "Fiyat, kur, enstrüman listesi ve endeks üyeliği dışarıdan gelir." }
   - { id: kullanici, label: "Kullanıcı girişi", desc: "Kullanıcının formla gönderdiği veriler." }
   - { id: kimlik, label: "Kimlik", desc: "Kayıt ve oturum verisi Kratos'ta durur." }
   - { id: uretilen, label: "Üretilen görünümler", desc: "Saklanmaz; her istekte saklanan veriden hesaplanır." }
@@ -237,6 +237,48 @@ cards:
       - "Gelen → saklanan: bir kaynak boş gelirse veya aktif listenin %80'inin altında kalırsa o kaynağın satırlarına dokunulmaz. Kısmi bir cevap listeyi silmez."
       - "Hem hisse hem ETF olarak gelen sembol `IsConflict = true` ve pasif yazılır. Hangisinin doğru olduğu bilinmez."
       - "Saklanan → bellek: arama sık çağrılır. Bellekten okunduğu için veritabanına gitmez."
+
+  - id: borsaistanbul
+    group: dis
+    title: "Borsa İstanbul endeks üyeliği"
+    via: "Borsa İstanbul · HTTPS · CSV · haftada 1"
+    flow: endeks
+    file: market-service/Services/IndexConstituentSyncer.cs
+    in:
+      where: "`GET borsaistanbul.com/datum/hisse_endeks_ds.csv` (prod) · lokalde aynı dosya diskten (`/data/bist/`)"
+      text: >-
+        Senkron her pazartesi 06:00'da (Türkiye saati, `BorsaIstanbul:Cron`) ve açılışta liste yoksa veya 7 günden eskiyse çalışır.
+        Dosya `;` ile ayrılmıştır; ilk iki satır başlıktır (Türkçe ve İngilizce).
+      used:
+        - "`BILESEN KODU` (`.E` eki atılır), `ENDEKS KODU`, `TARIH(GG/AA/YYYY)`"
+      dropped:
+        - "`BULTEN_ADI`, `ENDEKS ADI`, `ENDEKS INGILIZCE ADI`: şirket adı `Instruments`'tan okunur"
+        - "XU030 ve XU100 dışındaki tüm endeksler"
+      samples:
+        - label: "hisse_endeks_ds.csv · ilk satırlar"
+          code: |
+            BILESEN KODU;BULTEN_ADI;ENDEKS KODU;ENDEKS ADI;ENDEKS INGILIZCE ADI;TARIH(GG/AA/YYYY)
+            CONSTITUENT CODE;CONSTITUENT NAME;INDEX CODE;INDEX NAME IN TURKISH;INDEX NAME IN ENGLISH;DATE(DD/MM/YYYY)
+            AKBNK.E;AKBANK;XU030;BIST 30;BIST 30;16/11/2026
+            …
+    store:
+      where: "Postgres `IndexConstituents` (anahtar `IndexCode` + `Symbol`). Bellekte `IndexMembership`."
+      text: >-
+        İki endeksin satırları her senkronda tek transaction içinde silinip yeniden yazılır. `Instruments` ile foreign key yoktur;
+        ilişki mantıksaldır: (`"BIST"`, `Symbol`).
+      samples:
+        - label: "Postgres · IndexConstituents satırı"
+          code: |
+            IndexCode = "XU030"        # XU030 | XU100
+            Symbol    = "AKBNK"        # ".E" eki atılmış
+            AsOf      = 2026-11-16     # listenin geçerli olduğu işlem günü
+    out:
+      where: "Sunucu · market-service belleği"
+      text: "Piyasa ekranının BIST 30 ve BIST 100 tabloları sembolleri buradan alır. Ad `InstrumentCatalog`'dan, fiyat Redis/Yahoo'dan eklenir."
+    why:
+      - "Gelen → saklanan: XU030 tam 30, XU100 tam 100 sembol değilse dosya reddedilir ve tablo değişmez. Bozuk dosya doğru listeyi silmez."
+      - "Otorite Borsa İstanbul'dur. `Instruments`'ta olmayan sembol de yazılır; yalnız `Warning` ile haber verilir."
+      - "Liste 10 günden eskiyse her senkronda `Error` yazılır. Log için alarm yoktur (BACKLOG)."
 
   # ---------------- Kullanıcı girişi ----------------
   - id: alim
@@ -636,8 +678,10 @@ cards:
     flow: cache
     file: market-service/Services/MarketOverviewService.cs
     in:
-      where: "Redis fiyatları (`stock:BIST:*`, `currency:*`, `gold:XAU`, `index:*`, `spark:*`) + bellekteki enstrüman adları"
-      text: "BIST 30 üyeliği API'den gelmez. 30 sembol kodda elle tutulur."
+      where: "Redis fiyatları (`stock:BIST:*`, `currency:*`, `gold:XAU`, `index:*`, `spark:*`) + bellekteki enstrüman adları + bellekteki endeks üyeliği"
+      text: >-
+        BIST 30 sembolleri `IndexMembership`'ten gelir (Borsa İstanbul dosyası, haftalık; Akış 13). BIST 100 hisseleri aynı yoldan
+        ayrı bir uçla gelir: `GET /api/market/index-stocks/XU100`.
     store:
       where: "Saklanmaz; parçaları Redis'te"
       text: "Endeks ve sparkline yalnız bu ekranda kullanıldığı için kendi anahtarlarındadır. Hisse, döviz ve altın portföyle aynı anahtardan okunur."
@@ -663,6 +707,7 @@ cards:
             }
     why:
       - "Hisselerin `spark` listesi boştur. 30 hisse için ayrı seri çekmek 30 ek istek demektir."
+      - "Şirket adı Borsa İstanbul dosyasından değil, `Instruments`'tan gelir. Ad her ekranda tek kaynaktan okunur; bulunamazsa sembol gösterilir."
       - "Altın sparkline'ı bugünün kuruyla çevrilir. Eğilimi gösterir, kesin tarihsel fiyatı göstermez."
 
   - id: arama

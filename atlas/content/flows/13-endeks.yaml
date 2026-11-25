@@ -1,0 +1,286 @@
+id: endeks
+no: "13"
+group: veri
+eyebrow: "Akış 13 · Endeks üyeliği · Arka plan işi"
+title: "BIST 30 ve 100'de *hangi hisseler var?*"
+lede: >-
+  Endeks üyeliği Borsa İstanbul'un herkese açık bileşen dosyasından haftada bir okunur. Liste Postgres'te tutulur,
+  piyasa ekranı servisin belleğindeki kopyadan okur. Şirket adı Instruments tablosundan, fiyat Yahoo'dan gelir.
+stats:
+  - { n: 2, l: "endeks" }
+  - { n: 1, l: "senkron / hafta" }
+  - { n: 0, l: "foreign key" }
+  - { n: 10, l: "gün sonra Error" }
+
+lanes:
+  - { id: client, label: "TARAYICI", tone: client }
+  - { id: ext, label: "BORSA İSTANBUL", tone: ext }
+  - { id: http, label: "MARKET-SERVICE · PİYASA", tone: app }
+  - { id: app, label: "MARKET-SERVICE · SENKRON", tone: app }
+  - { id: data, label: "POSTGRES", tone: data }
+
+nodes:
+  - { id: web, lane: client, col: 3, title: "Piyasa · BIST 30 / 100", sub: "Market.jsx · useIndexStocks", icon: browser }
+  - { id: bist, lane: ext, col: 1, title: "Bileşen dosyası", sub: "hisse_endeks_ds.csv", icon: globe }
+  - { id: catalog, lane: http, col: 1, title: "InstrumentCatalog", sub: "bellekte · şirket adı", icon: bolt }
+  - { id: overview, lane: http, col: 2, title: "MarketOverviewService", sub: "GetIndexStocksAsync()", icon: code }
+  - { id: ctrl, lane: http, col: 3, title: "MarketController", sub: "GET /index-stocks/{kod}", icon: server }
+  - { id: job, lane: app, col: 0, title: "IndexConstituentSyncJob", sub: "BackgroundService", icon: clock }
+  - { id: client, lane: app, col: 1, title: "BorsaIstanbulClient", sub: "indir veya diskten oku", icon: gear }
+  - { id: syncer, lane: app, col: 2, title: "IndexConstituentSyncer", sub: "SyncAsync()", icon: gear }
+  - { id: membership, lane: app, col: 3, title: "IndexMembership", sub: "sınıf · bellekte liste", icon: bolt }
+  - { id: table, lane: data, col: 2, title: "IndexConstituents", sub: "tablo · IndexCode+Symbol", icon: db }
+
+edges:
+  - [table, membership]
+  - [job, syncer]
+  - [bist, client]
+  - [client, syncer]
+  - [syncer, table]
+  - [catalog, syncer]
+  - [web, ctrl]
+  - [ctrl, overview]
+  - [membership, overview]
+  - [catalog, overview]
+
+steps:
+  - id: acilis
+    node: membership
+    edge: [table, membership]
+    title: "Açılış: liste veritabanından belleğe yüklenir"
+    what: >-
+      `Program.cs` migration'lardan sonra önce enstrüman listesini, sonra `IndexMembership.ReloadAsync()` ile endeks üyeliğini yükler.
+      `IndexConstituents` tablosundaki satırlar endekse göre gruplanıp belleğe alınır. Borsa İstanbul'a gidilmez.
+    why: >-
+      Piyasa ekranı ilk istekten itibaren tablodaki son listeyle çalışır. Senkronun bitmesi beklenmez.
+    cost: >-
+      Tablo boşsa (ilk kurulum) BIST 30 tablosu ilk senkron bitene kadar boş gelir.
+    next:
+      - { when: "Aynı anda arka plan işi başlar", to: guncel }
+      - { when: "Bu andan itibaren piyasa ekranı çalışır", to: istek }
+    terms: [in-memory, singleton]
+    file: market-service/Program.cs
+    code: |
+      # Piyasa özetinin BIST 30 tablosu da ilk istekten itibaren tablodaki son listeyle çalışsın.
+      await app.Services.GetRequiredService<IndexMembership>().ReloadAsync(db, CancellationToken.None);
+
+  - id: guncel
+    node: job
+    edge: null
+    aux: [membership]
+    title: "Açılış: liste güncel mi?"
+    what: >-
+      `IndexConstituentSyncJob` önce kaynak ayarına bakar. `BorsaIstanbul:ConstituentsSource` boşsa `Error` yazar ve hiç çalışmaz.
+      Sonra bellekteki listenin tarihine (`AsOf`) bakar. Liste yoksa veya 7 günden eskiyse senkronu hemen çalıştırır.
+    why: >-
+      Senkron haftada bir çalışır. Servis pazartesi 06:00'da kapalıysa o haftanın çalışması kaçar; açılış kontrolü bunu yakalar.
+      Liste güncelse dosya boşuna yeniden okunmaz.
+    cost: >-
+      Kaynak ayarı boşken servis çalışmaya devam eder. Liste güncellenmez ve bunu yalnız log söyler.
+    next:
+      - { when: "Liste yok veya 7 günden eski → hemen", to: cagir }
+      - { when: "Liste güncel → sonraki pazartesi 06:00'ı bekler", to: cagir }
+    terms: [hosted-service, env-var]
+    file: market-service/Services/IndexConstituentSyncJob.cs
+    code: |
+      if (membership.AsOf is not { } asOf || asOf.AddDays(StartupRunAfterDays) < MarketClock.Today)
+          await RunSyncAsync(stoppingToken);
+      else
+          logger.LogInformation("Index constituent sync on startup skipped: list as of {AsOf}", asOf);
+
+  - id: cagir
+    node: syncer
+    edge: [job, syncer]
+    title: "İş, senkron metodunu çağırır"
+    what: >-
+      Job yalnız zamanlar. Her pazartesi 06:00'da (`0 6 * * 1`, Türkiye saati) yeni bir scope açar ve `IndexConstituentSyncer.SyncAsync()` çağırır.
+      Twelve Data senkronundan (Akış 08) bağımsızdır: ayrı zamanlama, ayrı hata.
+    why: >-
+      Borsa İstanbul endeks bileşenlerini dönemsel değiştirir; günlük okumak gereksizdir.
+      Scope, veritabanı nesnesinin senkron bitince atılması içindir (Akış 08 ile aynı kalıp).
+    cost: >-
+      Endeks değişikliği en geç bir hafta gecikmeyle ekrana yansır.
+    next:
+      - { when: "Senkron başlar", to: oku }
+      - { when: "Senkronda istisna → job yakalar, servis düşmez", to: eskime }
+    terms: [cron, scoped]
+    file: market-service/Services/IndexConstituentSyncJob.cs
+    code: |
+      using var scope = scopeFactory.CreateScope();
+      await scope.ServiceProvider.GetRequiredService<IndexConstituentSyncer>().SyncAsync(ct);
+
+  - id: oku
+    node: client
+    edge: [bist, client]
+    title: "Dosya okunur: prod'da indirilir, lokalde diskten"
+    what: >-
+      `BorsaIstanbulClient` kaynak ayarına bakar. Değer `http` ile başlıyorsa dosyayı indirir, başlamıyorsa diskten okur.
+      Prod'da değer compose varsayılanıdır: Borsa İstanbul'un adresi. Lokalde `.env` ile container içindeki
+      `/data/bist/hisse_endeks_ds.csv` yolu verilir; klasör `docker-compose.override.yml` ile salt okunur bağlanır.
+    why: >-
+      Kaynak adresi kodda değil ayardadır. Lokalde her açılışta Borsa İstanbul'dan indirme yapılmaz.
+      Container host diskini göremez; bu yüzden klasör volume ile bağlanır.
+    cost: >-
+      Okuma başarısızsa `Warning` yazılır ve tablo değişmez. Lokaldeki dosya elle yenilenmezse eskir.
+    next:
+      - { when: "Dosya okundu", to: ayikla }
+      - { when: "Okunamadı → tablo değişmez", to: eskime }
+    terms: [env-var, bind-mount]
+    file: market-service/Clients/BorsaIstanbulClient.cs
+    code: |
+      if (!_source.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+          return await File.ReadAllTextAsync(_source, ct);
+
+      var response = await httpClient.GetAsync(_source, ct);
+
+  - id: ayikla
+    node: syncer
+    edge: [client, syncer]
+    title: "Satırlar ayıklanır ve sayılır"
+    what: >-
+      Dosya `;` ile ayrılmıştır, ilk iki satır başlıktır. Yalnız `XU030` ve `XU100` satırları alınır, sembolün `.E` eki atılır.
+      Sonra sayı kontrol edilir: BIST 30 tam 30, BIST 100 tam 100 sembol olmalı. Tarih okunamazsa veya sayı tutmazsa dosya reddedilir.
+    why: >-
+      Yarım inmiş ya da biçimi değişmiş bir dosya mevcut doğru listeyi silmemeli. Sayı kontrolü bunu ucuz yoldan yakalar.
+    cost: >-
+      Dosyadaki şirket adı (`BULTEN_ADI`) saklanmaz. Ad Instruments tablosundan gelir.
+    next:
+      - { when: "Sayılar tuttu", to: yaz }
+      - { when: "Dosya reddedildi → tablo değişmez", to: eskime }
+    terms: []
+    file: market-service/Services/IndexConstituentSyncer.cs
+    code: |
+      # Dosya: ";" ayraçlı, ilk iki satır başlık (TR + EN). Örnek:
+      # AKBNK.E;AKBANK;XU030;BIST 30;BIST 30;16/11/2026
+      var symbol = fields[0].Trim();
+      if (symbol.EndsWith(".E", StringComparison.Ordinal)) symbol = symbol[..^2];
+
+  - id: yaz
+    node: table
+    edge: [syncer, table]
+    title: "Tablo tek seferde değiştirilir"
+    what: >-
+      İki endeksin eski satırları silinir, yenileri eklenir. Silme ve ekleme tek transaction içindedir.
+    why: >-
+      Transaction yarıda kalırsa hiçbir değişiklik yazılmaz. Tablo hiçbir an boş veya yarım kalmaz.
+    cost: >-
+      Liste her seferinde baştan yazılır. Bir hissenin endekse ne zaman girip çıktığının geçmişi tutulmaz.
+    terms: [transaction]
+    file: market-service/Services/IndexConstituentSyncer.cs
+    code: |
+      await using (var tx = await db.Database.BeginTransactionAsync(ct))
+      {
+          await db.IndexConstituents.Where(c => codes.Contains(c.IndexCode)).ExecuteDeleteAsync(ct);
+          db.IndexConstituents.AddRange(rows);
+          await db.SaveChangesAsync(ct);
+          await tx.CommitAsync(ct);
+      }
+
+  - id: bellek
+    node: membership
+    edge: [table, membership]
+    aux: [syncer]
+    title: "Bellek listesi yenilenir"
+    what: >-
+      Yazmadan sonra `IndexConstituentSyncer`, `IndexMembership.ReloadAsync()` çağırır. Yeni liste eskisinin yerine tek atamayla geçer.
+    why: >-
+      Piyasa ekranı her istekte veritabanına gitmez. Tek atama sayesinde ekran hiçbir zaman yarım liste görmez.
+    cost: >-
+      Liste her servis örneğinin belleğinde ayrı tutulur. Servis çoğaltılırsa diğer örnekler bu senkronu görmez.
+    next:
+      - { when: "Sembol kontrolüne geçilir", to: kontrol }
+    terms: [in-memory, singleton]
+    file: market-service/Services/IndexMembership.cs
+    code: |
+      # Liste ve tarih tek nesnede; yenilemede tek atamayla değişir, okuyan yarım liste görmez.
+      _snapshot = new Snapshot(byIndex, rows.Count > 0 ? rows.Max(r => r.AsOf) : null);
+
+  - id: kontrol
+    node: syncer
+    edge: [catalog, syncer]
+    title: "Her sembol Instruments'ta aranır"
+    what: >-
+      Yeni listedeki her sembol, Twelve Data'nın doldurduğu enstrüman listesinde (`InstrumentCatalog`, Akış 08) aranır.
+      Bulunamayanlar tek bir `Warning` satırında listelenir. Kayıt yine de yazılmıştır.
+    why: >-
+      Üyeliğin otoritesi Borsa İstanbul'dur. Sembol değişikliği önce bu dosyada görünür; uyarı iki kaynağın ayrıştığını haber verir.
+      İki tablo arasında foreign key yoktur: Twelve Data bir sembolde geride kalırsa kısıt bütün güncellemeyi reddettirirdi.
+    cost: >-
+      Karşılaştırmayı yalnız bu senkron yapar. Twelve Data bir sembolü pasife çekerse bu en geç sonraki pazartesi fark edilir.
+    next:
+      - { when: "Tarih kontrolüne geçilir", to: eskime }
+    terms: [foreign-key]
+    file: market-service/Services/IndexConstituentSyncer.cs
+    code: |
+      # Üyeliğin otoritesi Borsa İstanbul: katalogda olmayan sembol de yazılır, yalnızca haber verilir.
+      var missing = rows.Where(r => catalog.Find("BIST", r.Symbol) is null)
+          .Select(r => r.Symbol).Distinct().Order(StringComparer.Ordinal).ToList();
+
+  - id: eskime
+    node: syncer
+    edge: null
+    aux: [job, membership]
+    title: "Liste 10 günden eskiyse Error"
+    what: >-
+      Her senkronun sonunda listenin tarihine bakılır. Liste yoksa veya 10 günden eskiyse `Error` yazılır.
+      İstisna olursa job yakalar ve loglar; tablo değişmez, sonraki pazartesi yeniden denenir.
+    why: >-
+      İki durumu yakalar: kaynak okunamıyor, ya da okunuyor ama Borsa İstanbul dosyayı güncellemiyor.
+      Senkron hatası servisi düşürmez; ekran son listeyle çalışmaya devam eder.
+    cost: >-
+      Log için alarm yok. Liste sessizce eskiyebilir; bunu yalnız logu okuyan görür.
+    next:
+      - { when: "Servis açık kalırsa → sonraki pazartesi 06:00", to: cagir }
+      - { when: "Servis yeniden açılırsa → açılış kontrolü", to: guncel }
+    terms: [hosted-service, log-level]
+    file: market-service/Services/IndexConstituentSyncer.cs
+    code: |
+      if (membership.AsOf is not { } asOf || asOf.AddDays(StaleAfterDays) < MarketClock.Today)
+          logger.LogError("Index constituents are stale: list as of {AsOf}, older than {Days} days; check BorsaIstanbul:ConstituentsSource",
+              membership.AsOf, StaleAfterDays);
+
+  - id: istek
+    node: ctrl
+    edge: [web, ctrl]
+    title: "Kullanıcı endeks segmentini seçer"
+    what: >-
+      BIST 30 hisseleri piyasa özetiyle (`GET /api/market/overview`) zaten gelir. BIST 100 seçilince `useIndexStocks('XU100')`
+      ayrı bir istek atar: `GET /api/market/index-stocks/XU100`. İstek portfolio-service'ten market-service'e iletilir.
+      Seçim adreste durur (`?index=xu100`).
+    why: >-
+      100 hisse için fiyat istemek pahalıdır. Kullanıcı BIST 100'ü seçmezse bu istek hiç atılmaz.
+    cost: >-
+      Yalnız `XU030` ve `XU100` kabul edilir; başka kod `400` döner.
+    next:
+      - { when: "market-service listeyi kurar", to: liste }
+    terms: []
+    file: web/src/pages/Market.jsx
+    code: |
+      const indexCode = params.get('index') === 'xu100' ? 'XU100' : 'XU030'
+      const bist100Query = useIndexStocks('XU100', tab === 'stocks' && indexCode === 'XU100')
+      const stocks = (indexCode === 'XU100' ? bist100Query.data : data?.stocks) ?? []
+
+  - id: liste
+    node: overview
+    edge: [membership, overview]
+    aux: [catalog]
+    auxEdges: [[catalog, overview]]
+    title: "Üç kaynaktan tek liste"
+    what: >-
+      `GetIndexStocksAsync()` sembolleri `IndexMembership`'ten alır. Her sembolün adı `InstrumentCatalog`'dan gelir; yoksa sembol gösterilir.
+      Fiyat portföyle aynı Redis anahtarından (`stock:BIST:{sembol}`) okunur, yoksa Yahoo'dan çekilir.
+    why: >-
+      Üç sorunun üç ayrı kaynağı vardır: hangi hisse (Borsa İstanbul), adı ne (Twelve Data), fiyatı ne (Yahoo).
+      Önbellek boşken BIST 100, 100 Yahoo isteği demektir; engellenmemek için aynı anda en fazla 8 istek gider.
+    cost: >-
+      İlk BIST 100 isteği önbellek dolana kadar yavaştır. Fiyatı alınamayan hisse listede görünmez.
+    terms: [cache-aside, in-memory]
+    file: market-service/Services/MarketOverviewService.cs
+    code: |
+      var tasks = _membership.Symbols(indexCode).Select(async symbol =>
+      {
+          await gate.WaitAsync();
+          try
+          {
+              return await StockQuoteAsync(symbol, _catalog.FindName("BIST", symbol) ?? symbol);
+          }

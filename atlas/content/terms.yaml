@@ -185,6 +185,12 @@
 - id: soft-delete
   term: soft delete
   def: Satırı silmek yerine pasif diye işaretlemek. Geçmiş ve ona bağlı kayıtlar korunur.
+- id: transaction
+  term: transaction
+  def: Birden çok veritabanı değişikliğini tek iş sayan blok. Ya hepsi yazılır ya hiçbiri; yarım kalırsa geri alınır.
+- id: foreign-key
+  term: foreign key
+  def: Bir tablodaki değerin başka tablodaki bir satırı göstermesini veritabanının zorunlu tutması. Karşılığı olmayan değer yazılamaz.
 - id: in-memory
   term: bellekte tutma
   def: Veriyi servisin RAM'inde saklamak. Okuma çok hızlıdır; servis yeniden başlarsa yeniden yüklenir.

@@ -6,6 +6,7 @@ title: "Hangi hisseler *aranabilir?*"
 lede: >-
   Aranabilen hisse ve ETF listesi her sabah Twelve Data'dan yenilenir. Liste Postgres'te tutulur,
   aramada servisin belleğindeki kopyadan okunur. Senkron yalnız farkı yazar ve hiçbir satırı silmez.
+  BIST 30 ve 100 tablolarındaki şirket adları da bu listeden gelir; endeks üyeliği ayrı bir senkronla gelir (Akış 13).
 stats:
   - { n: 5, l: "kaynak liste" }
   - { n: 1, l: "senkron / gün" }

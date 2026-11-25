@@ -5,7 +5,7 @@ id: ekran-veri
 eyebrow: "Akış 10 · Ekran → veri · Soy ağacı"
 title: "Ekrandaki sayı *nereden* geliyor?"
 lede: >-
-  Assay'ın beş ekranındaki on iki öğe. Bir öğeye dokun: verinin kaynağını, geçtiği yolu,
+  Assay'ın beş ekranındaki on üç öğe. Bir öğeye dokun: verinin kaynağını, geçtiği yolu,
   nerede hesaplandığını ve neden böyle gösterildiğini gör.
 
 screens:
@@ -32,15 +32,15 @@ screens:
         label: "Dağılım çubuğu"
         h: 1
         source: client
-        hook: "useDashboard"
-        endpoint: "GET /api/dashboard"
+        hook: "useHoldings"
+        endpoint: "GET /api/assets"
         chain:
-          - { label: "Overview.jsx", icon: browser }
-          - { label: "GET /api/dashboard → hisse ve nakit toplamı", icon: shield }
-          - { label: "Tarayıcı: altın = toplam − hisse − nakit", icon: calc }
-        calc: "Hisse ve nakit toplamı sunucudan gelir. Altın ayrı gelmez; tarayıcı kalan olarak hesaplar. Pay = tür ÷ toplam."
-        why: "Segment çubuğu oranı tek bakışta gösterir. Renkler kategori token'larıdır, kâr/zarar anlamı taşımaz."
-        file: web/src/pages/Overview.jsx
+          - { label: "Overview.jsx · useHoldings", icon: browser }
+          - { label: "GET /api/assets (varlık listesi)", icon: shield }
+          - { label: "summarizeCategories: kategori değeri, payı, K/Z %", icon: calc }
+        calc: "Kategori değeri, payı ve K/Z yüzdesi varlık listesinden tarayıcıda hesaplanır. Pay = kategori ÷ toplam."
+        why: "Portföy sayfasıyla aynı fonksiyon kullanılır; iki ekran birbiriyle çelişmez. Renkler kategori token'larıdır, kâr/zarar anlamı taşımaz."
+        file: web/src/lib/portfolioCategories.js
 
   - id: portfoy
     title: "Portföy"
@@ -103,23 +103,37 @@ screens:
           - { label: "GET /api/market/overview", icon: shield }
           - { label: "market-service MarketOverviewService → Redis (5 dk) → Yahoo", icon: bolt }
           - { label: "pulse(stocks): yükselen / düşen / sabit, ruh hali", icon: calc }
-        calc: "BIST 30 hisselerinin günlük değişiminden sayılar ve ağırlıksız ortalama. ±0,05 altı sabit sayılır."
+        calc: "Seçili endeksin (BIST 30 veya BIST 100) hisselerinin günlük değişiminden sayılar ve ağırlıksız ortalama. ±0,05 altı sabit sayılır."
         why: "30 satır okumadan piyasanın yönü görülür. Rakam tek başına bırakılmaz; yorum cümlesi eşlik eder."
         file: web/src/lib/marketPulse.js
       - id: bist30
-        label: "BIST 30 tablosu"
+        label: "BIST 30 / BIST 100 tablosu"
         h: 3
         source: external
-        hook: "useMarketOverview"
-        endpoint: "GET /api/market/overview"
+        hook: "useMarketOverview · useIndexStocks"
+        endpoint: "GET /api/market/overview · GET /api/market/index-stocks/XU100"
         chain:
-          - { label: "Market.jsx", icon: browser }
-          - { label: "GET /api/market/overview", icon: shield }
-          - { label: "BIST 30 bileşenleri: kodda elle tutulan liste", icon: code }
-          - { label: "Yahoo quote → Redis (5 dk)", icon: globe }
-        calc: "Fiyat, değişim, gün aralığı ve 52 haftalık konum Yahoo'dan olduğu gibi gelir. Sıralama ve arama tarayıcıda."
-        why: "Endeks üyeliğini hiçbir ücretsiz API vermiyor. Liste elle tutulur ve üç ayda bir gözden geçirilmelidir."
+          - { label: "Market.jsx · StockPanel.jsx (?index=xu100)", icon: browser }
+          - { label: "BIST 30 overview ile; BIST 100 ayrı uçla", icon: shield }
+          - { label: "IndexMembership: Borsa İstanbul dosyası, haftalık (Akış 13)", icon: clock }
+          - { label: "Ad: InstrumentCatalog · fiyat: Redis (5 dk) → Yahoo", icon: globe }
+        calc: "Üyelik Borsa İstanbul'dan, fiyat ve değişim Yahoo'dan olduğu gibi gelir. Sıralama, arama ve 10'luk sayfalama tarayıcıda."
+        why: "Üyeliğin resmî kaynağı Borsa İstanbul'dur; kodda elle tutulan liste güncellenmiyordu. BIST 100 yalnız seçilince istenir: 100 fiyat pahalıdır."
         file: market-service/Services/MarketOverviewService.cs
+      - id: watchlist
+        label: "İzlediklerim"
+        h: 2
+        source: server
+        hook: "useWatchlist"
+        endpoint: "GET /api/watchlist"
+        chain:
+          - { label: "WatchlistPanel.jsx · useWatchlist", icon: browser }
+          - { label: "GET /api/watchlist", icon: shield }
+          - { label: "Postgres · WatchlistItems (eklendiği andaki fiyat)", icon: db }
+          - { label: "market-service /prices → Redis → Yahoo", icon: bolt }
+        calc: "Günlük değişim önceki kapanıştan, \"eklediğinden beri\" değişim `PriceAtAdd`'den sunucuda hesaplanır. Fiyat enstrümanın kendi biriminde."
+        why: "Kullanıcı almadan takip eder. Ekleme anındaki fiyat saklanır; böylece \"ekledikten sonra ne oldu\" sorusu cevaplanır."
+        file: portfolio-service/Controllers/WatchlistController.cs
       - id: chart
         label: "Hisse detay grafiği"
         h: 2
