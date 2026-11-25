@@ -123,7 +123,7 @@ Erişim: [`lib/assetColors.js`](../../web/src/lib/assetColors.js) → `catOf(typ
 
 ## §3 Tema
 
-- `TM-01` Tema tercihi üç değer alır: `light`, `dark`, `system`. Varsayılan `system`.
+- `TM-01` Tema tercihi iki değer alır: `light`, `dark`. Varsayılan `light`. Sistem tercihine bakılmaz.
 - `TM-02` [`ThemeProvider`](../../web/src/contexts/ThemeProvider.jsx) `<html>`'e `.dark` sınıfını koyar. Tercihi `localStorage.theme`'de tutar.
 - `TM-03` Tema seçici olarak yalnız [`ThemeSwitch`](../../web/src/components/ThemeSwitch.jsx) kullan.
 - `TM-04` Renk token'dan geliyorsa `dark:` varyantı yazma.
