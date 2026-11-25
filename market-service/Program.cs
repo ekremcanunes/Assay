@@ -47,6 +47,7 @@ builder.Services.AddDbContext<MarketDbContext>(options =>
 builder.Services.AddHttpClient<IFrankfurterClient, FrankfurterClient>();
 builder.Services.AddHttpClient<ITwelveDataClient, TwelveDataClient>();
 builder.Services.AddHttpClient<IYahooFinanceClient, YahooFinanceClient>();
+builder.Services.AddHttpClient<IBorsaIstanbulClient, BorsaIstanbulClient>();
 builder.Services.AddHttpClient("Kratos");
 
 builder.Services.AddScoped<CacheLifetime>();
@@ -54,6 +55,9 @@ builder.Services.AddScoped<CacheStore>();
 builder.Services.AddSingleton<InstrumentCatalog>();
 builder.Services.AddScoped<InstrumentSyncer>();
 builder.Services.AddHostedService<InstrumentSyncJob>();
+builder.Services.AddSingleton<IndexMembership>();
+builder.Services.AddScoped<IndexConstituentSyncer>();
+builder.Services.AddHostedService<IndexConstituentSyncJob>();
 builder.Services.AddScoped<IMarketService, MarketService>();
 builder.Services.AddScoped<ISymbolSearchService, SymbolSearchService>();
 builder.Services.AddScoped<IMarketOverviewService, MarketOverviewService>();
@@ -77,6 +81,8 @@ using (var scope = app.Services.CreateScope())
 
     // Arama ilk istekten itibaren çalışsın: liste Twelve Data'ya değil veritabanına bağlı (spec §4.4 Açılış).
     await app.Services.GetRequiredService<InstrumentCatalog>().ReloadAsync(db, CancellationToken.None);
+    // Piyasa özetinin BIST 30 tablosu da ilk istekten itibaren tablodaki son listeyle çalışsın.
+    await app.Services.GetRequiredService<IndexMembership>().ReloadAsync(db, CancellationToken.None);
 }
 
 if (app.Environment.IsDevelopment())

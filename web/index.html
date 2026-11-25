@@ -8,9 +8,7 @@
     <!-- Tema sınıfını ilk boyamadan önce koy: koyu temada beyaz flaş olmasın (ThemeContext ile aynı kural) -->
     <script>
       try {
-        var t = localStorage.getItem('theme') || 'system'
-        if (t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches))
-          document.documentElement.classList.add('dark')
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark')
       } catch (e) {}
     </script>
   </head>

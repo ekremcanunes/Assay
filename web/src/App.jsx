@@ -1,14 +1,18 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { AuthProvider } from './contexts/AuthContext'
-import { LanguageProvider } from './contexts/LanguageContext'
-import { ThemeProvider } from './contexts/ThemeContext'
+import { AuthProvider } from './contexts/AuthProvider'
+import { LanguageProvider } from './contexts/LanguageProvider'
+import { ThemeProvider } from './contexts/ThemeProvider'
 import ProtectedRoute from './components/ProtectedRoute'
 import PageLoader from './components/PageLoader'
 import Layout from './components/Layout'
 import Overview from './pages/Overview'
 import Market from './pages/Market'
+import AssetDetail from './pages/AssetDetail'
+import Watchlist from './pages/Watchlist'
+import Account from './pages/Account'
+import Toaster from './components/Toaster'
 import Assets from './pages/Assets'
 import AddAsset from './pages/AddAsset'
 import AssetCategory from './pages/AssetCategory'
@@ -64,6 +68,9 @@ export default function App() {
               <Route path="/market" element={<Market />} />
               {/* Borsa ve Altın & Döviz artık tek sayfada */}
               <Route path="/market/:panel" element={<Navigate to="/market" replace />} />
+              <Route path="/market/:market/:symbol" element={<AssetDetail />} />
+              <Route path="/watchlist" element={<Watchlist />} />
+              <Route path="/account" element={<Account />} />
               <Route path="/assets" element={<Assets />} />
               <Route path="/assets/buy" element={<AddAsset />} />
               <Route path="/assets/:category" element={<AssetCategory />} />
@@ -77,6 +84,7 @@ export default function App() {
             </Route>
           </Routes>
           </BrowserRouter>
+          <Toaster />
         </AuthProvider>
       </LanguageProvider>
       </ThemeProvider>

@@ -43,7 +43,7 @@ export default function Analytics() {
   }, [holdings, t])
 
   return (
-    <Page eyebrow={t('nav.sectionGeneral')} title={t('nav.analytics')}>
+    <Page title={t('nav.analytics')}>
       {isLoading ? (
         <div className="text-ui text-muted-foreground">{t('common.loading')}</div>
       ) : error ? (

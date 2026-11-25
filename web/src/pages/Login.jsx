@@ -195,7 +195,7 @@ export default function Login() {
   }
 
   if (!flow && step === 'password') {
-    return <PageLoader label={t('auth.redirecting')} className="paper" />
+    return <PageLoader label={t('auth.redirecting')} />
   }
 
   return (

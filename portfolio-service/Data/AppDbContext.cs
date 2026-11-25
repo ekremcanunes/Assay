@@ -7,6 +7,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<Asset> Assets => Set<Asset>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
+    public DbSet<WatchlistItem> WatchlistItems => Set<WatchlistItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -37,6 +38,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasIndex(t => t.UserId);
             entity.HasIndex(t => t.Date);
             entity.HasIndex(t => t.Type);
+        });
+
+        modelBuilder.Entity<WatchlistItem>(entity =>
+        {
+            entity.Property(w => w.AssetType).HasConversion<string>();
+            entity.Property(w => w.Market).HasDefaultValue(string.Empty);
+            entity.Property(w => w.PriceAtAdd).HasPrecision(18, 8);
+            entity.HasIndex(w => new { w.UserId, w.Market, w.Symbol }).IsUnique();
         });
     }
 }

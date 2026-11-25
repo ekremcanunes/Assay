@@ -33,7 +33,6 @@ const detail = {
           ['Okuma çizgisi', '1px çizgi · translate3d', 'yalnızca transform değişir, sayfa yerleşimi yeniden hesaplanmaz'],
         ],
       },
-      after: 'Izgara, auth zeminindeki .paper sınıfının 34px ızgarasıyla aynı orijine hizalanıyor; kartın arkasındaki çizgilerle kesintisiz devam ediyor.',
     },
     {
       kind: 'code',

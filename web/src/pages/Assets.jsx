@@ -26,7 +26,6 @@ export default function Assets() {
 
   return (
     <Page
-      eyebrow={t('nav.sectionGeneral')}
       title={t('assets.title')}
       meta={
         <span className="tabular">

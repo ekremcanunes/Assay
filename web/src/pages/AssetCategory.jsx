@@ -29,7 +29,6 @@ export default function AssetCategory() {
 
   return (
     <Page
-      eyebrow={t('assets.title')}
       title={name}
       actions={
         <PrimaryAction onClick={() => navigate(buyPath({ type }))}>

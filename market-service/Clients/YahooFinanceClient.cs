@@ -3,39 +3,42 @@ using market_service.Common;
 using market_service.Models;
 
 namespace market_service.Clients;
-
-public class YahooFinanceClient(HttpClient httpClient, ILogger<YahooFinanceClient> logger) : IYahooFinanceClient
+//YahooFinanceClient, Yahoo Finance üzerinden hisse senedi veya finansal enstrümanların güncel fiyat bilgilerini çekmek için yazılmıştır.
+public class YahooFinanceClient(HttpClient httpClient, ILogger<YahooFinanceClient> logger) : IYahooFinanceClient // HttpClient ve logger örnekleri sınıfın yapıcısı üzerinden alınır. Eski yöntemle bağımlılık enjeksiyonu yapılır.
 {
-    public async Task<YahooQuote?> GetQuoteAsync(string yahooSymbol)
+    
+
+    public async Task<YahooQuote?> GetQuoteAsync(string yahooSymbol) // Yahoo Finance üzerinden belirli bir sembolün güncel fiyat bilgisini alır.
+
     {
         try
         {
             var url = $"https://query1.finance.yahoo.com/v8/finance/chart/{Uri.EscapeDataString(yahooSymbol)}?interval=1d&range=1d";
             var request = new HttpRequestMessage(HttpMethod.Get, url);
-            // Yahoo varsayılan istemcileri engeller; tarayıcı User-Agent gerekli
-            request.Headers.Add("User-Agent", "Mozilla/5.0");
+            
+            request.Headers.Add("User-Agent", "Mozilla/5.0"); // Yahoo varsayılan istemcileri engeller; tarayıcı User-Agent gerekli
+            
+            var response = await httpClient.SendAsync(request); // İstek gönderiliyor.
+            response.EnsureSuccessStatusCode(); // Başarısız HTTP yanıtları burada yakalanacak.
 
-            var response = await httpClient.SendAsync(request);
-            response.EnsureSuccessStatusCode();
 
-            var json = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(json);
+            var json = await response.Content.ReadAsStringAsync(); // JSON yanıtı okunuyor.
+            using var doc = JsonDocument.Parse(json);  // JSON belgesi parse ediliyor.
 
-            var result = doc.RootElement.GetProperty("chart").GetProperty("result");
-            if (result.ValueKind != JsonValueKind.Array || result.GetArrayLength() == 0)
+            var result = doc.RootElement.GetProperty("chart").GetProperty("result"); // Chart verisi alınıyor.
+            if (result.ValueKind != JsonValueKind.Array || result.GetArrayLength() == 0)  // Result dizisi boşsa null döndür.
                 return null;
 
-            var meta = result[0].GetProperty("meta");
+            var meta = result[0].GetProperty("meta"); // Meta bilgisi alınıyor.
 
-            if (!TryGetDecimal(meta, "regularMarketPrice", out var price))
+            if (!TryGetDecimal(meta, "regularMarketPrice", out var price))  // Güncel piyasa fiyatı alınamazsa uyarı ver ve null döndür.
             {
-                logger.LogWarning("No price in Yahoo response for {Symbol}", LogSanitizer.ForLog(yahooSymbol));
+                logger.LogWarning("No price in Yahoo response for {Symbol}", LogSanitizer.ForLog(yahooSymbol)); // Uyarı logu yazılıyor.
                 return null;
             }
 
-            // previousClose bazen null döner; chartPreviousClose yedek
-            decimal? prevClose = TryGetDecimal(meta, "previousClose", out var pc) ? pc
-                : TryGetDecimal(meta, "chartPreviousClose", out var cpc) ? cpc : null;
+            decimal? prevClose = TryGetDecimal(meta, "previousClose", out var pc) ? pc   // Önce previousClose deneniyor
+                : TryGetDecimal(meta, "chartPreviousClose", out var cpc) ? cpc : null; // Yoksa chartPreviousClose kullanılıyor
 
             // Seans sınırları: currentTradingPeriod.regular { start, end } (Unix saniye)
             JsonElement session = default;

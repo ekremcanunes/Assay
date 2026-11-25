@@ -73,6 +73,8 @@ services:
       - Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore=${LOG_LEVEL_EFCORE:-Warning}
       - ConnectionStrings__MarketDb=${MARKET_DB_CONNECTION_STRING}
       - TwelveData__ApiKey=${TWELVEDATA_API_KEY}
+      # BIST 30/100 üyelik dosyası: prod URL'den indirir; lokalde .env ile klasördeki dosyaya çevrilir.
+      - BorsaIstanbul__ConstituentsSource=${BIST_CONSTITUENTS_SOURCE:-https://www.borsaistanbul.com/datum/hisse_endeks_ds.csv}
       - REDIS_CONNECTION=redis:6379
       - Kratos__BaseUrl=http://kratos:4433
       - Auth__RequiredAal=${AUTH_REQUIRED_AAL:-highest_available}

@@ -32,4 +32,5 @@ const Button = React.forwardRef(({ className, variant, size, asChild = false, ..
 })
 Button.displayName = "Button"
 
-export { Button, buttonVariants }
+// buttonVariants dışarıda kullanılmıyor; yalnız bileşen export edilir (Fast Refresh)
+export { Button }

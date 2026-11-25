@@ -1,0 +1,104 @@
+<h2>Bir akış nasıl anlatılsın?</h2>
+<p class="subtitle">Örnek akış: "main-prod'a push edince ne oluyor?" — gerçek içerikle. Aynı içerik, üç sunum biçimi.</p>
+
+<style>
+  .fx-rail{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0 12px}
+  .fx-node{padding:6px 9px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;background:#fff;color:#0f172a}
+  .fx-node.on{border-color:#1d4ed8;background:#1d4ed8;color:#fff;font-weight:600}
+  .fx-node.done{border-color:#1d4ed8;color:#1d4ed8}
+  .fx-arrow{color:#94a3b8;font-size:12px}
+  .fx-panel{border:1px solid #e2e8f0;border-radius:10px;padding:12px;background:#fff;color:#0f172a;font-size:13px;line-height:1.5}
+  .fx-panel h4{margin:0 0 6px;font-size:15px}
+  .fx-k{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#475569;margin-top:8px}
+  .fx-code{font-family:ui-monospace,monospace;font-size:11px;background:#0f172a;color:#e2e8f0;border-radius:6px;padding:8px;margin-top:6px;white-space:pre}
+  .fx-btns{display:flex;justify-content:space-between;margin-top:10px;font-size:12px}
+  .fx-btn{border:1px solid #cbd5e1;border-radius:8px;padding:4px 10px;background:#fff;color:#0f172a}
+  .fx-map{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:18px 14px;padding:10px;background:#f8fafc;border-radius:10px}
+  .fx-map .fx-node{text-align:center}
+  .fx-side{display:grid;grid-template-columns:1.2fr 1fr;gap:10px}
+  .fx-tag{display:inline-block;font-size:10px;padding:1px 6px;border-radius:5px;background:#eff6ff;color:#1d4ed8;margin-left:4px}
+</style>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Slayt — adım adım</h3>
+      <p>Üstte akış şeridi, altta tek adımın anlatımı. İleri/geri ile sunum gibi ilerler.</p>
+      <div class="fx-rail">
+        <span class="fx-node done">Push</span><span class="fx-arrow">→</span>
+        <span class="fx-node done">OIDC</span><span class="fx-arrow">→</span>
+        <span class="fx-node on">Build → ECR</span><span class="fx-arrow">→</span>
+        <span class="fx-node">S3 release</span><span class="fx-arrow">→</span>
+        <span class="fx-node">CodePipeline</span><span class="fx-arrow">→</span>
+        <span class="fx-node">deploy.sh</span>
+      </div>
+      <div class="fx-panel">
+        <h4>3 / 6 · Üç image build edilir, ECR'a gönderilir</h4>
+        <div class="fx-k">Ne oluyor</div>
+        market-service, portfolio-service ve web image'ları build edilir. Tag = commit SHA.
+        <div class="fx-k">Neden böyle</div>
+        SHA tag'i her sürümü tekil yapar. EC2'de tam olarak CI'da build edilen image çalışır (immutable).
+        <div class="fx-k">Bedeli / alternatif</div>
+        <code>latest</code> tag'i daha basit ama hangi sürümün çalıştığı bilinmez, geri dönüş zorlaşır.
+        <div class="fx-k">Dosya · komut</div>
+        <div class="fx-code">.github/workflows/build-push.yml
+docker build -t $REG/assay/web:$SHA ./web
+docker push $REG/assay/web:$SHA</div>
+        <div class="fx-btns"><span class="fx-btn">← OIDC</span><span class="fx-btn">S3 release →</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Harita — tıkla, keşfet</h3>
+      <p>Tüm akış tek ekranda diyagram. Bir kutuya tıklayınca sağda aynı anlatım paneli açılır.</p>
+      <div class="fx-side">
+        <div class="fx-map">
+          <span class="fx-node done">GitHub push</span>
+          <span class="fx-node done">Actions (OIDC)</span>
+          <span class="fx-node on">ECR</span>
+          <span class="fx-node">S3</span>
+          <span class="fx-node">CodePipeline</span>
+          <span class="fx-node">EC2 · compose</span>
+          <span class="fx-node" style="grid-column:2">Secrets Manager</span>
+        </div>
+        <div class="fx-panel">
+          <h4>ECR <span class="fx-tag">AWS</span></h4>
+          <div class="fx-k">Nedir</div>
+          AWS'nin private Docker image deposu.
+          <div class="fx-k">Assay'da</div>
+          3 repo; tag = commit SHA.
+          <div class="fx-k">Bağlantılar</div>
+          ← Actions push eder · → EC2 pull eder
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Karma — harita + "Oynat"</h3>
+      <p>B'deki harita varsayılan. "Oynat" deyince A gibi adım adım ilerler: aktif kutu yanar, istek okla akar, panel o adımı anlatır. Kavram sözlüğü her kutuya bağlı.</p>
+      <div class="fx-side">
+        <div class="fx-map">
+          <span class="fx-node done">GitHub push</span>
+          <span class="fx-node done">Actions (OIDC)</span>
+          <span class="fx-node on">ECR</span>
+          <span class="fx-node">S3</span>
+          <span class="fx-node">CodePipeline</span>
+          <span class="fx-node">EC2 · compose</span>
+          <span class="fx-node" style="grid-column:2">▶ Oynat · 3/6</span>
+        </div>
+        <div class="fx-panel">
+          <h4>3 / 6 · Build → ECR</h4>
+          Ne oluyor · Neden · Bedeli · Dosya/komut — A'daki panelle aynı.
+          <div class="fx-btns"><span class="fx-btn">←</span><span class="fx-btn">→</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

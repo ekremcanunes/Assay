@@ -6,6 +6,9 @@ services:
     build: ./market-service
     ports:
       - "5002:5002"
+    # BIST endeks dosyasi icin lokal klasor (konteyner host diskini goremez). BIST_DATA_DIR yoksa .bist/
+    volumes:
+      - ${BIST_DATA_DIR:-./.bist}:/data/bist:ro
   portfolio-service:
     build: ./portfolio-service
     ports:

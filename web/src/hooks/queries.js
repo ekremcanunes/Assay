@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { assetApi, dashboardApi, transactionApi, marketApi, systemApi } from '@/services/api'
+import { assetApi, dashboardApi, transactionApi, marketApi, systemApi, watchlistApi } from '@/services/api'
 
 export const queryKeys = {
   holdings: ['holdings'],
+  watchlist: ['watchlist'],
   dashboard: ['dashboard'],
   transactions: ['transactions'],
   marketOverview: ['market-overview'],
@@ -37,13 +38,72 @@ export function useMarketOverview() {
   })
 }
 
-// Tüm BIST evreninde sembol arama — yalnızca BIST 30 filtresi boş kalınca kullanılır.
+// Bir endeksin hisseleri (Piyasa'daki BIST 100 segmenti). BIST 30 piyasa özetiyle gelir;
+// bu sorgu yalnız segment seçilince çalışır, sayfayı açan herkes 100 hisse yüklemez.
+export function useIndexStocks(indexCode, enabled) {
+  return useQuery({
+    queryKey: ['index-stocks', indexCode],
+    ...serverCached(() => marketApi.indexStocks(indexCode)),
+    enabled,
+  })
+}
+
+// Tüm BIST evreninde sembol arama — yalnızca seçili endeksin (BIST 30 / BIST 100) filtresi boş kalınca kullanılır.
 // q null ise sorgu hiç çalışmaz.
 export function useSymbolSearch(q) {
   return useQuery({
     queryKey: ['symbol-search', q],
     ...serverCached(() => marketApi.search(q)),
     enabled: !!q && q.length >= 2,
+  })
+}
+
+// İzleme listesi: kalemler + güncel fiyat. Tazeliği fiyatların cache ömrü belirler (serverCached).
+// options: yalnız okuyan yerler (satırlardaki yıldız) { refetchOnMount: false } verir. Neden: tablo
+// sayfalanınca her sayfada yeni yıldızlar mount olur; liste boşken önbellek başlığı gelmez, veri hep
+// bayat sayılır ve her sayfa değişimi /api/watchlist isteği atardı. Liste ekle/çıkar sonrası zaten
+// invalidate edilir; İzlediklerim ekranı kendi sorgusuyla tazeler.
+export function useWatchlist(options = {}) {
+  return useQuery({
+    queryKey: queryKeys.watchlist,
+    ...serverCached(() => watchlistApi.getAll()),
+    ...options,
+  })
+}
+
+export function useAddWatch() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => watchlistApi.add(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.watchlist }),
+  })
+}
+
+export function useRemoveWatch() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => watchlistApi.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.watchlist }),
+  })
+}
+
+// Varlık sayfası: tek varlığın fiyatı + gün/52H istatistikleri. Bulunamazsa (404) tekrar denenmez.
+export function useQuote(market, symbol) {
+  return useQuery({
+    queryKey: ['quote', market, symbol],
+    ...serverCached(() => marketApi.quote(market, symbol)),
+    enabled: !!symbol,
+    retry: false,
+  })
+}
+
+// Varlık sayfası: ad, borsa, para birimi (enstrüman kataloğundan).
+export function useInstrument(market, symbol) {
+  return useQuery({
+    queryKey: ['instrument', market, symbol],
+    ...serverCached(() => marketApi.instrument(market, symbol)),
+    enabled: !!market && !!symbol,
+    retry: false,
   })
 }
 
@@ -108,6 +168,15 @@ export function useAssetTransactions(market, symbol) {
     queryKey: [...queryKeys.transactions, market, symbol],
     queryFn: () => transactionApi.getAll({ symbol, market }).then((r) => r.data.items ?? []),
     enabled: !!symbol,
+  })
+}
+
+// Genel Bakış'taki son işlemler — en yeni `limit` kayıt (sunucu tarihe göre yeniden eskiye sıralar).
+// Anahtar ['transactions', ...] ile başlar: al-sat sonrası invalidate bunu da tazeler.
+export function useRecentTransactions(limit = 5) {
+  return useQuery({
+    queryKey: [...queryKeys.transactions, 'recent', limit],
+    queryFn: () => transactionApi.getAll({ pageSize: limit }).then((r) => r.data.items ?? []),
   })
 }
 

@@ -5,7 +5,8 @@
 const categories = {
   Stock: { text: 'text-cat-stock', tint: 'bg-cat-stock/12', dot: 'bg-cat-stock', color: 'hsl(var(--cat-stock))' },
   Currency: { text: 'text-cat-fx', tint: 'bg-cat-fx/12', dot: 'bg-cat-fx', color: 'hsl(var(--cat-fx))' },
-  Gold: { text: 'text-cat-gold', tint: 'bg-cat-gold/20', dot: 'bg-cat-gold', color: 'hsl(var(--cat-gold))' },
+  // text: monogram harfi; açık temada koyu "ink" tonu (cat-gold kendi tonunda okunmuyor)
+  Gold: { text: 'text-cat-gold-ink', tint: 'bg-cat-gold/20', dot: 'bg-cat-gold', color: 'hsl(var(--cat-gold))' },
   Cash: { text: 'text-cat-cash', tint: 'bg-cat-cash/12', dot: 'bg-cat-cash', color: 'hsl(var(--cat-cash))' },
   Index: { text: 'text-cat-index', tint: 'bg-cat-index/12', dot: 'bg-cat-index', color: 'hsl(var(--cat-index))' },
   Other: { text: 'text-cat-other', tint: 'bg-cat-other/15', dot: 'bg-cat-other', color: 'hsl(var(--cat-other))' },

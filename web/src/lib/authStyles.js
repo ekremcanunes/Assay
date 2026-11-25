@@ -8,16 +8,16 @@ export const authLabelCls =
 export const authInputCls =
   'h-[52px] w-full rounded-[10px] border border-border bg-card px-3.5 font-mono text-[16px] text-foreground ' +
   'md:h-12 md:text-body ' +
-  'placeholder:text-muted-foreground/70 hover:border-input focus:border-primary focus:outline-none'
+  'placeholder:text-muted-foreground hover:border-input focus:border-primary focus:outline-none'
 
 // Dış boşluk (margin) kullanan yerde verilir: mobilde buton alttaki sabit şeritte durur
 export const authSubmitCls =
   'press flex h-12 w-full items-center justify-center rounded-[10px] bg-primary text-body font-semibold text-primary-foreground ' +
   'hover:opacity-90 disabled:opacity-50'
 
-// Giriş/Kayıt iskeleti: mobilde ekranın tamamı form (kart yok); md+ hairline ızgara zemin üstünde kart.
+// Giriş/Kayıt iskeleti: mobilde ekranın tamamı form (kart yok); md+ düz zemin üstünde kart.
 export const authPageCls =
-  'paper flex min-h-dvh md:items-center md:p-12'
+  'flex min-h-dvh md:items-center md:p-12'
 
 export const authCardCls =
   'relative z-10 flex min-h-dvh w-full flex-col px-5 pt-[calc(1.25rem+env(safe-area-inset-top))] ' +

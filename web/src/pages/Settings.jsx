@@ -80,7 +80,7 @@ export default function Settings() {
 
   if (!flow) {
     return (
-      <div className="paper flex min-h-screen items-center justify-center bg-background font-mono text-micro text-muted-foreground">
+      <div className="flex min-h-screen items-center justify-center bg-background font-mono text-micro text-muted-foreground">
         {t('auth.redirecting')}
       </div>
     )

@@ -38,7 +38,7 @@ function HowBlock({ b }) {
     return (
       <figure>
         <h3 className="mb-1.5 text-body font-semibold text-foreground">{b.title}</h3>
-        {b.body && <p className="mb-3 text-ui text-muted-foreground">{b.body}</p>}
+        {b.body && <p className="mb-3 max-w-[50ch] text-ui text-muted-foreground">{b.body}</p>}
         <div className="overflow-x-auto rounded-xl border border-border bg-card p-4">{b.figure}</div>
         {b.caption && <figcaption className="mt-2 font-mono text-micro text-muted-foreground">{b.caption}</figcaption>}
       </figure>
@@ -47,9 +47,10 @@ function HowBlock({ b }) {
   return (
     <div>
       <h3 className="mb-1.5 text-body font-semibold text-foreground">{b.title}</h3>
-      <p className="text-ui text-muted-foreground">{b.body}</p>
+      {/* 50ch ≈ 78 karakter (13px): satır 80 karakteri geçmesin */}
+      <p className="max-w-[50ch] text-ui text-muted-foreground">{b.body}</p>
       {b.table && <MiniTable head={b.table.head} rows={b.table.rows} />}
-      {b.after && <p className="mt-3 text-ui text-muted-foreground">{b.after}</p>}
+      {b.after && <p className="mt-3 max-w-[50ch] text-ui text-muted-foreground">{b.after}</p>}
       {b.code && <div className="mt-3"><Fold label={b.title}><CodeBlock code={b.code} /></Fold></div>}
     </div>
   )
@@ -62,7 +63,7 @@ function TechHeader({ tech, tagline }) {
       <span className="text-primary [&>svg]:h-8 [&>svg]:w-8">{tech.icon}</span>
       <h1 className="mt-3 text-head font-bold text-foreground">{tech.name}</h1>
       <span className="font-mono text-micro tracking-wide text-muted-foreground">{tech.role}</span>
-      {tagline && <p className="mt-3 text-body text-foreground">{tagline}</p>}
+      {tagline && <p className="mt-3 max-w-[50ch] text-body text-foreground">{tagline}</p>}
     </header>
   )
 }
@@ -90,12 +91,12 @@ function Body({ tech }) {
     <TechHeader tech={tech} tagline={tagline} />
     <div className="flex flex-col gap-7">
       <section>
-        <h2 className="label mb-3 text-muted-foreground">Neden bunu seçtik</h2>
+        <h2 className="mb-3 text-figure font-semibold text-foreground">Neden bunu seçtik</h2>
         <div className="flex flex-col gap-4">
           {why.map((w) => (
             <div key={w.t} className="border-t border-border pt-2.5">
               <h3 className="mb-1 text-body font-semibold text-foreground">{w.t}</h3>
-              <p className="text-ui text-muted-foreground">{w.d}</p>
+              <p className="max-w-[50ch] text-ui text-muted-foreground">{w.d}</p>
             </div>
           ))}
         </div>
@@ -103,7 +104,7 @@ function Body({ tech }) {
 
       {how.length > 0 && (
         <section>
-          <h2 className="label mb-3 text-muted-foreground">Assay&apos;da nasıl</h2>
+          <h2 className="mb-3 text-figure font-semibold text-foreground">Assay&apos;da nasıl</h2>
           <div className="flex flex-col gap-6">
             {how.map((b) => <HowBlock key={b.title ?? b.code} b={b} />)}
           </div>
@@ -112,12 +113,12 @@ function Body({ tech }) {
 
       {learned.length > 0 && (
         <section>
-          <h2 className="label mb-3 text-muted-foreground">Ne öğrendik</h2>
+          <h2 className="mb-3 text-figure font-semibold text-foreground">Ne öğrendik</h2>
           <div className="flex flex-col gap-3">
             {learned.map((b) => (
               <div key={b.title} className="rounded-xl border border-border bg-card p-4 shadow-card">
                 <h3 className="mb-1 text-ui font-semibold text-foreground">{b.title}</h3>
-                <p className="text-ui text-muted-foreground">{b.body}</p>
+                <p className="max-w-[50ch] text-ui text-muted-foreground">{b.body}</p>
               </div>
             ))}
           </div>

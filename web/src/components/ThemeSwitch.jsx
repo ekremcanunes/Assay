@@ -1,9 +1,9 @@
-import { Sun, Moon, Monitor } from 'lucide-react'
+import { Sun, Moon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useTheme } from '@/contexts/ThemeContext'
 
-const THEMES = [['light', Sun], ['dark', Moon], ['system', Monitor]]
+const THEMES = [['light', Sun], ['dark', Moon]]
 
 // Tema seçici: segment oluğu, aktif dilim beyaz yüzey. Tercih localStorage'da (ThemeContext).
 // iconOnly: dar yerler (landing üst menüsü, giriş/kayıt) — etiket yalnız aria-label/title'da.
@@ -14,7 +14,7 @@ export function ThemeSwitch({ iconOnly = false, className }) {
     <div
       role="radiogroup"
       aria-label={t('theme.label')}
-      className={cn('grid grid-cols-3 gap-0.5 rounded-[10px] bg-secondary p-1', iconOnly && 'inline-grid', className)}
+      className={cn('grid grid-cols-2 gap-0.5 rounded-[10px] bg-secondary p-1', iconOnly && 'inline-grid', className)}
     >
       {THEMES.map(([key, Icon]) => (
         <button
